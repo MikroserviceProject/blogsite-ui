@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError } from 'rxjs';
+import { Observable, tap, interval, Subscription } from 'rxjs';
 import { ApiResponse, LoginRequest, LoginResponse, RegisterRequest, User, ConfirmEmailRequest } from '../models/auth.model';
 
 @Injectable({
@@ -14,6 +14,7 @@ export class AuthService {
 
   private tokenSignal = signal<string | null>(localStorage.getItem('lumina_auth_token'));
   currentUser = signal<User | null>(null);
+  sessionWarning = signal<string | null>(null);
 
   // Computed state
   isLoggedIn = computed(() => !!this.tokenSignal());
@@ -27,17 +28,57 @@ export class AuthService {
   isConfirmModalOpen = signal<boolean>(false);
   pendingConfirmEmail = signal<string>('');
 
+  private sessionCheckSub: Subscription | null = null;
+
   constructor() {
-    // Sayfa ilk yüklendiğinde hafızada token varsa profili otomatik getir
+    // Sayfa ilk yüklendiğinde hafızada token varsa profili otomatik getir ve oturum takibini başlat
     if (this.tokenSignal()) {
       this.getMe().subscribe({
-        error: () => this.logout()
+        next: () => this.startSessionHeartbeat(),
+        error: () => this.handleSessionTerminated('Oturumunuz geçerli değil veya sonlandırılmış.')
       });
     }
   }
 
   getToken(): string | null {
     return this.tokenSignal();
+  }
+
+  // 5 saniyede bir oturumun hala geçerli olup olmadığını (başka cihazdan girilip girilmediğini) kontrol eder
+  private startSessionHeartbeat() {
+    this.stopSessionHeartbeat();
+    this.sessionCheckSub = interval(5000).subscribe(() => {
+      if (this.tokenSignal()) {
+        this.http.get<ApiResponse<boolean>>(`${this.apiUrl}/validate-session`).subscribe({
+          error: (err) => {
+            if (err.status === 401) {
+              const msg = err.error?.message || 'Hesabınıza başka bir sekmeden veya cihazdan giriş yapıldığı için bu oturumunuz anında sonlandırıldı.';
+              this.handleSessionTerminated(msg);
+            }
+          }
+        });
+      }
+    });
+  }
+
+  private stopSessionHeartbeat() {
+    if (this.sessionCheckSub) {
+      this.sessionCheckSub.unsubscribe();
+      this.sessionCheckSub = null;
+    }
+  }
+
+  handleSessionTerminated(message: string) {
+    this.stopSessionHeartbeat();
+    localStorage.removeItem('lumina_auth_token');
+    this.tokenSignal.set(null);
+    this.currentUser.set(null);
+    this.sessionWarning.set(message);
+    this.router.navigate(['/login']);
+  }
+
+  clearSessionWarning() {
+    this.sessionWarning.set(null);
   }
 
   register(request: RegisterRequest): Observable<ApiResponse<User>> {
@@ -58,7 +99,9 @@ export class AuthService {
     return this.http.post<ApiResponse<LoginResponse>>(`${this.apiUrl}/login`, request).pipe(
       tap(res => {
         if (res.success && res.data) {
+          this.sessionWarning.set(null);
           this.setSession(res.data.token, res.data.user);
+          this.startSessionHeartbeat();
           this.closeAllModals();
         }
       })
@@ -76,10 +119,19 @@ export class AuthService {
   }
 
   logout() {
+    const token = this.tokenSignal();
+    if (token) {
+      // Backend'deki CurrentSessionToken'ı anında yenileyerek diğer tüm kopyalanmış token'ları geçersiz kıl
+      this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
+        next: () => {},
+        error: () => {}
+      });
+    }
+    this.stopSessionHeartbeat();
     localStorage.removeItem('lumina_auth_token');
     this.tokenSignal.set(null);
     this.currentUser.set(null);
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
   }
 
   private setSession(token: string, user: User) {
@@ -111,3 +163,4 @@ export class AuthService {
     this.isConfirmModalOpen.set(false);
   }
 }
+

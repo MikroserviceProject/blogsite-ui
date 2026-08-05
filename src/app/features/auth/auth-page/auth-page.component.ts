@@ -414,6 +414,17 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
           <!-- 2. TAB: GİRİŞ YAP (LOGIN)                                -->
           <!-- ======================================================== -->
           @if (activeTab() === 'login') {
+            @if (authService.sessionWarning()) {
+              <div class="session-warning-banner">
+                <div class="swb-icon">🛡️</div>
+                <div class="swb-body">
+                  <div class="swb-title">Oturum Güvenliği Bildirimi</div>
+                  <div class="swb-desc">{{ authService.sessionWarning() }}</div>
+                </div>
+                <button type="button" class="swb-dismiss" (click)="authService.clearSessionWarning()">✕</button>
+              </div>
+            }
+
             <form (ngSubmit)="onLoginSubmit()" class="auth-form">
               
               <div class="form-group">
@@ -1135,6 +1146,56 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       font-size: 12px;
       color: #047857;
       line-height: 1.4;
+    }
+
+    .session-warning-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      border-radius: var(--radius-md);
+      margin-bottom: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .swb-icon {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .swb-body {
+      flex: 1;
+    }
+
+    .swb-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #991b1b;
+      margin-bottom: 4px;
+    }
+
+    .swb-desc {
+      font-size: 13px;
+      color: #b91c1c;
+      line-height: 1.4;
+    }
+
+    .swb-dismiss {
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      color: #991b1b;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .swb-dismiss:hover {
+      opacity: 1;
     }
   `]
 })
