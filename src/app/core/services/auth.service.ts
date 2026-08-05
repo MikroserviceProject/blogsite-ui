@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, interval, Subscription } from 'rxjs';
-import { ApiResponse, LoginRequest, LoginResponse, RegisterRequest, User, ConfirmEmailRequest } from '../models/auth.model';
+import { ApiResponse, LoginRequest, LoginResponse, RegisterRequest, User, ConfirmEmailRequest, UpdateProfileRequest, ResendEmailRequest } from '../models/auth.model';
 
 @Injectable({
   providedIn: 'root'
