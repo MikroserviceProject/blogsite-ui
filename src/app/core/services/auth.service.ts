@@ -118,6 +118,42 @@ export class AuthService {
     );
   }
 
+  updateProfile(request: UpdateProfileRequest): Observable<ApiResponse<User>> {
+    return this.http.put<ApiResponse<User>>(`${this.apiUrl}/update-profile`, request).pipe(
+      tap(res => {
+        if (res.success && res.data) {
+          this.currentUser.set(res.data);
+          if (!res.data.isEmailConfirmed) {
+            this.pendingConfirmEmail.set(res.data.email);
+          }
+        }
+      })
+    );
+  }
+
+  uploadAvatar(file: File): Observable<ApiResponse<User>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/upload-avatar`, formData).pipe(
+      tap(res => {
+        if (res.success && res.data) {
+          this.currentUser.set(res.data);
+        }
+      })
+    );
+  }
+
+  getAvatarUrl(path: string | null | undefined): string | null {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('data:image')) return path;
+    return `http://localhost:5001${path}`;
+  }
+
+  resendConfirmation(email: string): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/resend-confirmation`, { email });
+  }
+
+
   logout() {
     const token = this.tokenSignal();
     if (token) {

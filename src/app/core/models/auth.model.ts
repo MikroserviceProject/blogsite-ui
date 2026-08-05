@@ -10,6 +10,7 @@ export interface User {
   username: string;
   email: string;
   role: 'Admin' | 'Author' | 'User';
+  profilePictureUrl?: string;
   isEmailConfirmed: boolean;
   createdAt: string;
 }
@@ -37,3 +38,14 @@ export interface ConfirmEmailRequest {
   email: string;
   token: string;
 }
+
+export interface UpdateProfileRequest {
+  username: string;
+  email: string;
+  profilePictureUrl?: string;
+}
+
+export interface ResendEmailRequest {
+  email: string;
+}
+

@@ -15,21 +15,33 @@ import { AuthService } from '../../core/services/auth.service';
           <div class="logo-icon">✨</div>
           <div class="logo-text">
             <span class="brand-name">Lumina</span>
-            <span class="brand-badge">Blog</span>
+            <span class="brand-badge">Kimlik Portalı</span>
           </div>
         </a>
 
         <!-- Desktop Navigation Links -->
         <nav class="navbar-nav">
-          <a routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Ana Sayfa</a>
-          <a routerLink="/category/yazilar" routerLinkActive="nav-active" class="nav-link">Köşe Yazıları</a>
-          <a routerLink="/category/teknoloji" routerLinkActive="nav-active" class="nav-link">Teknoloji</a>
-          <a routerLink="/category/mimari" routerLinkActive="nav-active" class="nav-link">Mimari & Tasarım</a>
+          <a routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
+            Ana Sayfa
+          </a>
+          @if (authService.isLoggedIn()) {
+            <a routerLink="/profile" routerLinkActive="nav-active" class="nav-link">
+              Hesabım
+            </a>
+            @if (!authService.currentUser()?.isEmailConfirmed) {
+              <a routerLink="/confirm-email" routerLinkActive="nav-active" class="nav-link nav-unconfirmed">
+                ⚠️ E-Postayı Doğrula
+              </a>
+            }
+          }
         </nav>
 
         <!-- Right Side Actions -->
         <div class="navbar-actions">
           @if (!authService.isLoggedIn()) {
+            <a routerLink="/confirm-email" class="btn btn-ghost btn-sm">
+              ✉️ Doğrula
+            </a>
             <a routerLink="/login" class="btn btn-secondary btn-sm">
               🔐 Giriş Yap
             </a>
@@ -37,19 +49,19 @@ import { AuthService } from '../../core/services/auth.service';
               ✨ Kayıt Ol
             </a>
           } @else {
-            <!-- Author / Admin New Post Button -->
-            @if (authService.isAuthor()) {
-              <a routerLink="/create-post" class="btn btn-secondary btn-sm new-post-btn">
-                <span>✍️</span>
-                <span>Yazı Yaz</span>
-              </a>
-            }
-
-            <!-- User Menu -->
+            <!-- User Menu Dropdown -->
             <div class="user-menu-wrapper">
               <button class="user-menu-btn" (click)="toggleDropdown()">
                 <div class="user-avatar">
-                  {{ authService.currentUser()?.username?.charAt(0)?.toUpperCase() || 'U' }}
+                  @if (authService.currentUser()?.profilePictureUrl) {
+                    <img 
+                      [src]="authService.getAvatarUrl(authService.currentUser()?.profilePictureUrl)" 
+                      alt="Avatar" 
+                      class="user-avatar-img" 
+                    />
+                  } @else {
+                    <span>{{ authService.currentUser()?.username?.charAt(0)?.toUpperCase() || 'U' }}</span>
+                  }
                 </div>
                 <div class="user-details">
                   <span class="user-name">{{ authService.currentUser()?.username }}</span>
@@ -69,13 +81,11 @@ import { AuthService } from '../../core/services/auth.service';
                   </div>
                   <div class="dropdown-divider"></div>
                   <a routerLink="/profile" class="dropdown-item" (click)="closeDropdown()">
-                    <span>👤</span> Profilim & Oturum
+                    <span>👤</span> Profilim & Hesap Ayarları
                   </a>
-                  @if (authService.isAuthor()) {
-                    <a routerLink="/create-post" class="dropdown-item" (click)="closeDropdown()">
-                      <span>📝</span> Yeni Makale Taslağı
-                    </a>
-                  }
+                  <a routerLink="/confirm-email" class="dropdown-item" (click)="closeDropdown()">
+                    <span>✉️</span> E-Posta Doğrulama
+                  </a>
                   <div class="dropdown-divider"></div>
                   <button class="dropdown-item dropdown-logout" (click)="logout()">
                     <span>🚪</span> Çıkış Yap
@@ -95,7 +105,7 @@ import { AuthService } from '../../core/services/auth.service';
       left: 0;
       right: 0;
       height: 72px;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
@@ -133,7 +143,7 @@ import { AuthService } from '../../core/services/auth.service';
     .logo-text {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .brand-name {
@@ -149,18 +159,19 @@ import { AuthService } from '../../core/services/auth.service';
       font-weight: 700;
       background: var(--primary-light);
       color: var(--primary);
-      padding: 2px 6px;
-      border-radius: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .navbar-nav {
       display: flex;
       align-items: center;
-      gap: 28px;
+      gap: 24px;
     }
 
-    @media (max-width: 820px) {
+    @media (max-width: 768px) {
       .navbar-nav { display: none; }
     }
 
@@ -171,10 +182,16 @@ import { AuthService } from '../../core/services/auth.service';
       color: var(--text-secondary);
       transition: var(--transition);
       position: relative;
+      text-decoration: none;
     }
 
     .nav-link:hover, .nav-active {
       color: var(--primary);
+    }
+
+    .nav-unconfirmed {
+      color: #d97706 !important;
+      font-weight: 700;
     }
 
     .nav-active::after {
@@ -191,13 +208,19 @@ import { AuthService } from '../../core/services/auth.service';
     .navbar-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .new-post-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .btn-ghost {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      border-color: var(--border);
     }
 
     .user-menu-wrapper {
@@ -232,6 +255,15 @@ import { AuthService } from '../../core/services/auth.service';
       justify-content: center;
       font-weight: 700;
       font-size: 14px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .user-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .user-details {
@@ -256,7 +288,7 @@ import { AuthService } from '../../core/services/auth.service';
       position: absolute;
       top: calc(100% + 10px);
       right: 0;
-      width: 220px;
+      width: 240px;
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);

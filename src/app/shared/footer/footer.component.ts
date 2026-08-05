@@ -14,40 +14,35 @@ import { RouterLink } from '@angular/router';
             <div class="footer-logo">
               <span class="logo-icon">✨</span>
               <span class="brand-name">Lumina</span>
+              <span class="brand-sub">Kimlik Portalı</span>
             </div>
             <p class="brand-desc">
-              Fikirlerin, derinlikli makalelerin ve güncel köşe yazılarının buluştuğu modern yayıncılık platformu.
+              Güvenli oturum, tekil cihaz koruması ve e-posta onaylı hesap yönetimi altyapısı.
             </p>
           </div>
 
-          <div class="footer-links-grid">
+          <div class="footer-links">
             <div class="footer-column">
-              <h4 class="column-title">Keşfet</h4>
-              <a routerLink="/">Son Yazılar</a>
-              <a routerLink="/">Köşe Yazarları</a>
-              <a routerLink="/">Haftanın Seçkisi</a>
+              <h4 class="column-title">Hızlı Erişim</h4>
+              <a routerLink="/">Ana Sayfa</a>
+              <a routerLink="/login">Giriş Yap</a>
+              <a routerLink="/register">Kayıt Ol</a>
+              <a routerLink="/confirm-email">E-Posta Doğrulama</a>
             </div>
+
             <div class="footer-column">
-              <h4 class="column-title">Kategoriler</h4>
-              <a routerLink="/">Yazılım & Mimari</a>
-              <a routerLink="/">Tasarım & UI/UX</a>
-              <a routerLink="/">Yapay Zeka</a>
-            </div>
-            <div class="footer-column">
-              <h4 class="column-title">Platform</h4>
+              <h4 class="column-title">Hesap & Güvenlik</h4>
               <a routerLink="/profile">Hesabım</a>
-              <a href="http://localhost:5001/scalar/v1" target="_blank">API Dokümantasyonu</a>
-              <a href="http://localhost:5001" target="_blank">Auth Test Konsolu</a>
+              <a routerLink="/profile">Oturum Durumu</a>
+              <a routerLink="/confirm-email">Aktivasyon</a>
             </div>
           </div>
         </div>
 
         <div class="footer-bottom">
-          <p>© 2026 Lumina Platform. Güvenli Kimlik Doğrulama Servisi ile güçlendirilmiştir.</p>
-          <div class="footer-badges">
-            <span class="tech-badge">.NET 10 Web API</span>
-            <span class="tech-badge">Angular 19</span>
-            <span class="tech-badge">PostgreSQL</span>
+          <p>© 2026 Lumina Kimlik & Erişim Yönetimi. Tüm hakları saklıdır.</p>
+          <div class="footer-security-note">
+            <span>🔒 Güvenli Bağlantı & Tekil Oturum Koruması</span>
           </div>
         </div>
       </div>
@@ -57,29 +52,34 @@ import { RouterLink } from '@angular/router';
     .footer {
       background: var(--bg-surface);
       border-top: 1px solid var(--border);
-      padding: 60px 0 30px 0;
+      padding: 40px 0 24px 0;
       margin-top: auto;
     }
 
     .footer-top {
-      display: grid;
-      grid-template-columns: 1.5fr 3fr;
-      gap: 60px;
-      margin-bottom: 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 40px;
+      margin-bottom: 30px;
     }
 
-    @media (max-width: 820px) {
+    @media (max-width: 768px) {
       .footer-top {
-        grid-template-columns: 1fr;
-        gap: 32px;
+        flex-direction: column;
+        gap: 24px;
       }
+    }
+
+    .footer-brand {
+      max-width: 380px;
     }
 
     .footer-logo {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 8px;
     }
 
     .logo-icon {
@@ -88,35 +88,40 @@ import { RouterLink } from '@angular/router';
 
     .brand-name {
       font-family: var(--font-heading);
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
       color: var(--text-primary);
     }
 
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
     .brand-desc {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-secondary);
-      line-height: 1.6;
-      max-width: 320px;
+      line-height: 1.5;
+      margin: 0;
     }
 
-    .footer-links-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 30px;
+    .footer-links {
+      display: flex;
+      gap: 50px;
     }
 
-    @media (max-width: 560px) {
-      .footer-links-grid {
-        grid-template-columns: 1fr 1fr;
+    @media (max-width: 500px) {
+      .footer-links {
+        gap: 30px;
       }
     }
 
     .column-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--text-primary);
-      margin-bottom: 16px;
+      margin: 0 0 12px 0;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -124,12 +129,13 @@ import { RouterLink } from '@angular/router';
     .footer-column {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .footer-column a {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-secondary);
+      text-decoration: none;
       transition: var(--transition);
     }
 
@@ -139,27 +145,17 @@ import { RouterLink } from '@angular/router';
 
     .footer-bottom {
       border-top: 1px solid var(--border);
-      padding-top: 24px;
+      padding-top: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .footer-badges {
-      display: flex;
-      gap: 8px;
-    }
-
-    .tech-badge {
-      background: var(--bg-subtle);
-      border: 1px solid var(--border);
-      padding: 3px 8px;
-      border-radius: var(--radius-sm);
-      font-size: 11px;
+    .footer-security-note {
       font-weight: 600;
       color: var(--text-secondary);
     }

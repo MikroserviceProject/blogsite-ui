@@ -1,144 +1,184 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
 @Component({
-  selector: 'app-login-modal',
+  selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    @if (authService.isLoginModalOpen()) {
-      <div class="modal-backdrop" (click)="close($event)">
-        <div class="modal-dialog" (click)="$event.stopPropagation()">
+    <div class="auth-page-container container">
+      <div class="auth-card card">
+        <div class="auth-header">
+          <div class="auth-icon-badge">🔐</div>
+          <h1 class="auth-title">Giriş Yap</h1>
+          <p class="auth-subtitle">Lumina hesabınıza erişmek için bilgilerinizi giriniz</p>
+        </div>
 
-          <!-- Modal Tabs Switcher -->
-          <div class="modal-tabs-header">
-            <button type="button" class="modal-tab-btn tab-active">
-              🔐 Giriş Yap
-            </button>
-            <button type="button" class="modal-tab-btn" (click)="authService.openRegisterModal()">
-              ✨ Kayıt Ol
-            </button>
-            <button type="button" class="modal-tab-btn" (click)="goToConfirmEmail()">
-              ✉️ E-Posta Doğrula
-            </button>
-          </div>
-
-          <div class="modal-header">
-            <div>
-              <h2 class="modal-title">Giriş Yap</h2>
-              <p class="modal-subtitle">Lumina hesabınıza erişin ve yazıları sınırsız okuyun</p>
+        @if (authService.sessionWarning()) {
+          <div class="session-alert">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-msg">
+              <strong>Oturum Uyarısı:</strong> {{ authService.sessionWarning() }}
             </div>
-            <button class="modal-close" (click)="authService.closeAllModals()">✕</button>
+            <button type="button" class="alert-dismiss" (click)="authService.clearSessionWarning()">✕</button>
+          </div>
+        }
+
+        <form (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label class="form-label" for="login-email">E-Posta veya Kullanıcı Adı</label>
+            <input
+              id="login-email"
+              type="text"
+              class="form-control"
+              [(ngModel)]="emailOrUsername"
+              name="emailOrUsername"
+              placeholder="Örn: saliha@example.com veya sahilcicek44"
+              required
+              autocomplete="username"
+            />
           </div>
 
-          <form (ngSubmit)="onSubmit()">
-            <div class="form-group">
-              <label class="form-label">E-Posta veya Kullanıcı Adı</label>
+          <div class="form-group">
+            <div class="password-label-row">
+              <label class="form-label" for="login-password">Şifre</label>
+            </div>
+            <div class="password-input-wrapper">
               <input
-                type="text"
+                id="login-password"
+                [type]="showPassword() ? 'text' : 'password'"
                 class="form-control"
-                [(ngModel)]="emailOrUsername"
-                name="emailOrUsername"
-                placeholder="Örn: saliha@example.com veya sahilcicek44"
+                [(ngModel)]="password"
+                name="password"
+                placeholder="••••••••"
                 required
+                autocomplete="current-password"
               />
+              <button
+                type="button"
+                class="toggle-password-btn"
+                (click)="togglePassword()"
+                title="Şifreyi Göster/Gizle"
+              >
+                {{ showPassword() ? '🙈' : '👁️' }}
+              </button>
             </div>
+          </div>
 
-            <div class="form-group">
-              <div class="password-label-row">
-                <label class="form-label">Şifre</label>
-              </div>
-              <div class="password-input-wrapper">
-                <input
-                  [type]="showPassword() ? 'text' : 'password'"
-                  class="form-control"
-                  [(ngModel)]="password"
-                  name="password"
-                  placeholder="••••••••"
-                  required
-                />
-                <button type="button" class="toggle-password-btn" (click)="togglePassword()">
-                  {{ showPassword() ? '🙈' : '👁️' }}
-                </button>
+          @if (errorMessage()) {
+            <div class="error-alert" [class.error-email-confirm]="isEmailConfirmError()">
+              <span class="error-icon">{{ isEmailConfirmError() ? '📧' : '⚠️' }}</span>
+              <div class="error-content">
+                <span>{{ errorMessage() }}</span>
+                @if (isEmailConfirmError()) {
+                  <button type="button" class="confirm-redirect-btn" (click)="goToConfirmEmail()">
+                    📬 E-Posta Doğrulama Sayfasına Git →
+                  </button>
+                }
               </div>
             </div>
+          }
 
-            @if (errorMessage()) {
-              <div class="error-alert" [class.error-email-confirm]="isEmailConfirmError()">
-                <span>{{ isEmailConfirmError() ? '📧' : '⚠️' }}</span>
-                <div class="error-content">
-                  <span>{{ errorMessage() }}</span>
-                  @if (isEmailConfirmError()) {
-                    <button type="button" class="confirm-redirect-btn" (click)="goToConfirmEmail()">
-                      📬 E-Posta Doğrulama Ekranına Git
-                    </button>
-                  }
-                </div>
-              </div>
+          <button
+            type="submit"
+            class="btn btn-primary btn-block btn-lg"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <span>Giriş Yapılıyor...</span>
+            } @else {
+              <span>🔐 Giriş Yap</span>
             }
+          </button>
+        </form>
 
-            <button type="submit" class="btn btn-primary btn-block btn-lg" [disabled]="isLoading()">
-              @if (isLoading()) {
-                <span>Giriş Yapılıyor...</span>
-              } @else {
-                <span>🔐 Giriş Yap</span>
-              }
-            </button>
-          </form>
-
-          <div class="modal-footer">
+        <div class="auth-footer">
+          <div class="footer-row">
             <span>Hesabınız yok mu?</span>
-            <button class="link-btn" (click)="authService.openRegisterModal()">Hemen Kaydolun</button>
+            <a routerLink="/register" class="link-text">Hemen Kayıt Olun</a>
+          </div>
+          <div class="footer-row footer-secondary">
+            <span>Doğrulama kodunuz mu var?</span>
+            <a routerLink="/confirm-email" class="link-text">E-Postanızı Doğrulayın</a>
           </div>
         </div>
       </div>
-    }
+    </div>
   `,
   styles: [`
-    .modal-tabs-header {
+    .auth-page-container {
       display: flex;
-      background: var(--bg-subtle);
-      padding: 4px;
-      border-radius: var(--radius-md);
-      gap: 4px;
-      margin-bottom: 16px;
-      border: 1px solid var(--border);
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 240px);
+      padding: 30px 16px;
     }
-    .modal-tab-btn {
-      flex: 1;
-      padding: 8px 12px;
-      border: none;
-      background: none;
-      font-family: var(--font-heading);
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: var(--transition);
+
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      padding: 36px 32px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .auth-header {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .auth-icon-badge {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: var(--primary-light);
+      color: var(--primary);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-    }
-    .modal-tab-btn:hover {
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.6);
-    }
-    .modal-tab-btn.tab-active {
-      background: #ffffff;
-      color: var(--primary);
-      box-shadow: var(--shadow-sm);
+      font-size: 24px;
+      margin: 0 auto 14px auto;
     }
 
-    .modal-subtitle {
+    .auth-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 0 0 6px 0;
+    }
+
+    .auth-subtitle {
       font-size: 13px;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin: 0;
+    }
+
+    .session-alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .alert-icon { font-size: 16px; }
+    .alert-msg { flex: 1; line-height: 1.4; }
+    .alert-dismiss {
+      background: none;
+      border: none;
+      color: #991b1b;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
     }
 
     .password-label-row {
@@ -161,25 +201,26 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       border: none;
       cursor: pointer;
       font-size: 16px;
-      padding: 2px;
+      padding: 4px;
+      color: var(--text-muted);
     }
 
     .error-alert {
       background: var(--danger-light);
       border: 1px solid rgba(239, 68, 68, 0.3);
       color: var(--danger);
-      padding: 10px 14px;
+      padding: 12px 14px;
       border-radius: var(--radius-md);
       font-size: 13px;
       display: flex;
       align-items: flex-start;
-      gap: 8px;
-      margin-bottom: 18px;
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
     .error-email-confirm {
-      background: var(--warning-light);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      background: #fffbeb;
+      border-color: #fde68a;
       color: #92400e;
     }
 
@@ -187,53 +228,65 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       display: flex;
       flex-direction: column;
       gap: 8px;
+      flex: 1;
     }
 
     .confirm-redirect-btn {
-      background: none;
-      border: 1px solid #d97706;
-      color: #92400e;
+      background: #f59e0b;
+      color: #ffffff;
+      border: none;
       padding: 6px 12px;
       border-radius: var(--radius-sm);
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
+      align-self: flex-start;
       transition: var(--transition);
     }
 
     .confirm-redirect-btn:hover {
-      background: rgba(245, 158, 11, 0.15);
+      background: #d97706;
     }
 
-    .modal-footer {
-      margin-top: 20px;
+    .auth-footer {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
       text-align: center;
       font-size: 13px;
       color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .footer-row {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
     }
 
-    .link-btn {
-      background: none;
-      border: none;
-      color: var(--primary);
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
+    .footer-secondary {
+      font-size: 12px;
+      color: var(--text-muted);
     }
 
-    .link-btn:hover {
+    .link-text {
+      color: var(--primary);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .link-text:hover {
       text-decoration: underline;
     }
   `]
 })
-export class LoginModalComponent {
+export class LoginComponent {
   authService = inject(AuthService);
   toastService = inject(ToastService);
+  router = inject(Router);
 
   emailOrUsername = '';
   password = '';
@@ -246,14 +299,15 @@ export class LoginModalComponent {
     this.showPassword.set(!this.showPassword());
   }
 
-  close(event: MouseEvent) {
-    this.authService.closeAllModals();
-  }
-
   goToConfirmEmail() {
     const input = this.emailOrUsername.trim();
     const isEmail = input.includes('@');
-    this.authService.openConfirmModal(isEmail ? input : '');
+    if (isEmail) {
+      this.authService.pendingConfirmEmail.set(input);
+      this.router.navigate(['/confirm-email'], { queryParams: { email: input } });
+    } else {
+      this.router.navigate(['/confirm-email']);
+    }
   }
 
   onSubmit() {
@@ -274,9 +328,8 @@ export class LoginModalComponent {
       next: (res) => {
         this.isLoading.set(false);
         if (res.success) {
-          this.toastService.success('Giriş Başarılı', `Hoş geldiniz, ${res.data?.user.username}!`);
-          this.emailOrUsername = '';
-          this.password = '';
+          this.toastService.success('Giriş Başarılı 🎉', `Hoş geldiniz, ${res.data?.user.username}!`);
+          this.router.navigate(['/profile']);
         } else {
           this.errorMessage.set(res.message);
           this.isEmailConfirmError.set(
@@ -304,4 +357,3 @@ export class LoginModalComponent {
     });
   }
 }
-
