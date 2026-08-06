@@ -26,7 +26,13 @@ interface Particle {
   imports: [CommonModule],
   template: `
     <div class="interactive-bg-wrapper">
+      <!-- Textured Grid Layer -->
+      <div class="bg-texture-grid"></div>
+      
+      <!-- Interactive Dynamic Canvas -->
       <canvas #bgCanvas class="interactive-canvas"></canvas>
+      
+      <!-- Ambient Cursor Golden Halo -->
       <div
         class="cursor-glow-spotlight"
         [style.transform]="'translate3d(' + glowX + 'px, ' + glowY + 'px, 0)'"
@@ -49,6 +55,22 @@ interface Particle {
       inset: 0;
       width: 100%;
       height: 100%;
+      background: 
+        radial-gradient(ellipse at 50% 0%, rgba(254, 243, 199, 0.35) 0%, transparent 60%),
+        radial-gradient(ellipse at 100% 100%, rgba(224, 231, 255, 0.4) 0%, transparent 60%),
+        #f8fafc;
+    }
+
+    /* Dokulu Nokta & Izgara Matrisi */
+    .bg-texture-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(rgba(148, 163, 184, 0.28) 1.2px, transparent 1.2px),
+        radial-gradient(rgba(245, 158, 11, 0.12) 1.5px, transparent 1.5px);
+      background-size: 28px 28px, 84px 84px;
+      background-position: 0 0, 14px 14px;
+      opacity: 0.85;
     }
 
     .interactive-canvas {
@@ -61,19 +83,19 @@ interface Particle {
 
     .cursor-glow-spotlight {
       position: absolute;
-      top: -200px;
-      left: -200px;
-      width: 400px;
-      height: 400px;
+      top: -240px;
+      left: -240px;
+      width: 480px;
+      height: 480px;
       border-radius: 50%;
       background: radial-gradient(
         circle,
-        rgba(245, 158, 11, 0.20) 0%,
-        rgba(251, 191, 36, 0.12) 35%,
-        rgba(217, 119, 6, 0.05) 65%,
+        rgba(245, 158, 11, 0.24) 0%,
+        rgba(251, 191, 36, 0.15) 30%,
+        rgba(217, 119, 6, 0.06) 60%,
         transparent 75%
       );
-      filter: blur(42px);
+      filter: blur(48px);
       transition: opacity 0.4s ease;
       will-change: transform;
       pointer-events: none;
@@ -87,9 +109,9 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
   private ctx!: CanvasRenderingContext2D;
   private animationFrameId: number | null = null;
   private particles: Particle[] = [];
-  private particleCount = 150;
-  private attractionRadius = 160;
-  private maxDistance = 95;
+  private particleCount = 160;
+  private attractionRadius = 180;
+  private maxDistance = 145; // Geniş bağlantı menzili (daha çok ağ / constellation)
   private isDestroyed = false;
 
   // Mouse coordinates with smooth easing
@@ -151,8 +173,8 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
     canvas.height = height * dpr;
     this.ctx.scale(dpr, dpr);
 
-    // Dynamic particle count: plenty of golden stars across the whole viewport
-    this.particleCount = Math.floor(Math.min(180, Math.max(90, (width * height) / 9000)));
+    // Dynamic particle count: plenty of golden stars for deep connection mesh
+    this.particleCount = Math.floor(Math.min(190, Math.max(100, (width * height) / 8000)));
     this.createParticles();
   };
 
@@ -167,11 +189,11 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
       this.particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        originVx: vx === 0 ? 0.3 : vx,
-        originVy: vy === 0 ? 0.3 : vy,
+        originVx: vx === 0 ? 0.35 : vx,
+        originVy: vy === 0 ? 0.35 : vy,
         vx: vx,
         vy: vy,
-        radius: Math.random() * 2 + 1.2,
+        radius: Math.random() * 2.2 + 1.4,
         baseAlpha: Math.random() * 0.45 + 0.45,
         color: this.colors[Math.floor(Math.random() * this.colors.length)]
       });
@@ -220,11 +242,11 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
 
     this.ctx.clearRect(0, 0, width, height);
 
-    // Update and draw particles
+    // Update particles
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
 
-      // Localized subtle magnetic curve (only affects nearby particles without trapping them)
+      // Localized subtle magnetic curve
       if (this.isMouseInside) {
         const dx = this.mouseX - p.x;
         const dy = this.mouseY - p.y;
@@ -232,27 +254,27 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
 
         if (dist < this.attractionRadius && dist > 1) {
           const angle = Math.atan2(dy, dx);
-          // Gentle pull + orbital slingshot curve so particles glide around mouse and continue their journey
+          // Gentle pull + orbital slingshot curve so particles glide around mouse without piling up
           const pull = ((this.attractionRadius - dist) / this.attractionRadius) * 0.18;
           
           p.vx += Math.cos(angle) * pull + (-Math.sin(angle) * 0.06);
           p.vy += Math.sin(angle) * pull + (Math.cos(angle) * 0.06);
 
-          // Velocity capping to keep motion elegant & gentle
+          // Velocity capping
           const speed = Math.hypot(p.vx, p.vy);
           if (speed > 2.2) {
             p.vx = (p.vx / speed) * 2.2;
             p.vy = (p.vy / speed) * 2.2;
           }
 
-          // Golden beam to mouse when nearby
-          if (dist < 120) {
-            const beamAlpha = (1 - dist / 120) * 0.35;
+          // Golden laser beam connection to mouse
+          if (dist < 150) {
+            const beamAlpha = (1 - dist / 150) * 0.45;
             this.ctx.beginPath();
             this.ctx.moveTo(p.x, p.y);
             this.ctx.lineTo(this.mouseX, this.mouseY);
             this.ctx.strokeStyle = `rgba(245, 158, 11, ${beamAlpha})`;
-            this.ctx.lineWidth = 1.0;
+            this.ctx.lineWidth = 1.2;
             this.ctx.stroke();
           }
         } else {
@@ -274,31 +296,52 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
       if (p.x > width + 10) p.x = -10;
       if (p.y < -10) p.y = height + 10;
       if (p.y > height + 10) p.y = -10;
+    }
 
-      // Draw golden star dot with radiant glow
+    // Draw rich constellation connection network between particles
+    for (let i = 0; i < this.particles.length; i++) {
+      const p1 = this.particles[i];
+      for (let j = i + 1; j < this.particles.length; j++) {
+        const p2 = this.particles[j];
+        const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+
+        if (dist < this.maxDistance) {
+          const alpha = (1 - dist / this.maxDistance) * 0.35;
+          this.ctx.beginPath();
+          this.ctx.moveTo(p1.x, p1.y);
+          this.ctx.lineTo(p2.x, p2.y);
+          this.ctx.strokeStyle = `rgba(245, 158, 11, ${alpha})`;
+          this.ctx.lineWidth = dist < 70 ? 1.1 : 0.8;
+          this.ctx.stroke();
+
+          // Subtle glowing triangular mesh fill for tightly clustered triplets
+          if (dist < 60 && j + 1 < this.particles.length) {
+            const p3 = this.particles[j + 1];
+            const dist3 = Math.hypot(p1.x - p3.x, p1.y - p3.y);
+            if (dist3 < 60) {
+              this.ctx.beginPath();
+              this.ctx.moveTo(p1.x, p1.y);
+              this.ctx.lineTo(p2.x, p2.y);
+              this.ctx.lineTo(p3.x, p3.y);
+              this.ctx.closePath();
+              this.ctx.fillStyle = 'rgba(245, 158, 11, 0.04)';
+              this.ctx.fill();
+            }
+          }
+        }
+      }
+    }
+
+    // Draw glowing golden particles and hubs
+    for (let i = 0; i < this.particles.length; i++) {
+      const p = this.particles[i];
       this.ctx.beginPath();
       this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
       this.ctx.fillStyle = `${p.color}${p.baseAlpha})`;
-      this.ctx.shadowBlur = 9;
-      this.ctx.shadowColor = 'rgba(245, 158, 11, 0.85)';
+      this.ctx.shadowBlur = 10;
+      this.ctx.shadowColor = 'rgba(245, 158, 11, 0.9)';
       this.ctx.fill();
       this.ctx.shadowBlur = 0; // reset
-
-      // Draw subtle golden constellation lines between nearby stars
-      for (let j = i + 1; j < this.particles.length; j++) {
-        const p2 = this.particles[j];
-        const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
-
-        if (dist < this.maxDistance) {
-          const alpha = (1 - dist / this.maxDistance) * 0.24;
-          this.ctx.beginPath();
-          this.ctx.moveTo(p.x, p.y);
-          this.ctx.lineTo(p2.x, p2.y);
-          this.ctx.strokeStyle = `rgba(245, 158, 11, ${alpha})`;
-          this.ctx.lineWidth = 0.75;
-          this.ctx.stroke();
-        }
-      }
     }
 
     this.animationFrameId = requestAnimationFrame(this.animate);
