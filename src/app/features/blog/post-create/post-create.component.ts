@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { BlogService } from '../../../core/services/blog.service';
 
 @Component({
   selector: 'app-post-create',
@@ -26,21 +27,7 @@ import { ToastService } from '../../../core/services/toast.service';
       <div class="create-grid">
         <!-- Editor Form -->
         <div class="card editor-card">
-          <form (ngSubmit)="onSubmit()">
-            <div class="form-group">
-              <label class="form-label">İçerik Türü</label>
-              <div class="type-selector">
-                <label class="type-option" [class.type-selected]="type === 'Blog'">
-                  <input type="radio" name="type" value="Blog" [(ngModel)]="type" />
-                  <span>📄 Standart Blog</span>
-                </label>
-                <label class="type-option" [class.type-selected]="type === 'Column'">
-                  <input type="radio" name="type" value="Column" [(ngModel)]="type" />
-                  <span>✍️ Köşe Yazısı</span>
-                </label>
-              </div>
-            </div>
-
+          <form (ngSubmit)="onSubmit('Published')">
             <div class="form-group">
               <label class="form-label">Başlık</label>
               <input
@@ -53,65 +40,35 @@ import { ToastService } from '../../../core/services/toast.service';
               />
             </div>
 
-            <div class="form-row-2">
-              <div class="form-group">
-                <label class="form-label">Kategori</label>
-                <select class="form-control" [(ngModel)]="category" name="category">
-                  <option value="Teknoloji">Teknoloji</option>
-                  <option value="Mikroservis & .NET">Mikroservis & .NET</option>
-                  <option value="Yapay Zeka">Yapay Zeka</option>
-                  <option value="Tasarım">Tasarım & UI/UX</option>
-                  <option value="Güncel Yorum">Güncel Yorum</option>
-                </select>
-              </div>
-
-              <!-- Fotoğraf Yükleme Alanı (Yazar & Admin Yetkisi) -->
-              <div class="form-group">
-                <label class="form-label">📸 Kapak Fotoğrafı Yükle</label>
-                <div class="photo-upload-container">
-                  <input
-                    type="file"
-                    #fileInput
-                    (change)="onFileSelected($event)"
-                    accept="image/*"
-                    style="display: none;"
-                  />
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary upload-trigger-btn"
-                    (click)="fileInput.click()"
-                  >
-                    📁 Bilgisayardan Fotoğraf Seç
-                  </button>
-                  <span class="upload-or-text">veya URL:</span>
-                  <input
-                    type="text"
-                    class="form-control"
-                    [(ngModel)]="coverImageUrl"
-                    name="coverImageUrl"
-                    placeholder="https://images.unsplash.com/..."
-                  />
-                </div>
-              </div>
-            </div>
-
+            <!-- Fotoğraf Yükleme Alanı -->
             <div class="form-group">
-              <label class="form-label">Özet (Lead Text)</label>
-              <textarea
-                class="form-control"
-                rows="2"
-                [(ngModel)]="summary"
-                name="summary"
-                placeholder="Yazının ana temasını belirten kısa bir özet..."
-                required
-              ></textarea>
+              <label class="form-label">📸 Kapak Fotoğrafı (fotoğraf eklerseniz "Blog", eklemezseniz "Köşe Yazısı" olarak yayınlanır)</label>
+              <div class="photo-upload-container">
+                <input
+                  type="file"
+                  #fileInput
+                  (change)="onFileSelected($event)"
+                  accept="image/*"
+                  style="display: none;"
+                />
+                <button
+                  type="button"
+                  class="btn btn-outline-primary upload-trigger-btn"
+                  (click)="fileInput.click()"
+                >
+                  📁 Bilgisayardan Fotoğraf Seç
+                </button>
+                @if (selectedFileName()) {
+                  <span class="upload-or-text">{{ selectedFileName() }}</span>
+                }
+              </div>
             </div>
 
             <div class="form-group">
               <label class="form-label">İçerik Metni</label>
               <textarea
                 class="form-control"
-                rows="8"
+                rows="10"
                 [(ngModel)]="content"
                 name="content"
                 placeholder="Makalenizin detaylı içeriğini buraya yazınız..."
@@ -119,9 +76,17 @@ import { ToastService } from '../../../core/services/toast.service';
               ></textarea>
             </div>
 
+            @if (submitError()) {
+              <p class="submit-error">{{ submitError() }}</p>
+            }
+
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" (click)="saveDraft()">Taslak Olarak Kaydet</button>
-              <button type="submit" class="btn btn-primary btn-lg">Yayına Al</button>
+              <button type="button" class="btn btn-secondary" [disabled]="submitting()" (click)="onSubmit('Draft')">
+                {{ submitting() ? 'Kaydediliyor...' : 'Taslak Olarak Kaydet' }}
+              </button>
+              <button type="submit" class="btn btn-primary btn-lg" [disabled]="submitting()">
+                {{ submitting() ? 'Kaydediliyor...' : 'Yayına Al' }}
+              </button>
             </div>
           </form>
         </div>
@@ -130,13 +95,13 @@ import { ToastService } from '../../../core/services/toast.service';
         <div class="card preview-card">
           <h3 class="preview-title">👁️ Canlı Önizleme</h3>
           <div class="preview-box">
-            <div class="preview-cover" *ngIf="coverImageUrl">
-              <img [src]="coverImageUrl" alt="Kapak" />
+            <div class="preview-cover" *ngIf="previewUrl()">
+              <img [src]="previewUrl()" alt="Kapak" />
             </div>
             <div class="preview-body">
-              <span class="badge badge-primary">{{ category }}</span>
+              <span class="badge badge-primary">{{ selectedFile() ? 'Blog' : 'Köşe Yazısı' }}</span>
               <h3 class="preview-heading">{{ title || 'Yazı Başlığı Buraya Gelecek' }}</h3>
-              <p class="preview-summary">{{ summary || 'Yazının kısa özeti burada görünecektir...' }}</p>
+              <p class="preview-summary">{{ content ? (content.slice(0, 150) + (content.length > 150 ? '...' : '')) : 'Yazının içeriği burada görünecektir...' }}</p>
               <div class="preview-author-row">
                 <strong>{{ authService.currentUser()?.username }}</strong>
                 <span class="text-muted">• Şimdi</span>
@@ -205,36 +170,6 @@ import { ToastService } from '../../../core/services/toast.service';
       }
     }
 
-    .type-selector {
-      display: flex;
-      gap: 12px;
-    }
-
-    .type-option {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-md);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: var(--transition);
-    }
-
-    .type-selected {
-      border-color: var(--primary);
-      background: var(--primary-light);
-      color: var(--primary);
-    }
-
-    .form-row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
 
     .form-actions {
       display: flex;
@@ -272,6 +207,12 @@ import { ToastService } from '../../../core/services/toast.service';
       font-size: 12px;
       color: var(--text-muted);
       font-weight: 500;
+    }
+    .submit-error {
+      color: #dc2626;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 12px;
     }
     .preview-box {
       border: 1px solid var(--border);
@@ -319,39 +260,67 @@ import { ToastService } from '../../../core/services/toast.service';
 export class PostCreateComponent {
   authService = inject(AuthService);
   toastService = inject(ToastService);
+  blogService = inject(BlogService);
   router = inject(Router);
 
-  type: 'Blog' | 'Column' = 'Column';
   title = '';
-  category = 'Teknoloji';
-  coverImageUrl = 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80';
-  summary = '';
   content = '';
+
+  selectedFile = signal<File | null>(null);
+  selectedFileName = signal<string>('');
+  previewUrl = signal<string | null>(null);
+
+  submitting = signal<boolean>(false);
+  submitError = signal<string | null>(null);
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
+      this.selectedFile.set(file);
+      this.selectedFileName.set(file.name);
+
       const reader = new FileReader();
       reader.onload = (e) => {
-        this.coverImageUrl = e.target?.result as string;
-        this.toastService.success('Fotoğraf Yüklendi! 📸', `${file.name} başarıyla seçildi ve önizlemeye eklendi.`);
+        this.previewUrl.set(e.target?.result as string);
       };
       reader.readAsDataURL(file);
+
+      this.toastService.success('Fotoğraf Seçildi 📸', `${file.name} önizlemeye eklendi.`);
     }
   }
 
-  saveDraft() {
-    this.toastService.info('Taslak Kaydedildi', 'Yazı taslağınız yerel belleğe kaydedildi.');
-  }
-
-  onSubmit() {
-    if (!this.title || !this.summary || !this.content) {
-      this.toastService.warning('Eksik Alan', 'Lütfen başlık, özet ve içerik alanlarını doldurunuz.');
+  onSubmit(status: 'Draft' | 'Published') {
+    if (!this.title || !this.content) {
+      this.toastService.warning('Eksik Alan', 'Lütfen başlık ve içerik alanlarını doldurunuz.');
       return;
     }
 
-    this.toastService.success('Yazı Yayında! 🎉', 'Yazınız başarıyla yayınlandı ve listelendi.');
-    this.router.navigate(['/']);
+    this.submitting.set(true);
+    this.submitError.set(null);
+
+    const type: 'Blog' | 'Koseyazisi' = this.selectedFile() ? 'Blog' : 'Koseyazisi';
+
+    this.blogService.create({
+      title: this.title,
+      content: this.content,
+      type: type,
+      status: status,
+      photo: this.selectedFile()
+    }).subscribe({
+      next: () => {
+        this.submitting.set(false);
+        if (status === 'Published') {
+          this.toastService.success('Yazı Yayında! 🎉', 'Yazınız başarıyla yayınlandı ve listelendi.');
+        } else {
+          this.toastService.info('Taslak Kaydedildi', 'Yazınız taslak olarak kaydedildi.');
+        }
+        this.router.navigate(['/']);
+      },
+      error: () => {
+        this.submitting.set(false);
+        this.submitError.set('Yazı kaydedilemedi. Backend\'in çalıştığından emin olun.');
+      }
+    });
   }
 }

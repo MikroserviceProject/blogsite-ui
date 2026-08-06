@@ -1,9 +1,10 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { BlogPost } from '../../../core/models/blog.model';
 import { AuthService } from '../../../core/services/auth.service';
+import { BlogService } from '../../../core/services/blog.service';
 
 @Component({
   selector: 'app-blog-home',
@@ -13,16 +14,15 @@ import { AuthService } from '../../../core/services/auth.service';
     <!-- Hero Banner -->
     <section class="hero-section">
       <div class="container hero-container">
-        <div class="hero-tag">
-          <span>✨</span>
-          <span>Modern Yayıncılık & Kimlik Platformu</span>
-        </div>
         <h1 class="hero-title">
-          Fikirlerin, Teknolojinin ve <br/>
-          <span class="text-gradient">Köşe Yazılarının</span> Buluşma Noktası
+          @if (fixedType() === 'Koseyazisi') {
+            <span class="text-gradient">Köşe Yazıları</span>
+          } @else {
+            <span class="text-gradient">Bloglar</span>
+          }
         </h1>
         <p class="hero-subtitle">
-          Mikroservis mimarisiyle güçlendirilmiş güvenli auth altyapısı, ferah okuma deneyimi ve seçkin yazarlar.
+          Fikirlerin teknolojiyle, teknolojinin gelecekle buluştuğu yer.
         </p>
 
         <!-- Search Bar -->
@@ -33,25 +33,12 @@ import { AuthService } from '../../../core/services/auth.service';
               type="text"
               class="hero-search-input"
               [(ngModel)]="searchQuery"
-              placeholder="Makale, köşe yazısı veya yazar ara..."
+              placeholder="Başlık veya içerikte ara..."
             />
             @if (searchQuery()) {
               <button class="clear-search" (click)="searchQuery.set('')">✕</button>
             }
           </div>
-        </div>
-
-        <!-- Category Filter Chips -->
-        <div class="category-chips">
-          @for (cat of categories; track cat) {
-            <button
-              class="chip-btn"
-              [class.chip-active]="selectedCategory() === cat"
-              (click)="selectedCategory.set(cat)"
-            >
-              {{ cat }}
-            </button>
-          }
         </div>
       </div>
     </section>
@@ -61,7 +48,7 @@ import { AuthService } from '../../../core/services/auth.service';
       <!-- Section Header -->
       <div class="section-header">
         <div>
-          <h2 class="section-title">Öne Çıkan & Güncel Yazılar</h2>
+          <h2 class="section-title">{{ fixedType() === 'Koseyazisi' ? 'Tüm Köşe Yazıları' : 'Tüm Bloglar' }}</h2>
           <p class="section-subtitle">Toplam {{ filteredPosts().length }} yayın bulundu</p>
         </div>
         @if (authService.isAuthor()) {
@@ -71,57 +58,79 @@ import { AuthService } from '../../../core/services/auth.service';
         }
       </div>
 
+      <!-- Loading state -->
+      @if (loading()) {
+        <p class="text-muted">Yazılar yükleniyor...</p>
+      }
+
+      <!-- Error state -->
+      @if (loadError()) {
+        <div class="empty-state card">
+          <div class="empty-icon">⚠️</div>
+          <h3>Yazılar yüklenemedi</h3>
+          <p>{{ loadError() }}</p>
+        </div>
+      }
+
       <!-- Articles Grid -->
-      <div class="posts-grid">
-        @for (post of filteredPosts(); track post.id) {
-          <article class="post-card card">
-            <div class="post-cover-wrapper">
-              <img [src]="post.coverImageUrl" [alt]="post.title" class="post-cover" />
-              <span class="post-type-badge" [class.badge-column]="post.type === 'Column'">
-                {{ post.type === 'Column' ? '✍️ Köşe Yazısı' : '📄 Blog' }}
-              </span>
-            </div>
+      @if (!loading() && !loadError()) {
+        <div class="posts-grid">
+          @for (post of filteredPosts(); track post.id) {
+            <article class="post-card card">
+              @if (post.photoUrl) {
+                <div class="post-cover-wrapper">
+                  <img [src]="photoSrc(post.photoUrl)" [alt]="post.title" class="post-cover" />
+                  <span class="post-type-badge" [class.badge-column]="post.type === 'Koseyazisi'">
+                    {{ post.type === 'Koseyazisi' ? '✍️ Köşe Yazısı' : '📄 Blog' }}
+                  </span>
+                </div>
+              }
 
-            <div class="post-body">
-              <div class="post-meta-top">
-                <span class="post-category">{{ post.category }}</span>
-                <span class="post-read-time">⏱️ {{ post.readTimeMinutes }} dk okuma</span>
-              </div>
-
-              <h3 class="post-title">
-                <a [routerLink]="['/post', post.id]">{{ post.title }}</a>
-              </h3>
-
-              <p class="post-summary">{{ post.summary }}</p>
-
-              <div class="post-footer">
-                <div class="post-author">
-                  <img [src]="post.authorAvatar" [alt]="post.authorName" class="author-img" />
-                  <div class="author-info">
-                    <span class="author-name">{{ post.authorName }}</span>
-                    <span class="author-role">{{ post.authorRole }}</span>
+              <div class="post-body">
+                <div class="post-meta-top">
+                  <div class="post-meta-left">
+                    @if (!post.photoUrl) {
+                      <span class="post-type-badge-inline" [class.badge-column]="post.type === 'Koseyazisi'">
+                        {{ post.type === 'Koseyazisi' ? '✍️ Köşe Yazısı' : '📄 Blog' }}
+                      </span>
+                    }
+                    <span class="post-category">{{ post.status === 'Draft' ? 'Taslak' : 'Yayında' }}</span>
                   </div>
+                  <span class="post-read-time">
+                    @if (isNew(post.createdAt)) {
+                      <span class="new-badge">🆕 Yeni</span>
+                    }
+                    {{ post.createdAt | date:'dd.MM.yyyy' }}
+                  </span>
                 </div>
 
-                <a [routerLink]="['/post', post.id]" class="read-more-btn">
-                  Oku →
-                </a>
-              </div>
-            </div>
-          </article>
-        }
-      </div>
+                <h3 class="post-title">
+                  <a [routerLink]="['/post', post.id]">{{ post.title }}</a>
+                </h3>
 
-      <!-- Empty State -->
-      @if (filteredPosts().length === 0) {
-        <div class="empty-state card">
-          <div class="empty-icon">🔍</div>
-          <h3>Aradığınız kriterde yazı bulunamadı</h3>
-          <p>Farklı bir arama kelimesi deneyebilir veya kategori filtresini sıfırlayabilirsiniz.</p>
-          <button class="btn btn-secondary btn-sm" (click)="searchQuery.set(''); selectedCategory.set('Tümü')">
-            Filtreleri Temizle
-          </button>
+                <p class="post-summary">{{ contentPreview(post.content) }}</p>
+
+                <div class="post-footer">
+                  <a [routerLink]="['/post', post.id]" class="read-more-btn">
+                    Oku →
+                  </a>
+                </div>
+              </div>
+            </article>
+          }
         </div>
+
+        <!-- Empty State -->
+        @if (filteredPosts().length === 0) {
+          <div class="empty-state card">
+            <div class="empty-icon">🔍</div>
+            <h3>Aradığınız kriterde yazı bulunamadı</h3>
+            <p>Farklı bir arama kelimesi deneyebilir veya filtreyi sıfırlayabilirsiniz.</p>
+            <button class="btn btn-secondary btn-sm" (click)="searchQuery.set('')">
+              Aramayı Temizle
+            </button>
+          </div>
+        }
       }
     </section>
 
@@ -144,7 +153,7 @@ import { AuthService } from '../../../core/services/auth.service';
     .hero-section {
       background: linear-gradient(180deg, #ffffff 0%, var(--bg-main) 100%);
       border-bottom: 1px solid var(--border);
-      padding: 60px 0 40px 0;
+      padding: 28px 0 20px 0;
       text-align: center;
     }
 
@@ -164,20 +173,20 @@ import { AuthService } from '../../../core/services/auth.service';
       color: var(--primary);
       font-size: 13px;
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
 
     .hero-title {
-      font-size: 42px;
+      font-size: 36px;
       font-weight: 800;
       line-height: 1.2;
       color: var(--text-primary);
-      margin-bottom: 16px;
+      margin-bottom: 10px;
       letter-spacing: -1px;
     }
 
     @media (max-width: 768px) {
-      .hero-title { font-size: 30px; }
+      .hero-title { font-size: 26px; }
     }
 
     .text-gradient {
@@ -187,17 +196,17 @@ import { AuthService } from '../../../core/services/auth.service';
     }
 
     .hero-subtitle {
-      font-size: 16px;
+      font-size: 14px;
       color: var(--text-secondary);
       max-width: 620px;
-      margin-bottom: 30px;
-      line-height: 1.6;
+      margin-bottom: 16px;
+      line-height: 1.5;
     }
 
     .hero-search-wrapper {
       width: 100%;
       max-width: 520px;
-      margin-bottom: 24px;
+      margin-bottom: 0;
     }
 
     .hero-search-box {
@@ -271,7 +280,7 @@ import { AuthService } from '../../../core/services/auth.service';
     }
 
     .blog-content-section {
-      padding-top: 40px;
+      padding-top: 24px;
       padding-bottom: 40px;
     }
 
@@ -351,6 +360,20 @@ import { AuthService } from '../../../core/services/auth.service';
       font-weight: 700;
     }
 
+    .post-type-badge-inline {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .badge-column.post-type-badge-inline {
+      background: rgba(124, 58, 237, 0.12);
+      color: #7c3aed;
+    }
+
     .badge-column {
       background: rgba(124, 58, 237, 0.85);
     }
@@ -360,6 +383,17 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex;
       flex-direction: column;
       flex: 1;
+      min-height: 190px;
+    }
+
+    .new-badge {
+      background: #16a34a;
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: 10px;
+      font-weight: 700;
+      margin-right: 6px;
     }
 
     .post-meta-top {
@@ -368,6 +402,12 @@ import { AuthService } from '../../../core/services/auth.service';
       align-items: center;
       font-size: 12px;
       margin-bottom: 8px;
+    }
+
+    .post-meta-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .post-category {
@@ -411,38 +451,9 @@ import { AuthService } from '../../../core/services/auth.service';
     .post-footer {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       border-top: 1px solid var(--border);
       padding-top: 14px;
-    }
-
-    .post-author {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .author-img {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-
-    .author-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .author-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .author-role {
-      font-size: 11px;
-      color: var(--text-muted);
     }
 
     .read-more-btn {
@@ -522,94 +533,69 @@ import { AuthService } from '../../../core/services/auth.service';
     }
   `]
 })
-export class BlogHomeComponent {
+export class BlogHomeComponent implements OnInit {
   authService = inject(AuthService);
+  private blogService = inject(BlogService);
+  private route = inject(ActivatedRoute);
 
   searchQuery = signal<string>('');
-  selectedCategory = signal<string>('Tümü');
+  fixedType = signal<'Blog' | 'Koseyazisi'>('Blog');
+  loading = signal<boolean>(false);
+  loadError = signal<string | null>(null);
 
-  categories: string[] = ['Tümü', 'Köşe Yazıları', 'Teknoloji', 'Mikroservis & .NET', 'Yapay Zeka', 'Tasarım'];
-
-  posts = signal<BlogPost[]>([
-    {
-      id: '1',
-      title: 'Mikroservis Mimarilerinde Tekil Oturum ve JWT Güvenliği',
-      summary: 'Birden fazla istemcinin ve mikroservisin haberleştiği ortamlarda kullanıcı kimliğinin token tabanlı korunması ve güvenlik optimizasyonları.',
-      type: 'Column',
-      category: 'Mikroservis & .NET',
-      coverImageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80',
-      authorName: 'Saliha Çiçek',
-      authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      authorRole: 'Yazılım Mühendisi',
-      readTimeMinutes: 6,
-      publishedAt: '2026-08-04',
-      viewCount: 1420,
-      isRestricted: false
-    },
-    {
-      id: '2',
-      title: 'Modern Web Geliştirmede Angular 19 ve Signal Devrimi',
-      summary: 'Zone.js bağımsız reaktivite, signal tabanlı state yönetimi ve standalone mimari ile modern frontend tasarımının geleceği.',
-      type: 'Blog',
-      category: 'Teknoloji',
-      coverImageUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80',
-      authorName: 'Berkay Bey',
-      authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      authorRole: 'Takım Lideri',
-      readTimeMinutes: 4,
-      publishedAt: '2026-08-03',
-      viewCount: 980,
-      isRestricted: true
-    },
-    {
-      id: '3',
-      title: 'Kurumsal Sistemlerde PostgreSQL ve EF Core Performans İpuçları',
-      summary: 'Büyük ölçekli veri tabanlarında indeksleme stratejileri, bağlantı havuzları ve transaction yönetimi üzerine deneyimler.',
-      type: 'Column',
-      category: 'Mikroservis & .NET',
-      coverImageUrl: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800&auto=format&fit=crop&q=80',
-      authorName: 'Saliha Çiçek',
-      authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      authorRole: 'Yazılım Mühendisi',
-      readTimeMinutes: 8,
-      publishedAt: '2026-08-02',
-      viewCount: 2150,
-      isRestricted: false
-    },
-    {
-      id: '4',
-      title: 'Ferah ve Minimalist Kullanıcı Deneyimi Tasarlamak',
-      summary: 'Beyaz alan kullanımı, tipografi hiyerarşisi ve modern tasarım sistemlerinde renk uyumunun kullanıcı psikolojisine etkileri.',
-      type: 'Blog',
-      category: 'Tasarım',
-      coverImageUrl: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=800&auto=format&fit=crop&q=80',
-      authorName: 'Lumina Editör',
-      authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-      authorRole: 'Kıdemli Tasarımcı',
-      readTimeMinutes: 5,
-      publishedAt: '2026-08-01',
-      viewCount: 1640,
-      isRestricted: false
-    }
-  ]);
+  posts = signal<BlogPost[]>([]);
 
   filteredPosts = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
-    const cat = this.selectedCategory();
+    const type = this.fixedType();
 
     return this.posts().filter(p => {
-      const matchCat = (cat === 'Tümü') || 
-                       (cat === 'Köşe Yazıları' && p.type === 'Column') ||
-                       (p.category.toLowerCase().includes(cat.toLowerCase()));
-
+      const matchType = p.type === type;
       const matchQuery = !query ||
-                         p.title.toLowerCase().includes(query) ||
-                         p.summary.toLowerCase().includes(query) ||
-                         p.authorName.toLowerCase().includes(query);
+        p.title.toLowerCase().includes(query) ||
+        p.content.toLowerCase().includes(query);
 
-      return matchCat && matchQuery;
+      return matchType && matchQuery;
     });
   });
+
+  ngOnInit() {
+    const routeType = this.route.snapshot.data['fixedType'];
+    this.fixedType.set(routeType === 'Koseyazisi' ? 'Koseyazisi' : 'Blog');
+    this.loadPosts();
+  }
+
+  loadPosts() {
+    this.loading.set(true);
+    this.loadError.set(null);
+
+    this.blogService.getAll().subscribe({
+      next: (posts) => {
+        const sorted = [...posts].sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        this.posts.set(sorted);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loadError.set('Yazılar backend\'den alınamadı. API\'nin çalıştığından emin olun.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  contentPreview(content: string): string {
+    return content.length > 150 ? content.slice(0, 150) + '...' : content;
+  }
+
+  isNew(createdAt: string): boolean {
+    const hoursSince = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60);
+    return hoursSince <= 24;
+  }
+
+  photoSrc(photoUrl: string): string {
+    return `https://localhost:7296${photoUrl}`;
+  }
 
   subscribeNewsletter() {
     alert('Bültene başarıyla abone oldunuz! Teşekkür ederiz.');

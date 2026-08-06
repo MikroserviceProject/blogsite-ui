@@ -22,9 +22,8 @@ import { AuthService } from '../../core/services/auth.service';
         <!-- Desktop Navigation Links -->
         <nav class="navbar-nav">
           <a routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Ana Sayfa</a>
-          <a routerLink="/category/yazilar" routerLinkActive="nav-active" class="nav-link">Köşe Yazıları</a>
-          <a routerLink="/category/teknoloji" routerLinkActive="nav-active" class="nav-link">Teknoloji</a>
-          <a routerLink="/category/mimari" routerLinkActive="nav-active" class="nav-link">Mimari & Tasarım</a>
+          <a routerLink="/bloglar" routerLinkActive="nav-active" class="nav-link">Bloglar</a>
+          <a routerLink="/kose-yazilari" routerLinkActive="nav-active" class="nav-link">Köşe Yazıları</a>
         </nav>
 
         <!-- Right Side Actions -->

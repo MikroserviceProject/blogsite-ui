@@ -1,16 +1,11 @@
 export interface BlogPost {
-  id: string;
+  id: number;
   title: string;
-  summary: string;
-  content?: string;
-  type: 'Blog' | 'Column'; // Standart Blog veya Köşe Yazısı
-  category: string;
-  coverImageUrl: string;
-  authorName: string;
-  authorAvatar: string;
-  authorRole: string;
-  readTimeMinutes: number;
-  publishedAt: string;
-  viewCount: number;
-  isRestricted?: boolean;
+  content: string;
+  type: 'Blog' | 'Koseyazisi';
+  status: 'Draft' | 'Published';
+  photoUrl: string | null;
+  authorId: string;
+  createdAt: string;
+  updatedAt: string | null;
 }
