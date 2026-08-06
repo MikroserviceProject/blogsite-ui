@@ -339,6 +339,8 @@ export class ConfirmEmailComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       const qEmail = params['email'];
       const qToken = params['token'];
+      const qVerified = params['verified'];
+      const qError = params['error'];
 
       if (qEmail) {
         this.email = qEmail.trim();
@@ -350,6 +352,21 @@ export class ConfirmEmailComponent implements OnInit {
 
       if (qToken) {
         this.token = qToken.trim();
+      }
+
+      if (qVerified === 'true') {
+        this.isVerified.set(true);
+        this.toastService.success('Doğrulama Başarılı! 🎉', 'E-posta adresiniz başarıyla onaylandı.');
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 2500);
+        return;
+      }
+
+      if (qError) {
+        this.verificationFailed.set(true);
+        this.errorMessage.set(qError);
+        return;
       }
 
       // Linkten tıklandıysa (URL'de email ve token varsa) otomatik 1-tıkla doğrula!

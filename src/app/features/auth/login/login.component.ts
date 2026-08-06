@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -29,7 +29,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
           </div>
         }
 
-        <form (ngSubmit)="onSubmit()">
+        <form (ngSubmit)="onSubmit()" autocomplete="off">
           <div class="form-group">
             <label class="form-label" for="login-email">E-Posta veya Kullanıcı Adı</label>
             <input
@@ -38,9 +38,12 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
               class="form-control"
               [(ngModel)]="emailOrUsername"
               name="emailOrUsername"
-              placeholder="Örn: saliha@example.com veya sahilcicek44"
+              placeholder="Örn: kullanici@example.com"
               required
-              autocomplete="username"
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
             />
           </div>
 
@@ -57,7 +60,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                 name="password"
                 placeholder="••••••••"
                 required
-                autocomplete="current-password"
+                autocomplete="new-password"
               />
               <button
                 type="button"
@@ -103,7 +106,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
             <a routerLink="/register" class="link-text">Hemen Kayıt Olun</a>
           </div>
           <div class="footer-row footer-secondary">
-            <span>Doğrulama kodunuz mu var?</span>
+            <span>Hesabınızı onaylamanız mı gerekiyor?</span>
             <a routerLink="/confirm-email" class="link-text">E-Postanızı Doğrulayın</a>
           </div>
         </div>
@@ -283,7 +286,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   authService = inject(AuthService);
   toastService = inject(ToastService);
   router = inject(Router);
@@ -294,6 +297,11 @@ export class LoginComponent {
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   isEmailConfirmError = signal(false);
+
+  ngOnInit() {
+    this.emailOrUsername = '';
+    this.password = '';
+  }
 
   togglePassword() {
     this.showPassword.set(!this.showPassword());
