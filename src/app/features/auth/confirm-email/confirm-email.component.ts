@@ -275,6 +275,14 @@ export class ConfirmEmailComponent implements OnInit {
       } else if (this.authService.currentUser()?.email) {
         this.email = this.authService.currentUser()!.email;
       }
+
+      if (params['token']) {
+        this.token = params['token'];
+        // URL'den hem e-posta hem de token geldiyse (mailden linke tıklandıysa) otomatik doğrula
+        if (this.email && this.token) {
+          this.onSubmit();
+        }
+      }
     });
   }
 
