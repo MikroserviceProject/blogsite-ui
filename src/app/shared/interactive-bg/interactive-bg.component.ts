@@ -247,10 +247,12 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
     this.ctx.clearRect(0, 0, width, height);
 
     // Update positions and velocities
+    const minOrbitRadius = 85; // Minimum yaklaşma sınırı (Mouse merkezine toplanmayı engeller)
+
     for (let i = 0; i < this.stars.length; i++) {
       const s = this.stars[i];
 
-      // Mouse attraction with gentle sling around cursor
+      // Mouse orbital attraction with protective comfort buffer zone
       if (this.isMouseInside) {
         const dx = this.mouseX - s.x;
         const dy = this.mouseY - s.y;
@@ -258,25 +260,43 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
 
         if (dist < this.attractionRadius && dist > 1) {
           const angle = Math.atan2(dy, dx);
-          const pull = ((this.attractionRadius - dist) / this.attractionRadius) * 0.18;
-          
-          s.vx += Math.cos(angle) * pull + (-Math.sin(angle) * 0.05);
-          s.vy += Math.sin(angle) * pull + (Math.cos(angle) * 0.05);
 
-          const speed = Math.hypot(s.vx, s.vy);
-          if (speed > 2.0) {
-            s.vx = (s.vx / speed) * 2.0;
-            s.vy = (s.vy / speed) * 2.0;
+          if (dist < minOrbitRadius) {
+            // Mouse'a çok yaklaşınca geri it (tam üstüne toplanmasın)
+            const push = ((minOrbitRadius - dist) / minOrbitRadius) * 0.28;
+            s.vx -= Math.cos(angle) * push;
+            s.vy -= Math.sin(angle) * push;
+
+            // Çevresinde kavisli süzülme hareketi (Swirl / Orbit)
+            s.vx += -Math.sin(angle) * 0.18;
+            s.vy += Math.cos(angle) * 0.18;
+          } else {
+            // Çekim menzilindeyken yörünge halkasına doğru nazikçe çek
+            const pullFactor = (this.attractionRadius - dist) / (this.attractionRadius - minOrbitRadius);
+            const pull = pullFactor * 0.14;
+            s.vx += Math.cos(angle) * pull;
+            s.vy += Math.sin(angle) * pull;
+
+            // Yörünge etrafında dönme hızı
+            s.vx += -Math.sin(angle) * 0.12;
+            s.vy += Math.cos(angle) * 0.12;
           }
 
-          // Golden beam from mouse to star
-          if (dist < 150) {
-            const beamAlpha = (1 - dist / 150) * 0.4;
+          // Hızı zarafetle sınırla
+          const speed = Math.hypot(s.vx, s.vy);
+          if (speed > 1.8) {
+            s.vx = (s.vx / speed) * 1.8;
+            s.vy = (s.vy / speed) * 1.8;
+          }
+
+          // Mouse ile yıldız arasındaki altın lazer bağı
+          if (dist < 150 && dist > 35) {
+            const beamAlpha = (1 - dist / 150) * 0.35;
             this.ctx.beginPath();
             this.ctx.moveTo(s.x, s.y);
             this.ctx.lineTo(this.mouseX, this.mouseY);
             this.ctx.strokeStyle = `rgba(245, 158, 11, ${beamAlpha})`;
-            this.ctx.lineWidth = 1.1;
+            this.ctx.lineWidth = 0.9;
             this.ctx.stroke();
           }
         } else {
