@@ -2,7 +2,20 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, interval, Subscription } from 'rxjs';
-import { ApiResponse, LoginRequest, LoginResponse, RegisterRequest, User, ConfirmEmailRequest } from '../models/auth.model';
+import { 
+  ApiResponse, 
+  LoginRequest, 
+  LoginResponse, 
+  RegisterRequest, 
+  User, 
+  ConfirmEmailRequest, 
+  UpdateProfileRequest, 
+  ResendEmailRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  ChangePasswordRequest,
+  AuthorApplication
+} from '../models/auth.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,13 +32,20 @@ export class AuthService {
   // Computed state
   isLoggedIn = computed(() => !!this.tokenSignal());
   userRole = computed(() => this.currentUser()?.role || null);
-  isAdmin = computed(() => this.currentUser()?.role === 'Admin');
-  isAuthor = computed(() => this.currentUser()?.role === 'Author' || this.currentUser()?.role === 'Admin');
+  
+  // Türkçe Rol İsimlendirmesi
+  roleDisplayName = computed(() => {
+    const role = this.currentUser()?.role;
+    if (role === 'Admin') return 'Yönetici';
+    if (role === 'Author') return 'Yazar';
+    return 'Okur';
+  });
 
-  // Global Modals State
-  isLoginModalOpen = signal<boolean>(false);
-  isRegisterModalOpen = signal<boolean>(false);
-  isConfirmModalOpen = signal<boolean>(false);
+  isAdmin = computed(() => this.currentUser()?.role === 'Admin');
+  isAuthor = computed(() => this.currentUser()?.role === 'Author');
+  isReader = computed(() => this.currentUser()?.role === 'User' || !this.currentUser()?.role);
+
+  // Global Modals / State
   pendingConfirmEmail = signal<string>('');
 
   private sessionCheckSub: Subscription | null = null;
@@ -52,7 +72,7 @@ export class AuthService {
         this.http.get<ApiResponse<boolean>>(`${this.apiUrl}/validate-session`).subscribe({
           error: (err) => {
             if (err.status === 401) {
-              const msg = err.error?.message || 'Hesabınıza başka bir sekmeden veya cihazdan giriş yapıldığı için bu oturumunuz anında sonlandırıldı.';
+              const msg = err.error?.message || 'Hesabınıza başka bir sekmeden veya cihazdan giriş yapıldığı için bu oturumunuz sonlandırıldı.';
               this.handleSessionTerminated(msg);
             }
           }
@@ -81,6 +101,7 @@ export class AuthService {
     this.sessionWarning.set(null);
   }
 
+  // Standart Okur Kaydı
   register(request: RegisterRequest): Observable<ApiResponse<User>> {
     return this.http.post<ApiResponse<User>>(`${this.apiUrl}/register`, request).pipe(
       tap(res => {
@@ -89,6 +110,11 @@ export class AuthService {
         }
       })
     );
+  }
+
+  // Yazar Başvurusu Kaydı (CV PDF Dosyası Destekli FormData)
+  registerAuthor(formData: FormData): Observable<ApiResponse<User>> {
+    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/register-author`, formData);
   }
 
   confirmEmail(request: ConfirmEmailRequest): Observable<ApiResponse<boolean>> {
@@ -102,7 +128,6 @@ export class AuthService {
           this.sessionWarning.set(null);
           this.setSession(res.data.token, res.data.user);
           this.startSessionHeartbeat();
-          this.closeAllModals();
         }
       })
     );
@@ -118,10 +143,79 @@ export class AuthService {
     );
   }
 
+  updateProfile(request: UpdateProfileRequest): Observable<ApiResponse<User>> {
+    return this.http.put<ApiResponse<User>>(`${this.apiUrl}/update-profile`, request).pipe(
+      tap(res => {
+        if (res.success && res.data) {
+          this.currentUser.set(res.data);
+          if (!res.data.isEmailConfirmed) {
+            this.pendingConfirmEmail.set(res.data.email);
+          }
+        }
+      })
+    );
+  }
+
+  uploadAvatar(file: File): Observable<ApiResponse<User>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/upload-avatar`, formData).pipe(
+      tap(res => {
+        if (res.success && res.data) {
+          this.currentUser.set(res.data);
+        }
+      })
+    );
+  }
+
+  getAvatarUrl(path: string | null | undefined): string | null {
+    if (!path) return null;
+    if (path.startsWith('http') || path.startsWith('data:image')) return path;
+    return `http://localhost:5001${path}`;
+  }
+
+  getCvUrl(path: string | null | undefined): string | null {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `http://localhost:5001${path}`;
+  }
+
+  resendConfirmation(email: string): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/resend-confirmation`, { email });
+  }
+
+  forgotPassword(request: ForgotPasswordRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/forgot-password`, request);
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/reset-password`, request);
+  }
+
+  changePassword(request: ChangePasswordRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/change-password`, request);
+  }
+
+  // Admin Yazar Başvuru İşlemleri
+  getAuthorApplications(): Observable<ApiResponse<AuthorApplication[]>> {
+    return this.http.get<ApiResponse<AuthorApplication[]>>(`${this.apiUrl}/admin/author-applications`);
+  }
+
+  getPendingAuthors(): Observable<ApiResponse<AuthorApplication[]>> {
+    return this.getAuthorApplications();
+  }
+
+  approveAuthor(id: string): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/admin/approve-author/${id}`, {});
+  }
+
+  rejectAuthor(id: string, reason?: string): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/admin/reject-author/${id}`, { reason });
+  }
+
   logout() {
     const token = this.tokenSignal();
     if (token) {
-      // Backend'deki CurrentSessionToken'ı anında yenileyerek diğer tüm kopyalanmış token'ları geçersiz kıl
       this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
         next: () => {},
         error: () => {}
@@ -139,28 +233,4 @@ export class AuthService {
     this.tokenSignal.set(token);
     this.currentUser.set(user);
   }
-
-  // Modal Controls
-  openLoginModal() {
-    this.closeAllModals();
-    this.router.navigate(['/login']);
-  }
-
-  openRegisterModal() {
-    this.closeAllModals();
-    this.router.navigate(['/register']);
-  }
-
-  openConfirmModal(email?: string) {
-    this.closeAllModals();
-    if (email) this.pendingConfirmEmail.set(email);
-    this.router.navigate(['/confirm-email'], { queryParams: email ? { email } : {} });
-  }
-
-  closeAllModals() {
-    this.isLoginModalOpen.set(false);
-    this.isRegisterModalOpen.set(false);
-    this.isConfirmModalOpen.set(false);
-  }
 }
-
