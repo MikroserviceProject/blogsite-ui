@@ -13,94 +13,135 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
   template: `
     <div class="auth-page-container container">
       <div class="auth-card card">
-        <div class="auth-header">
-          <div class="auth-icon-badge">✉️</div>
-          <h1 class="auth-title">E-Posta Doğrulama</h1>
-          <p class="auth-subtitle">Hesabınızı aktifleştirmek için 6 haneli kodu giriniz</p>
-        </div>
-
-        <div class="info-alert">
-          <span class="info-icon">ℹ️</span>
-          <div class="info-text">
-            E-posta adresinize 6 haneli bir doğrulama kodu gönderildi. Lütfen gelen kutunuzu (ve Spam klasörünü) kontrol ediniz.
+        
+        <!-- DURUM 1: Linke Tıklandı & Otomatik Doğrulanıyor -->
+        @if (isAutoVerifying()) {
+          <div class="status-view">
+            <div class="spinner-badge">
+              <span class="loading-spinner"></span>
+            </div>
+            <h1 class="status-title">E-Posta Doğrulanıyor</h1>
+            <p class="status-subtitle">Bağlantınız kontrol ediliyor, lütfen bir saniye bekleyiniz...</p>
           </div>
-        </div>
+        }
 
-        <form (ngSubmit)="onSubmit()">
-          <div class="form-group">
-            <label class="form-label" for="confirm-email">E-Posta Adresi</label>
-            <input
-              id="confirm-email"
-              type="email"
-              class="form-control"
-              [(ngModel)]="email"
-              name="email"
-              placeholder="sahilcicek44@gmail.com"
-              required
-              autocomplete="email"
-            />
+        <!-- DURUM 2: Doğrulama Başarılı Oldu -->
+        @else if (isVerified()) {
+          <div class="status-view success-view">
+            <div class="status-icon-badge success-badge">✅</div>
+            <h1 class="status-title">Doğrulama Başarılı!</h1>
+            <p class="status-subtitle">
+              E-posta adresiniz başarıyla onaylandı. Hesabınız artık tamamen aktif.
+            </p>
+            <div class="action-btn-group">
+              <a routerLink="/login" class="btn btn-primary btn-block btn-lg">
+                🚀 Hemen Giriş Yap
+              </a>
+            </div>
+            <p class="redirect-hint">Birkaç saniye içinde otomatik olarak giriş sayfasına yönlendirileceksiniz...</p>
           </div>
+        }
 
-          <div class="form-group">
-            <div class="code-label-row">
-              <label class="form-label" for="confirm-token">6 Haneli Doğrulama Kodu</label>
-              <button
-                type="button"
-                class="resend-code-btn"
-                (click)="onResendCode()"
-                [disabled]="isResending()"
-              >
-                @if (isResending()) {
-                  <span>Gönderiliyor...</span>
+        <!-- DURUM 3: Doğrulama Başarısız Oldu veya Linkin Süresi Doldu -->
+        @else if (verificationFailed()) {
+          <div class="status-view error-view">
+            <div class="status-icon-badge error-badge">⚠️</div>
+            <h1 class="status-title">Doğrulama Yapılamadı</h1>
+            <p class="status-subtitle">
+              {{ errorMessage() || 'Doğrulama bağlantısı geçersiz veya süresi dolmuş.' }}
+            </p>
+
+            <div class="resend-box">
+              <label class="form-label" for="resend-email">Yeni Bir Doğrulama Linki İste</label>
+              <div class="resend-input-group">
+                <input
+                  id="resend-email"
+                  type="email"
+                  class="form-control"
+                  [(ngModel)]="email"
+                  name="email"
+                  placeholder="eposta@ornek.com"
+                  required
+                />
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="onResendLink()"
+                  [disabled]="isResending()"
+                >
+                  @if (isResending()) {
+                    <span>Gönderiliyor...</span>
+                  } @else {
+                    <span>🔄 Yeni Link Gönder</span>
+                  }
+                </button>
+              </div>
+            </div>
+
+            <div class="auth-footer">
+              <div class="footer-row">
+                <a routerLink="/login" class="link-text">← Giriş Sayfasına Dön</a>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- DURUM 4: Kayıt Sonrası Bekleme Ekranı (Link Gönderildi Ekranı) -->
+        @else {
+          <div class="status-view info-view">
+            <div class="status-icon-badge mail-badge">📬</div>
+            <h1 class="status-title">E-Postanızı Kontrol Edin</h1>
+            <p class="status-subtitle">
+              Hesabınızı aktifleştirmek için tek yapmanız gereken gelen kutunuzdaki bağlantıya tıklamak.
+            </p>
+
+            <div class="info-alert">
+              <span class="info-icon">💡</span>
+              <div class="info-text">
+                @if (email) {
+                  <strong>{{ email }}</strong> adresinize tek tıkla doğrulama bağlantısı gönderildi.
                 } @else {
-                  <span>🔄 Kodu Tekrar Gönder</span>
+                  E-posta adresinize tek tıkla doğrulama bağlantısı gönderildi.
                 }
-              </button>
+                Lütfen gelen kutunuzu (ve <strong>Spam / Gereksiz</strong> klasörünü) kontrol edip <strong>"E-Posta Adresimi Doğrula"</strong> butonuna tıklayınız.
+              </div>
             </div>
-            <input
-              id="confirm-token"
-              type="text"
-              class="form-control code-input"
-              [(ngModel)]="token"
-              name="token"
-              placeholder="123456"
-              maxlength="6"
-              required
-              autocomplete="one-time-code"
-            />
-            <div class="form-hint">E-postanıza gelen 6 haneli aktivasyon kodunu yazınız.</div>
-          </div>
 
-          @if (errorMessage()) {
-            <div class="error-alert">
-              <span>⚠️</span>
-              <span>{{ errorMessage() }}</span>
+            <div class="resend-section">
+              <p class="resend-prompt">E-posta elinize ulaşmadı mı?</p>
+              <div class="resend-input-group">
+                <input
+                  type="email"
+                  class="form-control"
+                  [(ngModel)]="email"
+                  name="email"
+                  placeholder="eposta@ornek.com"
+                  required
+                />
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="onResendLink()"
+                  [disabled]="isResending()"
+                >
+                  @if (isResending()) {
+                    <span>Gönderiliyor...</span>
+                  } @else {
+                    <span>🔄 Tekrar Gönder</span>
+                  }
+                </button>
+              </div>
             </div>
-          }
 
-          <button
-            type="submit"
-            class="btn btn-primary btn-block btn-lg"
-            [disabled]="isLoading()"
-          >
-            @if (isLoading()) {
-              <span>Doğrulanıyor...</span>
-            } @else {
-              <span>✉️ Hesabı Doğrula</span>
-            }
-          </button>
-        </form>
+            <div class="auth-footer">
+              <div class="footer-row">
+                <span>Zaten onayladınız mı?</span>
+                <a routerLink="/login" class="link-text">Giriş Yapın</a>
+              </div>
+            </div>
+          </div>
+        }
 
-        <div class="auth-footer">
-          <div class="footer-row">
-            <span>Hesabınız zaten onaylı mı?</span>
-            <a routerLink="/login" class="link-text">Giriş Yapın</a>
-          </div>
-          <div class="footer-row footer-secondary">
-            <span>Yeni bir hesap oluşturmak için</span>
-            <a routerLink="/register" class="link-text">Kayıt Olun</a>
-          </div>
-        </div>
       </div>
     </div>
   `,
@@ -115,107 +156,141 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     .auth-card {
       width: 100%;
-      max-width: 460px;
-      padding: 36px 32px;
-      animation: fadeIn 0.2s ease-out;
+      max-width: 480px;
+      padding: 38px 32px;
+      animation: fadeIn 0.25s ease-out;
     }
 
-    .auth-header {
+    .status-view {
       text-align: center;
-      margin-bottom: 20px;
     }
 
-    .auth-icon-badge {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-      background: var(--primary-light);
-      color: var(--primary);
+    .status-icon-badge {
+      width: 60px;
+      height: 60px;
+      border-radius: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      margin: 0 auto 14px auto;
+      font-size: 28px;
+      margin: 0 auto 16px auto;
     }
 
-    .auth-title {
+    .mail-badge {
+      background: rgba(30, 58, 138, 0.08);
+      border: 1.5px solid rgba(30, 58, 138, 0.2);
+      color: #1e3a8a;
+    }
+
+    .success-badge {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1.5px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .error-badge {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1.5px solid rgba(239, 68, 68, 0.25);
+    }
+
+    .spinner-badge {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .loading-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3.5px solid rgba(30, 58, 138, 0.15);
+      border-top-color: #1e3a8a;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-title {
       font-size: 24px;
       font-weight: 800;
       color: var(--text-primary);
-      margin: 0 0 6px 0;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.3px;
     }
 
-    .auth-subtitle {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin: 0;
+    .status-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin: 0 0 24px 0;
     }
 
     .info-alert {
       background: #eff6ff;
       border: 1px solid #bfdbfe;
       color: #1e40af;
-      padding: 12px 14px;
+      padding: 16px;
       border-radius: var(--radius-md);
-      font-size: 13px;
+      font-size: 13.5px;
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 22px;
-      line-height: 1.45;
+      gap: 12px;
+      margin-bottom: 24px;
+      text-align: left;
+      line-height: 1.5;
     }
 
     .info-icon {
-      font-size: 16px;
+      font-size: 18px;
+      flex-shrink: 0;
     }
 
-    .code-label-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
+    .info-text strong {
+      color: #1e3a8a;
+      word-break: break-all;
     }
 
-    .resend-code-btn {
-      background: none;
-      border: none;
-      color: var(--primary);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      padding: 0;
-      transition: var(--transition);
-    }
-
-    .resend-code-btn:hover:not(:disabled) {
-      text-decoration: underline;
-    }
-
-    .resend-code-btn:disabled {
-      color: var(--text-light);
-      cursor: not-allowed;
-    }
-
-    .code-input {
-      font-family: var(--font-mono);
-      font-size: 24px;
-      letter-spacing: 8px;
-      text-align: center;
-      font-weight: 800;
-      padding: 12px;
-    }
-
-    .error-alert {
-      background: var(--danger-light);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: var(--danger);
-      padding: 12px 14px;
+    .resend-section, .resend-box {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      padding: 18px;
       margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .resend-prompt {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0 0 10px 0;
+    }
+
+    .resend-input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    @media (max-width: 480px) {
+      .resend-input-group {
+        flex-direction: column;
+      }
+    }
+
+    .resend-input-group .form-control {
+      flex: 1;
+    }
+
+    .action-btn-group {
+      margin: 24px 0 16px 0;
+    }
+
+    .redirect-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0;
     }
 
     .auth-footer {
@@ -225,9 +300,6 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       text-align: center;
       font-size: 13px;
       color: var(--text-secondary);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
     }
 
     .footer-row {
@@ -235,11 +307,6 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       align-items: center;
       justify-content: center;
       gap: 6px;
-    }
-
-    .footer-secondary {
-      font-size: 12px;
-      color: var(--text-muted);
     }
 
     .link-text {
@@ -261,46 +328,87 @@ export class ConfirmEmailComponent implements OnInit {
 
   email = '';
   token = '';
-  isLoading = signal(false);
+
+  isAutoVerifying = signal(false);
+  isVerified = signal(false);
+  verificationFailed = signal(false);
   isResending = signal(false);
   errorMessage = signal<string | null>(null);
 
   ngOnInit() {
-    // URL parametresinden veya authService'ten e-postayı oku
     this.route.queryParams.subscribe(params => {
-      if (params['email']) {
-        this.email = params['email'];
+      const qEmail = params['email'];
+      const qToken = params['token'];
+
+      if (qEmail) {
+        this.email = qEmail.trim();
       } else if (this.authService.pendingConfirmEmail()) {
         this.email = this.authService.pendingConfirmEmail();
       } else if (this.authService.currentUser()?.email) {
         this.email = this.authService.currentUser()!.email;
       }
 
-      if (params['token']) {
-        this.token = params['token'];
-        // URL'den hem e-posta hem de token geldiyse (mailden linke tıklandıysa) otomatik doğrula
-        if (this.email && this.token) {
-          this.onSubmit();
-        }
+      if (qToken) {
+        this.token = qToken.trim();
+      }
+
+      // Linkten tıklandıysa (URL'de email ve token varsa) otomatik 1-tıkla doğrula!
+      if (this.email && this.token) {
+        this.autoVerify();
       }
     });
   }
 
-  onResendCode() {
+  private autoVerify() {
+    this.isAutoVerifying.set(true);
+    this.verificationFailed.set(false);
+    this.errorMessage.set(null);
+
+    this.authService.confirmEmail({
+      email: this.email.trim(),
+      token: this.token.trim()
+    }).subscribe({
+      next: (res) => {
+        this.isAutoVerifying.set(false);
+        if (res.success) {
+          this.isVerified.set(true);
+          this.toastService.success('Doğrulama Başarılı! 🎉', 'E-posta adresiniz başarıyla onaylandı.');
+          
+          // 2.5 saniye sonra otomatik login sayfasına yönlendir
+          setTimeout(() => {
+            this.router.navigate(['/login']);
+          }, 2500);
+        } else {
+          this.verificationFailed.set(true);
+          this.errorMessage.set(res.message);
+          this.toastService.error('Doğrulama Başarısız', res.message);
+        }
+      },
+      error: (err) => {
+        this.isAutoVerifying.set(false);
+        this.verificationFailed.set(true);
+        const parsed = parseAuthError(err);
+        this.errorMessage.set(parsed.generalMessage);
+        this.toastService.error('Doğrulama Başarısız', parsed.generalMessage);
+      }
+    });
+  }
+
+  onResendLink() {
     const targetEmail = this.email.trim();
     if (!targetEmail) {
-      this.toastService.warning('E-Posta Eksik', 'Lütfen kod gönderilecek e-posta adresini yazınız.');
+      this.toastService.warning('E-Posta Eksik', 'Lütfen doğrulama linki gönderilecek e-posta adresini yazınız.');
       return;
     }
 
     this.isResending.set(true);
-    this.errorMessage.set(null);
 
     this.authService.resendConfirmation(targetEmail).subscribe({
       next: (res) => {
         this.isResending.set(false);
         if (res.success) {
-          this.toastService.success('Kod Gönderildi! 📬', 'Yeni doğrulama kodu e-posta adresinize iletildi.');
+          this.toastService.success('Link Gönderildi! 📬', 'Yeni doğrulama bağlantısı e-posta adresinize iletildi.');
+          this.verificationFailed.set(false);
         } else {
           this.toastService.error('Hata', res.message);
         }
@@ -309,37 +417,6 @@ export class ConfirmEmailComponent implements OnInit {
         this.isResending.set(false);
         const parsed = parseAuthError(err);
         this.toastService.error('Hata', parsed.generalMessage);
-      }
-    });
-  }
-
-  onSubmit() {
-    if (!this.email || !this.token) {
-      this.errorMessage.set('Lütfen e-posta adresinizi ve 6 haneli onay kodunu giriniz.');
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-
-    this.authService.confirmEmail({
-      email: this.email.trim(),
-      token: this.token.trim()
-    }).subscribe({
-      next: (res) => {
-        this.isLoading.set(false);
-        if (res.success) {
-          this.toastService.success('Doğrulama Başarılı! 🎉', 'E-posta adresiniz onaylandı. Giriş yapabilirsiniz.');
-          this.router.navigate(['/login']);
-        } else {
-          this.errorMessage.set(res.message);
-        }
-      },
-      error: (err) => {
-        this.isLoading.set(false);
-        const parsed = parseAuthError(err);
-        this.errorMessage.set(parsed.generalMessage);
-        this.toastService.error('Doğrulama Hatası', parsed.generalMessage);
       }
     });
   }

@@ -117,7 +117,7 @@ import { AuthService } from '../../core/services/auth.service';
             <div class="feature-card card">
               <div class="feat-icon">✉️</div>
               <h4>E-Posta Doğrulama</h4>
-              <p>6 haneli güvenli aktivasyon kodları ile doğrulanmış kullanıcı hesabı yönetimi.</p>
+              <p>Tek tıkla güvenli aktivasyon bağlantısı ile doğrulanmış kullanıcı hesabı yönetimi.</p>
             </div>
           </div>
         </div>

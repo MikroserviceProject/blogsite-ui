@@ -189,7 +189,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                   placeholder="Yeni e-posta adresiniz"
                   required
                 />
-                <div class="form-hint">E-posta adresinizi değiştirirseniz yeni adresinize tekrar 6 haneli aktivasyon kodu iletilecektir.</div>
+                <div class="form-hint">E-posta adresinizi değiştirirseniz yeni adresinize doğrulama bağlantısı iletilecektir.</div>
               </div>
 
               @if (errorMessage()) {
