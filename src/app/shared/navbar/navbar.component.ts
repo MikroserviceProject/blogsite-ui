@@ -11,7 +11,7 @@ import { AuthService } from '../../core/services/auth.service';
     <header class="navbar-header">
       <div class="container navbar-container">
         <!-- Logo -->
-        <a routerLink="/" class="navbar-logo">
+        <a [routerLink]="authService.isLoggedIn() ? '/profile' : '/login'" class="navbar-logo">
           <div class="logo-icon">✨</div>
           <div class="logo-text">
             <span class="brand-name">Lumina</span>
@@ -21,12 +21,9 @@ import { AuthService } from '../../core/services/auth.service';
 
         <!-- Desktop Navigation Links -->
         <nav class="navbar-nav">
-          <a routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">
-            Ana Sayfa
-          </a>
           @if (authService.isLoggedIn()) {
             <a routerLink="/profile" routerLinkActive="nav-active" class="nav-link">
-              Hesabım
+              👤 Hesabım
             </a>
             @if (!authService.currentUser()?.isEmailConfirmed) {
               <a routerLink="/confirm-email" routerLinkActive="nav-active" class="nav-link nav-unconfirmed">

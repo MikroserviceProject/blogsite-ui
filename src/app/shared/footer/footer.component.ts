@@ -24,7 +24,6 @@ import { RouterLink } from '@angular/router';
           <div class="footer-links">
             <div class="footer-column">
               <h4 class="column-title">Hızlı Erişim</h4>
-              <a routerLink="/">Ana Sayfa</a>
               <a routerLink="/login">Giriş Yap</a>
               <a routerLink="/register">Kayıt Ol</a>
               <a routerLink="/confirm-email">E-Posta Doğrulama</a>
