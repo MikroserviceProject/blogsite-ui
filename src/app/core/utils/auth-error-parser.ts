@@ -8,9 +8,9 @@ export interface ParsedAuthError {
   isPasswordError: boolean;
 }
 
-export function parseAuthError(err: any): ParsedAuthError {
+export function parseAuthError(err: any, fallbackMessage?: string): ParsedAuthError {
   let title = '⚠️ İşlem Sırasında Hata Oluştu';
-  let generalMessage = 'Lütfen girdiğiniz bilgileri kontrol edip tekrar deneyiniz.';
+  let generalMessage = fallbackMessage || 'Lütfen girdiğiniz bilgileri kontrol edip tekrar deneyiniz.';
   const passwordErrors: string[] = [];
   const emailErrors: string[] = [];
   const usernameErrors: string[] = [];

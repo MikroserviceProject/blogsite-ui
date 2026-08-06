@@ -25,9 +25,9 @@ import { AuthService } from '../../core/services/auth.service';
             <a routerLink="/profile" routerLinkActive="nav-active" class="nav-link">
               👤 Hesabım
             </a>
-            @if (!authService.currentUser()?.isEmailConfirmed) {
-              <a routerLink="/confirm-email" routerLinkActive="nav-active" class="nav-link nav-unconfirmed">
-                ⚠️ E-Postayı Doğrula
+            @if (authService.isAdmin()) {
+              <a routerLink="/admin/author-approvals" routerLinkActive="nav-active" class="nav-link nav-admin">
+                👑 Yazar Başvuruları
               </a>
             }
           }
@@ -41,9 +41,6 @@ import { AuthService } from '../../core/services/auth.service';
             </a>
             <a routerLink="/register" class="btn btn-navy-outline btn-sm">
               ✨ Kayıt Ol
-            </a>
-            <a routerLink="/confirm-email" class="btn btn-navy-outline btn-sm">
-              ✉️ Doğrula
             </a>
           } @else {
             <!-- User Menu Dropdown -->
@@ -63,7 +60,7 @@ import { AuthService } from '../../core/services/auth.service';
                 <div class="user-details">
                   <span class="user-name">{{ authService.currentUser()?.username }}</span>
                   <span class="badge" [ngClass]="'badge-' + (authService.userRole()?.toLowerCase() || 'user')">
-                    {{ authService.userRole() }}
+                    {{ authService.roleDisplayName() }}
                   </span>
                 </div>
                 <span class="dropdown-chevron">▾</span>
@@ -80,9 +77,11 @@ import { AuthService } from '../../core/services/auth.service';
                   <a routerLink="/profile" class="dropdown-item" (click)="closeDropdown()">
                     <span>👤</span> Profilim & Hesap Ayarları
                   </a>
-                  <a routerLink="/confirm-email" class="dropdown-item" (click)="closeDropdown()">
-                    <span>✉️</span> E-Posta Doğrulama
-                  </a>
+                  @if (authService.isAdmin()) {
+                    <a routerLink="/admin/author-approvals" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
+                      <span>👑</span> Yazar Başvuru Yönetimi
+                    </a>
+                  }
                   <div class="dropdown-divider"></div>
                   <button class="dropdown-item dropdown-logout" (click)="logout()">
                     <span>🚪</span> Çıkış Yap

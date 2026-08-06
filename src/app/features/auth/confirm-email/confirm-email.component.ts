@@ -156,8 +156,13 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     .auth-card {
       width: 100%;
-      max-width: 480px;
-      padding: 38px 32px;
+      max-width: 500px;
+      padding: 38px 34px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
       animation: fadeIn 0.25s ease-out;
     }
 
@@ -176,20 +181,37 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       margin: 0 auto 16px auto;
     }
 
+    .status-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.3px;
+    }
+
+    .status-subtitle {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.55;
+      margin: 0 0 24px 0;
+    }
+
     .mail-badge {
-      background: rgba(30, 58, 138, 0.08);
-      border: 1.5px solid rgba(30, 58, 138, 0.2);
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
       color: #1e3a8a;
     }
 
     .success-badge {
-      background: rgba(16, 185, 129, 0.1);
-      border: 1.5px solid rgba(16, 185, 129, 0.25);
+      background: #f0fdf4;
+      border: 1.5px solid #bbf7d0;
+      color: #15803d;
     }
 
     .error-badge {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1.5px solid rgba(239, 68, 68, 0.25);
+      background: #fef2f2;
+      border: 1.5px solid #fecaca;
+      color: #991b1b;
     }
 
     .spinner-badge {
@@ -202,7 +224,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     .loading-spinner {
       width: 44px;
       height: 44px;
-      border: 3.5px solid rgba(30, 58, 138, 0.15);
+      border: 3.5px solid #e2e8f0;
       border-top-color: #1e3a8a;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -212,25 +234,10 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       to { transform: rotate(360deg); }
     }
 
-    .status-title {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--text-primary);
-      margin: 0 0 8px 0;
-      letter-spacing: -0.3px;
-    }
-
-    .status-subtitle {
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.55;
-      margin: 0 0 24px 0;
-    }
-
     .info-alert {
       background: #eff6ff;
       border: 1px solid #bfdbfe;
-      color: #1e40af;
+      color: #1e3a8a;
       padding: 16px;
       border-radius: var(--radius-md);
       font-size: 13.5px;
@@ -253,8 +260,8 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .resend-section, .resend-box {
-      background: var(--bg-surface-elevated);
-      border: 1px solid var(--border);
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
       border-radius: var(--radius-md);
       padding: 18px;
       margin-bottom: 20px;
@@ -263,8 +270,8 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     .resend-prompt {
       font-size: 13px;
-      font-weight: 600;
-      color: var(--text-primary);
+      font-weight: 700;
+      color: #0f172a;
       margin: 0 0 10px 0;
     }
 
@@ -281,6 +288,13 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     .resend-input-group .form-control {
       flex: 1;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      color: #0f172a;
+    }
+
+    .resend-input-group .form-control:focus {
+      border-color: #1e3a8a;
     }
 
     .action-btn-group {
@@ -289,17 +303,17 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     .redirect-hint {
       font-size: 12px;
-      color: var(--text-muted);
+      color: #64748b;
       margin: 0;
     }
 
     .auth-footer {
       margin-top: 24px;
       padding-top: 18px;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid #f1f5f9;
       text-align: center;
       font-size: 13px;
-      color: var(--text-secondary);
+      color: #64748b;
     }
 
     .footer-row {
@@ -310,13 +324,14 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .link-text {
-      color: var(--primary);
+      color: #1e40af;
       font-weight: 700;
       text-decoration: none;
     }
 
     .link-text:hover {
       text-decoration: underline;
+      color: #1d4ed8;
     }
   `]
 })

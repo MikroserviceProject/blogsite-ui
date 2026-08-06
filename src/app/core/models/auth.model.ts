@@ -11,8 +11,13 @@ export interface User {
   email: string;
   role: 'Admin' | 'Author' | 'User';
   profilePictureUrl?: string;
+  university?: string;
+  cvUrl?: string;
+  authorApprovalStatus?: 'Pending' | 'Approved' | 'Rejected';
+  authorApplicationDate?: string;
   isEmailConfirmed: boolean;
   createdAt: string;
+  lastLoginAt?: string;
 }
 
 export interface RegisterRequest {
@@ -20,7 +25,24 @@ export interface RegisterRequest {
   email: string;
   password: string;
   role: string;
+  university?: string;
+  cvUrl?: string;
 }
+
+export interface AuthorApplication {
+  id: string;
+  username: string;
+  email: string;
+  university?: string;
+  cvUrl?: string;
+  authorApprovalStatus: string;
+  authorApplicationDate?: string;
+  authorRejectionReason?: string | null;
+  isEmailConfirmed: boolean;
+  createdAt: string;
+}
+
+export type PendingAuthorDto = AuthorApplication;
 
 export interface LoginRequest {
   emailOrUsername: string;
@@ -49,3 +71,17 @@ export interface ResendEmailRequest {
   email: string;
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  token: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}

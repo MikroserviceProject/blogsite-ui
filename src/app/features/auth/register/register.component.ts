@@ -16,10 +16,38 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
         <div class="auth-header">
           <div class="auth-icon-badge">✨</div>
           <h1 class="auth-title">Hesap Oluştur</h1>
-          <p class="auth-subtitle">Lumina güvenli kimlik ağına katılın</p>
+          <p class="auth-subtitle">Lumina kimlik ve yayın platformuna katılın</p>
         </div>
 
         <form (ngSubmit)="onSubmit()">
+          <!-- Rol Seçimi (Okur & Yazar) -->
+          <div class="form-group">
+            <label class="form-label">Üyelik Türü</label>
+            <div class="role-selector">
+              <label class="role-option" [class.role-selected]="role === 'User'">
+                <input type="radio" name="role" value="User" [(ngModel)]="role" />
+                <div class="role-content">
+                  <span class="role-emoji">👤</span>
+                  <div class="role-info">
+                    <span class="role-title">Okur</span>
+                    <span class="role-desc">Standart üye profili</span>
+                  </div>
+                </div>
+              </label>
+
+              <label class="role-option" [class.role-selected]="role === 'Author'">
+                <input type="radio" name="role" value="Author" [(ngModel)]="role" />
+                <div class="role-content">
+                  <span class="role-emoji">✍️</span>
+                  <div class="role-info">
+                    <span class="role-title">Yazar</span>
+                    <span class="role-desc">İçerik üretici (Onaylı)</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="form-label" for="reg-username">Kullanıcı Adı</label>
             <input
@@ -32,7 +60,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
               required
               autocomplete="username"
             />
-            <div class="form-hint">3-50 karakter, harf, rakam veya alt çizgi (_)</div>
+            <div class="form-hint">3-50 karakter, benzersiz kullanıcı adı</div>
           </div>
 
           <div class="form-group">
@@ -43,11 +71,11 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
               class="form-control"
               [(ngModel)]="email"
               name="email"
-              placeholder="sahilcicek44@gmail.com"
+              placeholder="adiniz@ornek.com"
               required
               autocomplete="email"
             />
-            <div class="form-hint">Doğrulama kodu bu adrese gönderilecektir.</div>
+            <div class="form-hint">Aktivasyon ve bildirimler bu adrese gönderilir.</div>
           </div>
 
           <div class="form-group">
@@ -60,7 +88,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
                 [(ngModel)]="password"
                 name="password"
                 (ngModelChange)="onPasswordChange($event)"
-                placeholder="Güçlü bir şifre giriniz (Örn: Saliha123!*)"
+                placeholder="En az 8 karakter, güçlü şifre"
                 required
                 autocomplete="new-password"
               />
@@ -68,7 +96,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
                 type="button"
                 class="toggle-password-btn"
                 (click)="togglePassword()"
-                title="Şifreyi Göster/Gizle"
+                tabindex="-1"
               >
                 {{ showPassword() ? '🙈' : '👁️' }}
               </button>
@@ -90,51 +118,80 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
 
               <ul class="password-rules">
                 <li [class.rule-pass]="rules().hasMinLength">
-                  <span class="rule-icon">{{ rules().hasMinLength ? '✅' : '❌' }}</span> En az 8 karakter
+                  <span class="rule-icon">{{ rules().hasMinLength ? '✓' : '○' }}</span> En az 8 karakter
                 </li>
                 <li [class.rule-pass]="rules().hasUpperCase">
-                  <span class="rule-icon">{{ rules().hasUpperCase ? '✅' : '❌' }}</span> En az 1 büyük harf (A-Z)
+                  <span class="rule-icon">{{ rules().hasUpperCase ? '✓' : '○' }}</span> En az 1 büyük harf (A-Z)
                 </li>
                 <li [class.rule-pass]="rules().hasLowerCase">
-                  <span class="rule-icon">{{ rules().hasLowerCase ? '✅' : '❌' }}</span> En az 1 küçük harf (a-z)
+                  <span class="rule-icon">{{ rules().hasLowerCase ? '✓' : '○' }}</span> En az 1 küçük harf (a-z)
                 </li>
                 <li [class.rule-pass]="rules().hasDigit">
-                  <span class="rule-icon">{{ rules().hasDigit ? '✅' : '❌' }}</span> En az 1 rakam (0-9)
+                  <span class="rule-icon">{{ rules().hasDigit ? '✓' : '○' }}</span> En az 1 rakam (0-9)
                 </li>
                 <li [class.rule-pass]="rules().hasSpecial">
-                  <span class="rule-icon">{{ rules().hasSpecial ? '✅' : '❌' }}</span> En az 1 özel karakter (!&#64;#$%^&*)
+                  <span class="rule-icon">{{ rules().hasSpecial ? '✓' : '○' }}</span> En az 1 özel karakter (!&#64;#$%^&*)
                 </li>
               </ul>
             }
           </div>
 
-          <!-- Hesap Türü / Rol Seçimi -->
-          <div class="form-group">
-            <label class="form-label">Hesap Türü</label>
-            <div class="role-selector">
-              <label class="role-option" [class.role-selected]="role === 'User'">
-                <input type="radio" name="role" value="User" [(ngModel)]="role" />
-                <div class="role-content">
-                  <span class="role-emoji">👤</span>
-                  <div class="role-info">
-                    <span class="role-title">Kullanıcı Hesabı</span>
-                    <span class="role-desc">Standart üye profili</span>
-                  </div>
-                </div>
-              </label>
+          <!-- YAZAR BAŞVURUSU EK ALANLARI -->
+          @if (role === 'Author') {
+            <div class="author-extra-fields">
+              <div class="author-fields-badge">
+                <span>🎓 Yazar Başvuru Bilgileri</span>
+              </div>
 
-              <label class="role-option" [class.role-selected]="role === 'Author'">
-                <input type="radio" name="role" value="Author" [(ngModel)]="role" />
-                <div class="role-content">
-                  <span class="role-emoji">✍️</span>
-                  <div class="role-info">
-                    <span class="role-title">Yazar Hesabı</span>
-                    <span class="role-desc">İçerik üretici profili</span>
-                  </div>
+              <div class="form-group">
+                <label class="form-label" for="reg-university">Mezun Olduğunuz Üniversite / Bölüm <span class="required-star">*</span></label>
+                <input
+                  id="reg-university"
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="university"
+                  name="university"
+                  placeholder="Örn: Hacettepe Üniversitesi - Bilgisayar Mühendisliği"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Özgeçmiş / CV Dosyası (PDF) <span class="required-star">*</span></label>
+                
+                <div class="file-dropzone" [class.file-selected]="!!selectedCvFile">
+                  <input
+                    type="file"
+                    id="cv-file-input"
+                    class="file-input-hidden"
+                    accept=".pdf"
+                    (change)="onCvFileSelected($event)"
+                  />
+                  <label for="cv-file-input" class="file-dropzone-label">
+                    @if (selectedCvFile) {
+                      <div class="file-info-badge">
+                        <span class="file-icon">📄</span>
+                        <div class="file-text">
+                          <span class="file-name">{{ selectedCvFile.name }}</span>
+                          <span class="file-size">({{ getFormattedFileSize(selectedCvFile.size) }})</span>
+                        </div>
+                        <button type="button" class="btn-remove-file" (click)="removeCvFile($event)">✕</button>
+                      </div>
+                    } @else {
+                      <span class="upload-icon">📤</span>
+                      <span class="upload-title">CV Dosyanızı Buraya Yükleyin</span>
+                      <span class="upload-hint">Yalnızca PDF formatı (Maksimum 10 MB)</span>
+                    }
+                  </label>
                 </div>
-              </label>
+              </div>
+
+              <div class="author-notice-box">
+                <span>ℹ️</span>
+                <span>Yazar başvurunuz editörlerimiz ve sistem yöneticisi tarafından incelenecektir. Onaylandığında tarafınıza hesap aktivasyon bağlantısı iletilecektir.</span>
+              </div>
             </div>
-          </div>
+          }
 
           <!-- Detaylı Hata Kutusu -->
           @if (parsedError()) {
@@ -182,21 +239,62 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
             [disabled]="isLoading()"
           >
             @if (isLoading()) {
-              <span>Hesap Oluşturuluyor...</span>
+              <span>{{ role === 'Author' ? 'Başvuru İletiliyor...' : 'Hesap Oluşturuluyor...' }}</span>
             } @else {
-              <span>✨ Kayıt Ol</span>
+              <span>{{ role === 'Author' ? '✍️ Yazar Başvurusunu Gönder' : '✨ Hesabımı Oluştur' }}</span>
             }
           </button>
         </form>
 
+        <!-- Alt Kısım: Giriş Linki & Doğrulama Paneli Accordion -->
         <div class="auth-footer">
           <div class="footer-row">
             <span>Zaten bir hesabınız var mı?</span>
-            <a routerLink="/login" class="link-text">Giriş Yapın</a>
+            <a routerLink="/login" class="link-gold">Giriş Yap</a>
           </div>
-          <div class="footer-row footer-secondary">
-            <span>Aktivasyon kodunuzu mu gireceksiniz?</span>
-            <a routerLink="/confirm-email" class="link-text">E-Posta Doğrulama</a>
+
+          <!-- Doğrulama E-Postası Gelmedi mi? Accordion Butonu -->
+          <div class="resend-accordion-wrapper">
+            <button 
+              type="button" 
+              class="btn-toggle-resend" 
+              (click)="isResendOpen.set(!isResendOpen())"
+            >
+              <span>{{ isResendOpen() ? '▲' : '▼' }}</span>
+              <span>Doğrulama e-postası almadınız mı? Tekrar Gönder</span>
+            </button>
+
+            @if (isResendOpen()) {
+              <div class="resend-panel card">
+                <div class="rp-title">✉️ Doğrulama Bağlantısını Yeniden Alın</div>
+                <p class="rp-desc">Kayıt olduğunuz e-posta adresini girerek yeni bir aktivasyon bağlantısı isteyebilirsiniz:</p>
+                <div class="rp-form">
+                  <input
+                    type="email"
+                    class="form-control form-control-sm"
+                    [(ngModel)]="resendEmailInput"
+                    placeholder="ornek@mail.com"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    (click)="onResendConfirmation()"
+                    [disabled]="isResending() || !resendEmailInput"
+                  >
+                    @if (isResending()) {
+                      <span>Gönderiliyor...</span>
+                    } @else {
+                      <span>📨 Gönder</span>
+                    }
+                  </button>
+                </div>
+                @if (resendMessage()) {
+                  <div class="rp-result" [class.rp-error]="resendIsError()">
+                    {{ resendMessage() }}
+                  </div>
+                }
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -207,14 +305,19 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: calc(100vh - 240px);
-      padding: 30px 16px;
+      min-height: calc(100vh - 120px);
+      padding: 40px 16px;
     }
 
     .register-card {
       width: 100%;
-      max-width: 500px;
-      padding: 36px 32px;
+      max-width: 540px;
+      padding: 38px 34px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
       animation: fadeIn 0.2s ease-out;
     }
 
@@ -226,27 +329,73 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     .auth-icon-badge {
       width: 52px;
       height: 52px;
-      border-radius: 14px;
-      background: var(--primary-light);
-      color: var(--primary);
+      border-radius: var(--radius-lg);
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 26px;
       margin: 0 auto 14px auto;
     }
 
     .auth-title {
       font-size: 24px;
       font-weight: 800;
-      color: var(--text-primary);
+      color: #0f172a;
       margin: 0 0 6px 0;
+      letter-spacing: -0.5px;
     }
 
     .auth-subtitle {
       font-size: 13px;
-      color: var(--text-muted);
+      color: #64748b;
       margin: 0;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .required-star {
+      color: #ef4444;
+    }
+
+    .form-control {
+      width: 100%;
+      height: 44px;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 0 14px;
+      color: #0f172a;
+      font-size: 14px;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-control:focus {
+      background: #ffffff;
+      border-color: #1e3a8a;
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+    }
+
+    .form-control::placeholder {
+      color: #94a3b8;
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
     }
 
     .password-input-wrapper {
@@ -263,7 +412,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       cursor: pointer;
       font-size: 16px;
       padding: 4px;
-      color: var(--text-muted);
+      color: #64748b;
     }
 
     .password-strength {
@@ -276,7 +425,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     .strength-bar-track {
       flex: 1;
       height: 6px;
-      background: var(--bg-muted);
+      background: #e2e8f0;
       border-radius: var(--radius-full);
       overflow: hidden;
     }
@@ -287,10 +436,10 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       transition: width 0.3s ease, background 0.3s ease;
     }
 
-    .strength-weak { background: var(--danger); color: var(--danger); }
-    .strength-fair { background: var(--warning); color: #b45309; }
-    .strength-good { background: #22c55e; color: #16a34a; }
-    .strength-strong { background: var(--success); color: var(--success); }
+    .strength-weak { background: #ef4444; color: #ef4444; }
+    .strength-fair { background: #f59e0b; color: #d97706; }
+    .strength-good { background: #10b981; color: #059669; }
+    .strength-strong { background: #16a34a; color: #16a34a; }
     .strength-label { font-size: 12px; font-weight: 700; white-space: nowrap; }
 
     .password-rules {
@@ -304,16 +453,15 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
 
     .password-rules li {
       font-size: 12px;
-      color: var(--text-muted);
+      color: #64748b;
       display: flex;
       align-items: center;
       gap: 6px;
       padding: 2px 0;
-      transition: color 0.2s ease;
     }
 
     .rule-pass {
-      color: var(--success) !important;
+      color: #16a34a !important;
       font-weight: 600;
     }
 
@@ -329,7 +477,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     }
 
     .role-option {
-      border: 1.5px solid var(--border);
+      border: 1.5px solid #cbd5e1;
       border-radius: var(--radius-md);
       padding: 12px;
       cursor: pointer;
@@ -337,7 +485,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       align-items: center;
       gap: 10px;
       transition: var(--transition);
-      background: var(--bg-surface);
+      background: #f8fafc;
     }
 
     .role-option input[type="radio"] {
@@ -345,13 +493,14 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     }
 
     .role-option:hover {
-      border-color: var(--text-light);
+      border-color: #93c5fd;
+      background: #ffffff;
     }
 
     .role-selected {
-      border-color: var(--primary) !important;
-      background: rgba(79, 70, 229, 0.04);
-      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+      border-color: #1e3a8a !important;
+      background: #eff6ff !important;
+      box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.15);
     }
 
     .role-content {
@@ -372,17 +521,135 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     .role-title {
       font-size: 13px;
       font-weight: 700;
-      color: var(--text-primary);
+      color: #0f172a;
     }
 
     .role-desc {
       font-size: 11px;
-      color: var(--text-muted);
+      color: #64748b;
     }
 
+    /* Yazar Özel Alanları */
+    .author-extra-fields {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius-md);
+      padding: 18px;
+      margin-bottom: 20px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .author-fields-badge {
+      font-size: 12px;
+      font-weight: 800;
+      color: #15803d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+
+    .file-dropzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 18px;
+      text-align: center;
+      background: #ffffff;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .file-dropzone:hover {
+      border-color: #1e3a8a;
+      background: #eff6ff;
+    }
+
+    .file-input-hidden {
+      display: none;
+    }
+
+    .file-dropzone-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .upload-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .upload-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .upload-hint {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .file-info-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+    }
+
+    .file-icon {
+      font-size: 20px;
+    }
+
+    .file-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .file-size {
+      font-size: 11px;
+      color: #64748b;
+      margin-left: 4px;
+    }
+
+    .btn-remove-file {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+
+    .author-notice-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #92400e;
+      line-height: 1.4;
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    /* Error alert */
     .custom-error-alert {
       background: #fef2f2;
-      border: 1.5px solid #ef4444;
+      border: 1px solid #fecaca;
       border-radius: var(--radius-md);
       padding: 12px 14px;
       margin-bottom: 18px;
@@ -390,8 +657,8 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     }
 
     .error-alert-pass {
-      background: #fff1f2;
-      border-color: #f43f5e;
+      background: #fef2f2;
+      border-color: #fecaca;
     }
 
     .cea-head {
@@ -399,13 +666,16 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       align-items: center;
       gap: 6px;
       font-size: 13px;
+      font-weight: 700;
       margin-bottom: 4px;
+      color: #991b1b;
     }
 
     .cea-msg {
       font-size: 12px;
       line-height: 1.4;
       margin-bottom: 4px;
+      color: #7f1d1d;
     }
 
     .cea-list {
@@ -415,18 +685,22 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       display: flex;
       flex-direction: column;
       gap: 2px;
+      color: #991b1b;
+    }
+
+    .btn-block {
+      width: 100%;
+      justify-content: center;
+      margin-top: 10px;
     }
 
     .auth-footer {
       margin-top: 24px;
       padding-top: 18px;
-      border-top: 1px solid var(--border);
-      text-align: center;
-      font-size: 13px;
-      color: var(--text-secondary);
+      border-top: 1px solid #f1f5f9;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
 
     .footer-row {
@@ -434,21 +708,90 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       align-items: center;
       justify-content: center;
       gap: 6px;
+      font-size: 13px;
+      color: #64748b;
     }
 
-    .footer-secondary {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .link-text {
-      color: var(--primary);
+    .link-gold {
+      color: #d97706;
       font-weight: 700;
       text-decoration: none;
     }
 
-    .link-text:hover {
+    .link-gold:hover {
       text-decoration: underline;
+      color: #b45309;
+    }
+
+    /* Accordion Resend Panel */
+    .resend-accordion-wrapper {
+      text-align: center;
+    }
+
+    .btn-toggle-resend {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-toggle-resend:hover {
+      color: #0f172a;
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .resend-panel {
+      margin-top: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      text-align: left;
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    .rp-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .rp-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .rp-form {
+      display: flex;
+      gap: 8px;
+    }
+
+    .form-control-sm {
+      height: 38px;
+      font-size: 13px;
+    }
+
+    .rp-result {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #15803d;
+      font-weight: 600;
+    }
+
+    .rp-error {
+      color: #b91c1c !important;
     }
   `]
 })
@@ -460,10 +803,20 @@ export class RegisterComponent {
   username = '';
   email = '';
   password = '';
-  role = 'User';
+  role = 'User'; // 'User' veya 'Author'
+  university = '';
+  selectedCvFile: File | null = null;
+
   showPassword = signal(false);
   isLoading = signal(false);
   parsedError = signal<ParsedAuthError | null>(null);
+
+  // Doğrulama maili tekrar gönderim akordeonu
+  isResendOpen = signal(false);
+  resendEmailInput = '';
+  isResending = signal(false);
+  resendMessage = signal<string | null>(null);
+  resendIsError = signal(false);
 
   rules = signal({
     hasMinLength: false,
@@ -514,6 +867,60 @@ export class RegisterComponent {
     });
   }
 
+  onCvFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        this.toastService.error('Geçersiz Dosya', 'Lütfen sadece PDF formatında CV dosyası yükleyiniz.');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        this.toastService.error('Dosya Çok Büyük', 'CV dosyası boyutu en fazla 10 MB olabilir.');
+        return;
+      }
+      this.selectedCvFile = file;
+    }
+  }
+
+  removeCvFile(event: Event) {
+    event.stopPropagation();
+    this.selectedCvFile = null;
+  }
+
+  getFormattedFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  onResendConfirmation() {
+    if (!this.resendEmailInput) return;
+
+    this.isResending.set(true);
+    this.resendMessage.set(null);
+    this.resendIsError.set(false);
+
+    this.authService.resendConfirmation(this.resendEmailInput.trim()).subscribe({
+      next: (res: any) => {
+        this.isResending.set(false);
+        if (res.success) {
+          this.resendMessage.set('✅ Yeni doğrulama bağlantısı e-posta adresinize gönderildi.');
+          this.toastService.success('Başarılı 📬', 'Doğrulama e-postası gönderildi!');
+        } else {
+          this.resendIsError.set(true);
+          this.resendMessage.set(`⚠️ ${res.message || 'İşlem başarısız.'}`);
+        }
+      },
+      error: (err: any) => {
+        this.isResending.set(false);
+        this.resendIsError.set(true);
+        const parsed = parseAuthError(err, 'Doğrulama e-postası gönderilemedi.');
+        this.resendMessage.set(`⚠️ ${parsed.generalMessage}`);
+      }
+    });
+  }
+
   onSubmit() {
     if (!this.username || !this.email || !this.password) {
       this.parsedError.set({
@@ -526,6 +933,17 @@ export class RegisterComponent {
         isPasswordError: !this.password
       });
       return;
+    }
+
+    if (this.role === 'Author') {
+      if (!this.university.trim()) {
+        this.toastService.warning('Eksik Bilgi', 'Lütfen mezun olduğunuz üniversiteyi belirtiniz.');
+        return;
+      }
+      if (!this.selectedCvFile) {
+        this.toastService.warning('Eksik Dosya', 'Lütfen PDF formatında özgeçmişinizi (CV) yükleyiniz.');
+        return;
+      }
     }
 
     if (!this.isPasswordValid()) {
@@ -555,33 +973,66 @@ export class RegisterComponent {
 
     const targetEmail = this.email.trim();
 
-    this.authService.register({
-      username: this.username.trim(),
-      email: targetEmail,
-      password: this.password,
-      role: this.role
-    }).subscribe({
-      next: (res) => {
-        this.isLoading.set(false);
-        if (res.success) {
-          this.toastService.success(
-            'Kayıt Başarılı! 🎉',
-            'E-posta adresinize doğrulama kodu gönderildi. Lütfen onaylayınız.'
-          );
-          this.authService.pendingConfirmEmail.set(targetEmail);
-          this.router.navigate(['/confirm-email'], { queryParams: { email: targetEmail } });
-        } else {
-          const parsed = parseAuthError(res);
-          this.parsedError.set(parsed);
-          this.toastService.error('Kayıt Hatası', parsed.generalMessage);
-        }
-      },
-      error: (err) => {
-        this.isLoading.set(false);
-        const parsed = parseAuthError(err);
-        this.parsedError.set(parsed);
-        this.toastService.error(parsed.title, parsed.generalMessage);
+    if (this.role === 'Author') {
+      const formData = new FormData();
+      formData.append('username', this.username.trim());
+      formData.append('email', targetEmail);
+      formData.append('password', this.password);
+      formData.append('university', this.university.trim());
+      if (this.selectedCvFile) {
+        formData.append('cvFile', this.selectedCvFile);
       }
-    });
+
+      this.authService.registerAuthor(formData).subscribe({
+        next: (res: any) => {
+          this.isLoading.set(false);
+          if (res.success) {
+            this.toastService.success(
+              'Yazar Başvurunuz Alındı! 🎉',
+              'Başvurunuz ve CV dosyanız sistem yöneticisine iletildi. Onaylandığında aktivasyon bağlantısı e-postanıza gelecektir.'
+            );
+            this.router.navigate(['/login']);
+          } else {
+            const parsed = parseAuthError(res);
+            this.parsedError.set(parsed);
+            this.toastService.error('Başvuru Hatası', parsed.generalMessage);
+          }
+        },
+        error: (err: any) => {
+          this.isLoading.set(false);
+          const parsed = parseAuthError(err);
+          this.parsedError.set(parsed);
+          this.toastService.error(parsed.title, parsed.generalMessage);
+        }
+      });
+    } else {
+      this.authService.register({
+        username: this.username.trim(),
+        email: targetEmail,
+        password: this.password,
+        role: 'User'
+      }).subscribe({
+        next: (res: any) => {
+          this.isLoading.set(false);
+          if (res.success) {
+            this.toastService.success(
+              'Kayıt Başarılı! 🎉',
+              'E-posta adresinize tek tıkla doğrulama bağlantısı gönderildi. Lütfen gelen kutunuzu kontrol ediniz.'
+            );
+            this.router.navigate(['/login']);
+          } else {
+            const parsed = parseAuthError(res);
+            this.parsedError.set(parsed);
+            this.toastService.error('Kayıt Hatası', parsed.generalMessage);
+          }
+        },
+        error: (err: any) => {
+          this.isLoading.set(false);
+          const parsed = parseAuthError(err);
+          this.parsedError.set(parsed);
+          this.toastService.error(parsed.title, parsed.generalMessage);
+        }
+      });
+    }
   }
 }

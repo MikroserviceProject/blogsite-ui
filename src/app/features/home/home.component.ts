@@ -132,9 +132,13 @@ import { AuthService } from '../../core/services/auth.service';
 
     /* Welcome Banner */
     .welcome-banner {
-      padding: 28px;
+      padding: 30px;
       margin-bottom: 24px;
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
     }
 
     .welcome-content {
@@ -147,14 +151,15 @@ import { AuthService } from '../../core/services/auth.service';
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      background: var(--primary-gradient);
-      color: #fff;
+      background: #eff6ff;
+      border: 2px solid #1e3a8a;
+      color: #1e3a8a;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 26px;
       font-weight: 800;
-      box-shadow: 0 8px 16px -4px rgba(79, 70, 229, 0.4);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       flex-shrink: 0;
       overflow: hidden;
     }
@@ -181,13 +186,13 @@ import { AuthService } from '../../core/services/auth.service';
     .welcome-greeting h1 {
       font-size: 22px;
       font-weight: 800;
-      color: var(--text-primary);
+      color: #0f172a;
       margin: 0;
     }
 
     .welcome-desc {
       font-size: 14px;
-      color: var(--text-secondary);
+      color: #64748b;
       margin: 0;
     }
 
@@ -219,12 +224,13 @@ import { AuthService } from '../../core/services/auth.service';
       display: block;
       font-size: 14px;
       margin-bottom: 2px;
+      color: #b45309;
     }
 
     .alert-body p {
       font-size: 13px;
       margin: 0;
-      color: #b45309;
+      color: #78350f;
     }
 
     /* Dashboard Grid */
@@ -241,7 +247,12 @@ import { AuthService } from '../../core/services/auth.service';
     }
 
     .dashboard-card {
-      padding: 24px;
+      padding: 26px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.35);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -258,20 +269,20 @@ import { AuthService } from '../../core/services/auth.service';
       font-size: 20px;
     }
 
-    .primary-box { background: var(--primary-light); color: var(--primary); }
-    .success-box { background: var(--success-light); color: var(--success); }
-    .info-box { background: #e0f2fe; color: #0284c7; }
+    .primary-box { background: #eff6ff; color: #1e3a8a; border: 1px solid #bfdbfe; }
+    .success-box { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+    .info-box { background: #f8fafc; color: #0284c7; border: 1px solid #e2e8f0; }
 
     .dashboard-card h3 {
       font-size: 16px;
       font-weight: 700;
-      color: var(--text-primary);
+      color: #0f172a;
       margin: 0;
     }
 
     .dashboard-card p {
       font-size: 13px;
-      color: var(--text-secondary);
+      color: #64748b;
       line-height: 1.5;
       margin: 0;
       flex: 1;
@@ -282,23 +293,24 @@ import { AuthService } from '../../core/services/auth.service';
       align-items: center;
       gap: 6px;
       font-size: 12px;
-      font-weight: 600;
-      color: var(--success);
+      font-weight: 700;
+      color: #16a34a;
     }
 
     .status-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+      background: #16a34a;
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
     }
 
     .confirmed-badge {
       font-size: 12px;
       font-weight: 700;
-      color: var(--success);
-      background: var(--success-light);
+      color: #15803d;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
       padding: 4px 10px;
       border-radius: var(--radius-sm);
     }
@@ -312,8 +324,9 @@ import { AuthService } from '../../core/services/auth.service';
     .hero-badge {
       display: inline-block;
       padding: 6px 14px;
-      background: var(--primary-light);
-      color: var(--primary);
+      background: rgba(30, 58, 138, 0.4);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
       font-size: 12px;
       font-weight: 700;
       border-radius: var(--radius-full);
@@ -323,14 +336,14 @@ import { AuthService } from '../../core/services/auth.service';
     .hero-title {
       font-size: 36px;
       font-weight: 800;
-      color: var(--text-primary);
+      color: #ffffff;
       margin-bottom: 12px;
       letter-spacing: -0.5px;
     }
 
     .hero-subtitle {
       font-size: 16px;
-      color: var(--text-secondary);
+      color: #cbd5e1;
       max-width: 580px;
       margin: 0 auto 32px auto;
       line-height: 1.6;
@@ -346,15 +359,15 @@ import { AuthService } from '../../core/services/auth.service';
     }
 
     .btn-subtle {
-      background: var(--bg-surface);
-      color: var(--text-secondary);
-      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.16);
     }
 
     .btn-subtle:hover {
-      background: var(--bg-subtle);
-      color: var(--text-primary);
-      border-color: var(--text-light);
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.3);
     }
 
     .features-grid {
@@ -374,7 +387,12 @@ import { AuthService } from '../../core/services/auth.service';
     }
 
     .feature-card {
-      padding: 24px;
+      padding: 26px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.35);
     }
 
     .feat-icon {
@@ -385,13 +403,13 @@ import { AuthService } from '../../core/services/auth.service';
     .feature-card h4 {
       font-size: 16px;
       font-weight: 700;
-      color: var(--text-primary);
+      color: #0f172a;
       margin-bottom: 8px;
     }
 
     .feature-card p {
       font-size: 13px;
-      color: var(--text-secondary);
+      color: #64748b;
       line-height: 1.5;
       margin: 0;
     }

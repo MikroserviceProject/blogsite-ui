@@ -1,7 +1,7 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { parseAuthError } from '../../../core/utils/auth-error-parser';
@@ -9,7 +9,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="container profile-page">
       <div class="profile-container">
@@ -59,7 +59,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
             <div class="profile-title-row">
               <h1 class="profile-name">{{ authService.currentUser()?.username }}</h1>
               <span class="badge" [ngClass]="'badge-' + (authService.userRole()?.toLowerCase() || 'user')">
-                {{ authService.userRole() }}
+                {{ authService.roleDisplayName() }}
               </span>
               @if (authService.currentUser()?.isEmailConfirmed) {
                 <span class="badge badge-success">✓ E-Posta Onaylı</span>
@@ -86,28 +86,57 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
             <div class="alert-details">
               <h3>E-Posta Adresiniz Doğrulanmamış</h3>
               <p>
-                Hesabınızın tüm özelliklerini kullanabilmek ve güvenliğinizi sağlamak için lütfen e-posta adresinizi doğrulayınız.
+                Hesabınızın tüm özelliklerini kullanabilmek ve güvenliğinizi sağlamak için lütfen e-posta adresinize gönderilen bağlantıya tıklayarak onaylayınız.
               </p>
               <div class="alert-btn-group">
-                <a
-                  [routerLink]="['/confirm-email']"
-                  [queryParams]="{ email: authService.currentUser()?.email }"
-                  class="btn btn-warning btn-sm"
-                >
-                  ✉️ Doğrulama Kodunu Gir
-                </a>
                 <button
                   type="button"
-                  class="btn btn-secondary btn-sm"
+                  class="btn btn-warning btn-sm"
                   (click)="resendCode()"
                   [disabled]="isResending()"
                 >
                   @if (isResending()) {
                     <span>Gönderiliyor...</span>
                   } @else {
-                    <span>🔄 Yeni Kod Gönder</span>
+                    <span>🔄 Doğrulama Bağlantısını Tekrar Gönder</span>
                   }
                 </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Yazar Bilgileri Kartı (Eğer Rol Yazar İse) -->
+        @if (authService.isAuthor()) {
+          <div class="card author-details-card">
+            <div class="card-header-flex">
+              <div>
+                <h2 class="card-section-title">🎓 Yazar ve Akademik Bilgiler</h2>
+                <p class="card-section-desc">Onaylanmış yazar profilinizin detayları</p>
+              </div>
+            </div>
+            <div class="info-list">
+              <div class="info-item">
+                <span class="info-label">Mezun Olunan Üniversite / Bölüm</span>
+                <span class="info-value">{{ authService.currentUser()?.university || 'Belirtilmemiş' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Özgeçmiş / CV Belgesi</span>
+                <span class="info-value">
+                  @if (authService.currentUser()?.cvUrl) {
+                    <a [href]="authService.currentUser()?.cvUrl" target="_blank" class="cv-link">
+                      📄 Yüklenen CV Dosyasını Görüntüle
+                    </a>
+                  } @else {
+                    <span class="text-muted">CV dosyası bulunmuyor</span>
+                  }
+                </span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Yazar Başvuru Tarihi</span>
+                <span class="info-value">
+                  {{ authService.currentUser()?.authorApplicationDate ? (authService.currentUser()?.authorApplicationDate | date:'d MMMM y, HH:mm') : '—' }}
+                </span>
               </div>
             </div>
           </div>
@@ -142,7 +171,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                 <span class="info-label">Hesap Rolü</span>
                 <span class="info-value">
                   <span class="badge" [ngClass]="'badge-' + (authService.userRole()?.toLowerCase() || 'user')">
-                    {{ authService.currentUser()?.role }}
+                    {{ authService.roleDisplayName() }}
                   </span>
                 </span>
               </div>
@@ -189,7 +218,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                   placeholder="Yeni e-posta adresiniz"
                   required
                 />
-                <div class="form-hint">E-posta adresinizi değiştirirseniz yeni adresinize doğrulama bağlantısı iletilecektir.</div>
+                <div class="form-hint alert-hint">⚠️ Dikkat: E-posta adresinizi değiştirirseniz güvenlik nedeniyle oturumunuz kapatılacak ve yeni adresinize onay bağlantısı gönderilecektir.</div>
               </div>
 
               @if (errorMessage()) {
@@ -223,6 +252,121 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
             </form>
           }
         </div>
+
+        <!-- Şifre Değiştirme Kartı -->
+        <div class="card password-change-card">
+          <div class="card-header-flex">
+            <div>
+              <h2 class="card-section-title">🔒 Şifre Değiştir</h2>
+              <p class="card-section-desc">Hesabınızın güvenliği için mevcut şifrenizi güncelleyin.</p>
+            </div>
+            @if (!isChangingPassword()) {
+              <button class="btn btn-secondary btn-sm" (click)="isChangingPassword.set(true)">
+                <span>🔑</span> Şifremi Değiştir
+              </button>
+            }
+          </div>
+
+          @if (isChangingPassword()) {
+            <form (ngSubmit)="changePassword()" class="password-form">
+              <div class="form-group">
+                <label class="form-label" for="current-pwd">Mevcut Şifre</label>
+                <input
+                  id="current-pwd"
+                  type="password"
+                  class="form-control"
+                  [(ngModel)]="currentPassword"
+                  name="currentPassword"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="new-pwd">Yeni Şifre</label>
+                <input
+                  id="new-pwd"
+                  type="password"
+                  class="form-control"
+                  [(ngModel)]="newPassword"
+                  name="newPassword"
+                  (ngModelChange)="onNewPasswordChange($event)"
+                  placeholder="En az 8 karakter güçlü şifre"
+                  required
+                />
+
+                @if (currentPassword && newPassword && currentPassword === newPassword) {
+                  <div class="form-hint text-danger mt-1">⚠️ Yeni şifre eski şifrenizle aynı olamaz.</div>
+                }
+
+                @if (newPassword) {
+                  <ul class="password-rules">
+                    <li [class.rule-pass]="rules().hasMinLength">
+                      <span>{{ rules().hasMinLength ? '✓' : '○' }}</span> En az 8 karakter
+                    </li>
+                    <li [class.rule-pass]="rules().hasUpperCase">
+                      <span>{{ rules().hasUpperCase ? '✓' : '○' }}</span> En az 1 büyük harf (A-Z)
+                    </li>
+                    <li [class.rule-pass]="rules().hasLowerCase">
+                      <span>{{ rules().hasLowerCase ? '✓' : '○' }}</span> En az 1 küçük harf (a-z)
+                    </li>
+                    <li [class.rule-pass]="rules().hasDigit">
+                      <span>{{ rules().hasDigit ? '✓' : '○' }}</span> En az 1 rakam (0-9)
+                    </li>
+                    <li [class.rule-pass]="rules().hasSpecial">
+                      <span>{{ rules().hasSpecial ? '✓' : '○' }}</span> En az 1 özel karakter (!&#64;#$%^&*)
+                    </li>
+                  </ul>
+                }
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="confirm-new-pwd">Yeni Şifre (Tekrar)</label>
+                <input
+                  id="confirm-new-pwd"
+                  type="password"
+                  class="form-control"
+                  [(ngModel)]="confirmNewPassword"
+                  name="confirmNewPassword"
+                  placeholder="••••••••"
+                  required
+                />
+                @if (confirmNewPassword && newPassword !== confirmNewPassword) {
+                  <div class="form-hint text-danger">Şifreler eşleşmiyor.</div>
+                }
+              </div>
+
+              @if (passwordError()) {
+                <div class="error-alert">
+                  <span>⚠️</span>
+                  <span>{{ passwordError() }}</span>
+                </div>
+              }
+
+              <div class="edit-actions">
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="isSavingPassword() || !isNewPasswordValid() || newPassword !== confirmNewPassword || currentPassword === newPassword"
+                >
+                  @if (isSavingPassword()) {
+                    <span>Güncelleniyor...</span>
+                  } @else {
+                    <span>🔑 Şifreyi Güncelle</span>
+                  }
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="cancelPasswordChange()"
+                  [disabled]="isSavingPassword()"
+                >
+                  İptal
+                </button>
+              </div>
+            </form>
+          }
+        </div>
       </div>
     </div>
   `,
@@ -236,17 +380,22 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     .profile-container {
       width: 100%;
-      max-width: 720px;
+      max-width: 760px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 24px;
     }
 
     .profile-header {
       display: flex;
       align-items: center;
       gap: 24px;
-      padding: 30px;
+      padding: 32px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
     }
 
     @media (max-width: 600px) {
@@ -270,25 +419,25 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       width: 84px;
       height: 84px;
       border-radius: 50%;
-      background: var(--primary-gradient);
-      color: #fff;
+      background: #eff6ff;
+      border: 3px solid #1e3a8a;
+      color: #1e3a8a;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 32px;
       font-weight: 800;
-      box-shadow: 0 10px 24px -6px rgba(79, 70, 229, 0.45);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
       flex-shrink: 0;
       position: relative;
       overflow: hidden;
       cursor: pointer;
-      border: 3px solid var(--bg-surface);
       transition: var(--transition);
     }
 
     .profile-avatar-large:hover {
       transform: scale(1.04);
-      box-shadow: 0 12px 28px -4px rgba(79, 70, 229, 0.55);
+      border-color: #f59e0b;
     }
 
     .avatar-img-element {
@@ -301,7 +450,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     .avatar-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(15, 23, 42, 0.55);
+      background: rgba(15, 23, 42, 0.65);
       backdrop-filter: blur(2px);
       display: flex;
       align-items: center;
@@ -326,9 +475,9 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     .btn-link-action {
       background: none;
       border: none;
-      color: var(--primary);
+      color: #1e40af;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       padding: 2px 4px;
       border-radius: 4px;
@@ -336,20 +485,16 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .btn-link-action:hover {
-      background: var(--primary-light);
       text-decoration: underline;
+      color: #1d4ed8;
     }
 
     .btn-link-action.text-danger {
-      color: var(--danger);
-    }
-
-    .btn-link-action.text-danger:hover {
-      background: var(--danger-light);
+      color: #dc2626;
     }
 
     .action-sep {
-      color: var(--text-light);
+      color: #cbd5e1;
     }
 
     .spinner-small {
@@ -376,19 +521,19 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     .profile-name {
       font-size: 24px;
       font-weight: 800;
-      color: var(--text-primary);
+      color: #0f172a;
       margin: 0;
     }
 
     .profile-email {
       font-size: 15px;
-      color: var(--text-secondary);
+      color: #64748b;
       margin: 0 0 4px 0;
     }
 
     .profile-meta {
       font-size: 13px;
-      color: var(--text-muted);
+      color: #94a3b8;
       margin: 0;
     }
 
@@ -398,6 +543,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       align-items: flex-start;
       gap: 16px;
       padding: 20px 24px;
+      border-radius: var(--radius-md);
     }
 
     .warning-alert-card {
@@ -418,7 +564,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     .alert-details p {
       font-size: 13px;
-      color: #b45309;
+      color: #78350f;
       line-height: 1.5;
       margin: 0 0 14px 0;
     }
@@ -430,9 +576,14 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       flex-wrap: wrap;
     }
 
-    /* Profile Info Card */
-    .profile-info-card {
-      padding: 30px;
+    /* Profile Info Card & Author Details Card */
+    .profile-info-card, .author-details-card, .password-change-card {
+      padding: 32px;
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
     }
 
     .card-header-flex {
@@ -446,12 +597,12 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       font-size: 18px;
       font-weight: 800;
       margin: 0 0 4px 0;
-      color: var(--text-primary);
+      color: #0f172a;
     }
 
     .card-section-desc {
       font-size: 13px;
-      color: var(--text-muted);
+      color: #64748b;
       margin: 0 0 16px 0;
       line-height: 1.5;
     }
@@ -467,7 +618,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       justify-content: space-between;
       align-items: center;
       padding: 12px 0;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid #f1f5f9;
       font-size: 14px;
     }
 
@@ -476,25 +627,79 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .info-label {
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .info-value {
-      color: var(--text-primary);
+      color: #64748b;
       font-weight: 600;
     }
 
-    .text-success { color: var(--success); }
-    .text-warning { color: var(--warning); }
+    .info-value {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    .cv-link {
+      color: #1e40af;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .cv-link:hover {
+      text-decoration: underline;
+      color: #1d4ed8;
+    }
+
+    .text-success { color: #16a34a; }
+    .text-warning { color: #d97706; }
+    .text-danger { color: #dc2626; }
     .font-bold { font-weight: 700; }
 
-    /* Edit Form */
-    .edit-form {
+    /* Forms */
+    .edit-form, .password-form {
       display: flex;
       flex-direction: column;
       gap: 18px;
       margin-top: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 4px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      height: 44px;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 0 14px;
+      color: #0f172a;
+      font-size: 14px;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .form-control:focus {
+      background: #ffffff;
+      border-color: #1e3a8a;
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+    }
+
+    .form-hint {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .alert-hint {
+      color: #b45309 !important;
+      font-weight: 600;
     }
 
     .edit-actions {
@@ -505,15 +710,37 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .error-alert {
-      background: var(--danger-light);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: var(--danger);
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
       padding: 10px 14px;
       border-radius: var(--radius-md);
       font-size: 13px;
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .password-rules {
+      list-style: none;
+      padding: 0;
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 8px;
+    }
+
+    .password-rules li {
+      font-size: 11.5px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rule-pass {
+      color: #16a34a !important;
+      font-weight: 700;
     }
   `]
 })
@@ -530,6 +757,27 @@ export class ProfileComponent implements OnInit {
 
   editUsername = '';
   editEmail = '';
+
+  // Password Change
+  isChangingPassword = signal(false);
+  isSavingPassword = signal(false);
+  currentPassword = '';
+  newPassword = '';
+  confirmNewPassword = '';
+  passwordError = signal<string | null>(null);
+
+  rules = signal({
+    hasMinLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasDigit: false,
+    hasSpecial: false
+  });
+
+  isNewPasswordValid = computed(() => {
+    const r = this.rules();
+    return r.hasMinLength && r.hasUpperCase && r.hasLowerCase && r.hasDigit && r.hasSpecial;
+  });
 
   ngOnInit() {
     this.initFormData();
@@ -555,6 +803,71 @@ export class ProfileComponent implements OnInit {
     this.isEditing.set(false);
   }
 
+  onNewPasswordChange(value: string) {
+    this.rules.set({
+      hasMinLength: value.length >= 8,
+      hasUpperCase: /[A-Z]/.test(value),
+      hasLowerCase: /[a-z]/.test(value),
+      hasDigit: /[0-9]/.test(value),
+      hasSpecial: /[^a-zA-Z0-9]/.test(value)
+    });
+  }
+
+  cancelPasswordChange() {
+    this.isChangingPassword.set(false);
+    this.currentPassword = '';
+    this.newPassword = '';
+    this.confirmNewPassword = '';
+    this.passwordError.set(null);
+  }
+
+  changePassword() {
+    if (!this.currentPassword || !this.newPassword || !this.confirmNewPassword) {
+      this.passwordError.set('Lütfen tüm şifre alanlarını doldurunuz.');
+      return;
+    }
+
+    if (this.currentPassword === this.newPassword) {
+      this.passwordError.set('Yeni şifre eski şifrenizle aynı olamaz. Lütfen farklı bir şifre belirleyiniz.');
+      return;
+    }
+
+    if (this.newPassword !== this.confirmNewPassword) {
+      this.passwordError.set('Yeni şifreler eşleşmiyor.');
+      return;
+    }
+
+    if (!this.isNewPasswordValid()) {
+      this.passwordError.set('Yeni şifre belirlenen güvenlik kurallarını sağlamıyor.');
+      return;
+    }
+
+    this.isSavingPassword.set(true);
+    this.passwordError.set(null);
+
+    this.authService.changePassword({
+      currentPassword: this.currentPassword,
+      newPassword: this.newPassword
+    }).subscribe({
+      next: (res: any) => {
+        this.isSavingPassword.set(false);
+        if (res.success) {
+          this.toastService.success('Şifreniz Değiştirildi 🎉', 'Yeni şifreniz başarıyla kaydedildi.');
+          this.cancelPasswordChange();
+        } else {
+          this.passwordError.set(res.message);
+          this.toastService.error('Hata', res.message);
+        }
+      },
+      error: (err: any) => {
+        this.isSavingPassword.set(false);
+        const parsed = parseAuthError(err, 'Şifre değiştirilemedi.');
+        this.passwordError.set(parsed.generalMessage);
+        this.toastService.error('Hata', parsed.generalMessage);
+      }
+    });
+  }
+
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
@@ -569,7 +882,7 @@ export class ProfileComponent implements OnInit {
 
     this.isUploadingAvatar.set(true);
     this.authService.uploadAvatar(file).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.isUploadingAvatar.set(false);
         if (res.success) {
           this.toastService.success('Fotoğraf Güncellendi ✨', 'Yeni profil resminiz başarıyla kaydedildi.');
@@ -578,7 +891,7 @@ export class ProfileComponent implements OnInit {
         }
         input.value = '';
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isUploadingAvatar.set(false);
         const parsed = parseAuthError(err);
         this.toastService.error('Yükleme Başarısız', parsed.generalMessage);
@@ -597,7 +910,7 @@ export class ProfileComponent implements OnInit {
       email: currentUser.email,
       profilePictureUrl: ''
     }).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.isUploadingAvatar.set(false);
         if (res.success) {
           this.toastService.info('Profil Resmi Kaldırıldı', 'Varsayılan harfli profil görseline dönüldü.');
@@ -605,7 +918,7 @@ export class ProfileComponent implements OnInit {
           this.toastService.error('Hata', res.message);
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isUploadingAvatar.set(false);
         const parsed = parseAuthError(err);
         this.toastService.error('Hata', parsed.generalMessage);
@@ -630,15 +943,18 @@ export class ProfileComponent implements OnInit {
       username: newUsername,
       email: newEmail
     }).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.isSaving.set(false);
         if (res.success) {
           this.isEditing.set(false);
           if (prevEmail !== newEmail) {
             this.toastService.warning(
-              'E-Posta Güncellendi',
-              'Yeni e-posta adresinize doğrulama kodu gönderildi. Lütfen e-postanızı onaylayınız.'
+              'E-Posta Değiştirildi!',
+              'Güvenlik gereği oturumunuz kapatıldı. Yeni e-posta adresinize gönderilen bağlantı ile hesabınızı doğrulayınız.'
             );
+            // Automatic logout upon email update as requested
+            this.authService.logout();
+            this.router.navigate(['/login']);
           } else {
             this.toastService.success('Profil Güncellendi', 'Kullanıcı adı ve bilgileriniz başarıyla kaydedildi.');
           }
@@ -646,7 +962,7 @@ export class ProfileComponent implements OnInit {
           this.errorMessage.set(res.message);
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSaving.set(false);
         const parsed = parseAuthError(err);
         this.errorMessage.set(parsed.generalMessage);
@@ -661,15 +977,15 @@ export class ProfileComponent implements OnInit {
 
     this.isResending.set(true);
     this.authService.resendConfirmation(email).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.isResending.set(false);
         if (res.success) {
-          this.toastService.success('Kod Gönderildi 📬', 'Yeni doğrulama kodu e-posta adresinize iletildi.');
+          this.toastService.success('Bağlantı Gönderildi 📬', 'Doğrulama bağlantısı e-posta adresinize iletildi.');
         } else {
           this.toastService.error('Hata', res.message);
         }
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isResending.set(false);
         const parsed = parseAuthError(err);
         this.toastService.error('Hata', parsed.generalMessage);
