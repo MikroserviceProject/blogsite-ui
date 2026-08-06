@@ -49,10 +49,14 @@ import { RouterLink } from '@angular/router';
   `,
   styles: [`
     .footer {
-      background: var(--bg-surface);
-      border-top: 1px solid var(--border);
+      background: rgba(7, 13, 30, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       padding: 40px 0 24px 0;
       margin-top: auto;
+      position: relative;
+      z-index: 10;
     }
 
     .footer-top {
@@ -89,18 +93,18 @@ import { RouterLink } from '@angular/router';
       font-family: var(--font-heading);
       font-size: 18px;
       font-weight: 800;
-      color: var(--text-primary);
+      color: #ffffff;
     }
 
     .brand-sub {
       font-size: 12px;
-      color: var(--text-muted);
+      color: #94a3b8;
       font-weight: 600;
     }
 
     .brand-desc {
       font-size: 13px;
-      color: var(--text-secondary);
+      color: #94a3b8;
       line-height: 1.5;
       margin: 0;
     }
@@ -119,7 +123,7 @@ import { RouterLink } from '@angular/router';
     .column-title {
       font-size: 13px;
       font-weight: 700;
-      color: var(--text-primary);
+      color: #ffffff;
       margin: 0 0 12px 0;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -133,30 +137,30 @@ import { RouterLink } from '@angular/router';
 
     .footer-column a {
       font-size: 13px;
-      color: var(--text-secondary);
+      color: #94a3b8;
       text-decoration: none;
       transition: var(--transition);
     }
 
     .footer-column a:hover {
-      color: var(--primary);
+      color: #f59e0b;
     }
 
     .footer-bottom {
-      border-top: 1px solid var(--border);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       padding-top: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 12px;
-      color: var(--text-muted);
+      color: #64748b;
       flex-wrap: wrap;
       gap: 10px;
     }
 
     .footer-security-note {
       font-weight: 600;
-      color: var(--text-secondary);
+      color: #94a3b8;
     }
   `]
 })

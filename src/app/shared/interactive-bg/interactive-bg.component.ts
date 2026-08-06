@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-interface Particle {
+interface Star {
   x: number;
   y: number;
   originVx: number;
@@ -17,6 +17,9 @@ interface Particle {
   vy: number;
   radius: number;
   baseAlpha: number;
+  twinkleSpeed: number;
+  phase: number;
+  isGlitter: boolean;
   color: string;
 }
 
@@ -25,16 +28,16 @@ interface Particle {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="interactive-bg-wrapper">
-      <!-- Textured Grid Layer -->
-      <div class="bg-texture-grid"></div>
+    <div class="starry-sky-wrapper">
+      <!-- Deep Midnight Navy Night Sky Base -->
+      <div class="sky-cosmic-glow"></div>
       
-      <!-- Interactive Dynamic Canvas -->
-      <canvas #bgCanvas class="interactive-canvas"></canvas>
+      <!-- Dynamic Starfield & Constellations Canvas -->
+      <canvas #bgCanvas class="star-canvas"></canvas>
       
-      <!-- Ambient Cursor Golden Halo -->
+      <!-- Starlight Spotlight behind Cursor -->
       <div
-        class="cursor-glow-spotlight"
+        class="starlight-cursor-glow"
         [style.transform]="'translate3d(' + glowX + 'px, ' + glowY + 'px, 0)'"
         [style.opacity]="isMouseInside ? 1 : 0"
       ></div>
@@ -50,30 +53,26 @@ interface Particle {
       overflow: hidden;
     }
 
-    .interactive-bg-wrapper {
+    .starry-sky-wrapper {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      background: 
-        radial-gradient(ellipse at 50% 0%, rgba(254, 243, 199, 0.35) 0%, transparent 60%),
-        radial-gradient(ellipse at 100% 100%, rgba(224, 231, 255, 0.4) 0%, transparent 60%),
-        #f8fafc;
+      background: #060b18;
     }
 
-    /* Dokulu Nokta & Izgara Matrisi */
-    .bg-texture-grid {
+    /* Derin Lacivert Gece Gökyüzü Katmanı (Sıfır Morluk, Asil Lacivert) */
+    .sky-cosmic-glow {
       position: absolute;
       inset: 0;
-      background-image: 
-        radial-gradient(rgba(148, 163, 184, 0.28) 1.2px, transparent 1.2px),
-        radial-gradient(rgba(245, 158, 11, 0.12) 1.5px, transparent 1.5px);
-      background-size: 28px 28px, 84px 84px;
-      background-position: 0 0, 14px 14px;
-      opacity: 0.85;
+      background: 
+        radial-gradient(ellipse at 50% 0%, #0d1b3e 0%, transparent 65%),
+        radial-gradient(circle at 85% 25%, rgba(30, 58, 138, 0.45) 0%, transparent 55%),
+        radial-gradient(circle at 15% 80%, rgba(15, 30, 75, 0.5) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 100%, #081126 0%, #040813 100%);
     }
 
-    .interactive-canvas {
+    .star-canvas {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -81,7 +80,7 @@ interface Particle {
       display: block;
     }
 
-    .cursor-glow-spotlight {
+    .starlight-cursor-glow {
       position: absolute;
       top: -240px;
       left: -240px;
@@ -90,9 +89,9 @@ interface Particle {
       border-radius: 50%;
       background: radial-gradient(
         circle,
-        rgba(245, 158, 11, 0.24) 0%,
-        rgba(251, 191, 36, 0.15) 30%,
-        rgba(217, 119, 6, 0.06) 60%,
+        rgba(245, 158, 11, 0.22) 0%,
+        rgba(30, 58, 138, 0.35) 40%,
+        rgba(15, 23, 42, 0.1) 65%,
         transparent 75%
       );
       filter: blur(48px);
@@ -108,13 +107,14 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
 
   private ctx!: CanvasRenderingContext2D;
   private animationFrameId: number | null = null;
-  private particles: Particle[] = [];
-  private particleCount = 160;
+  private stars: Star[] = [];
+  private starCount = 175;
   private attractionRadius = 180;
-  private maxDistance = 145; // Geniş bağlantı menzili (daha çok ağ / constellation)
+  private maxDistance = 140;
   private isDestroyed = false;
+  private tick = 0;
 
-  // Mouse coordinates with smooth easing
+  // Mouse coordinates with easing
   private mouseX = -1000;
   private mouseY = -1000;
   private targetMouseX = -1000;
@@ -124,13 +124,13 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
   glowY = -1000;
   isMouseInside = false;
 
-  // Rich Gold & Amber Star Palette
-  private colors = [
-    'rgba(245, 158, 11, ',  // Amber Gold
-    'rgba(251, 191, 36, ',  // Warm Light Gold
-    'rgba(217, 119, 6, ',   // Deep Rich Gold
-    'rgba(234, 179, 8, ',   // Sun Yellow Gold
-    'rgba(253, 224, 71, '   // Bright Champagne Sparkle
+  // Parlak Altın Sarısı ve Elmas Beyaz Yıldız Renkleri (Morluk yok)
+  private starColors = [
+    '245, 158, 11',   // Sıcak Altın
+    '251, 191, 36',   // Parlak Altın Sarısı
+    '253, 224, 71',   // Şampanya Işıltısı
+    '255, 255, 255',   // Saf Elmas Beyazı
+    '224, 242, 254'    // Buzul Yıldız Işığı
   ];
 
   constructor(private ngZone: NgZone) {}
@@ -154,9 +154,8 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
     this.ctx = context;
 
     this.resizeCanvas();
-    this.createParticles();
+    this.createStars();
 
-    // Run animation outside Angular zone for optimal 60/120 FPS performance
     this.ngZone.runOutsideAngular(() => {
       this.addEventListeners();
       this.animate();
@@ -173,29 +172,33 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
     canvas.height = height * dpr;
     this.ctx.scale(dpr, dpr);
 
-    // Dynamic particle count: plenty of golden stars for deep connection mesh
-    this.particleCount = Math.floor(Math.min(190, Math.max(100, (width * height) / 8000)));
-    this.createParticles();
+    this.starCount = Math.floor(Math.min(220, Math.max(110, (width * height) / 7500)));
+    this.createStars();
   };
 
-  private createParticles() {
+  private createStars() {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    this.particles = [];
+    this.stars = [];
 
-    for (let i = 0; i < this.particleCount; i++) {
-      const vx = (Math.random() - 0.5) * 0.7;
-      const vy = (Math.random() - 0.5) * 0.7;
-      this.particles.push({
+    for (let i = 0; i < this.starCount; i++) {
+      const vx = (Math.random() - 0.5) * 0.45;
+      const vy = (Math.random() - 0.5) * 0.45;
+      const isGlitter = Math.random() > 0.85;
+
+      this.stars.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        originVx: vx === 0 ? 0.35 : vx,
-        originVy: vy === 0 ? 0.35 : vy,
+        originVx: vx === 0 ? 0.25 : vx,
+        originVy: vy === 0 ? 0.25 : vy,
         vx: vx,
         vy: vy,
-        radius: Math.random() * 2.2 + 1.4,
-        baseAlpha: Math.random() * 0.45 + 0.45,
-        color: this.colors[Math.floor(Math.random() * this.colors.length)]
+        radius: isGlitter ? Math.random() * 1.6 + 1.8 : Math.random() * 1.5 + 0.8,
+        baseAlpha: Math.random() * 0.5 + 0.4,
+        twinkleSpeed: Math.random() * 0.04 + 0.015,
+        phase: Math.random() * Math.PI * 2,
+        isGlitter: isGlitter,
+        color: this.starColors[Math.floor(Math.random() * this.starColors.length)]
       });
     }
   }
@@ -231,6 +234,7 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
   private animate = () => {
     if (this.isDestroyed) return;
 
+    this.tick += 0.02;
     const width = window.innerWidth;
     const height = window.innerHeight;
 
@@ -242,87 +246,84 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
 
     this.ctx.clearRect(0, 0, width, height);
 
-    // Update particles
-    for (let i = 0; i < this.particles.length; i++) {
-      const p = this.particles[i];
+    // Update positions and velocities
+    for (let i = 0; i < this.stars.length; i++) {
+      const s = this.stars[i];
 
-      // Localized subtle magnetic curve
+      // Mouse attraction with gentle sling around cursor
       if (this.isMouseInside) {
-        const dx = this.mouseX - p.x;
-        const dy = this.mouseY - p.y;
+        const dx = this.mouseX - s.x;
+        const dy = this.mouseY - s.y;
         const dist = Math.hypot(dx, dy);
 
         if (dist < this.attractionRadius && dist > 1) {
           const angle = Math.atan2(dy, dx);
-          // Gentle pull + orbital slingshot curve so particles glide around mouse without piling up
           const pull = ((this.attractionRadius - dist) / this.attractionRadius) * 0.18;
           
-          p.vx += Math.cos(angle) * pull + (-Math.sin(angle) * 0.06);
-          p.vy += Math.sin(angle) * pull + (Math.cos(angle) * 0.06);
+          s.vx += Math.cos(angle) * pull + (-Math.sin(angle) * 0.05);
+          s.vy += Math.sin(angle) * pull + (Math.cos(angle) * 0.05);
 
-          // Velocity capping
-          const speed = Math.hypot(p.vx, p.vy);
-          if (speed > 2.2) {
-            p.vx = (p.vx / speed) * 2.2;
-            p.vy = (p.vy / speed) * 2.2;
+          const speed = Math.hypot(s.vx, s.vy);
+          if (speed > 2.0) {
+            s.vx = (s.vx / speed) * 2.0;
+            s.vy = (s.vy / speed) * 2.0;
           }
 
-          // Golden laser beam connection to mouse
+          // Golden beam from mouse to star
           if (dist < 150) {
-            const beamAlpha = (1 - dist / 150) * 0.45;
+            const beamAlpha = (1 - dist / 150) * 0.4;
             this.ctx.beginPath();
-            this.ctx.moveTo(p.x, p.y);
+            this.ctx.moveTo(s.x, s.y);
             this.ctx.lineTo(this.mouseX, this.mouseY);
             this.ctx.strokeStyle = `rgba(245, 158, 11, ${beamAlpha})`;
-            this.ctx.lineWidth = 1.2;
+            this.ctx.lineWidth = 1.1;
             this.ctx.stroke();
           }
         } else {
-          // Smooth return to natural cruise velocity
-          p.vx += (p.originVx - p.vx) * 0.03;
-          p.vy += (p.originVy - p.vy) * 0.03;
+          s.vx += (s.originVx - s.vx) * 0.02;
+          s.vy += (s.originVy - s.vy) * 0.02;
         }
       } else {
-        p.vx += (p.originVx - p.vx) * 0.03;
-        p.vy += (p.originVy - p.vy) * 0.03;
+        s.vx += (s.originVx - s.vx) * 0.02;
+        s.vy += (s.originVy - s.vy) * 0.02;
       }
 
-      // Move particle
-      p.x += p.vx;
-      p.y += p.vy;
+      // Move star
+      s.x += s.vx;
+      s.y += s.vy;
 
-      // Wrap around screen boundaries seamlessly
-      if (p.x < -10) p.x = width + 10;
-      if (p.x > width + 10) p.x = -10;
-      if (p.y < -10) p.y = height + 10;
-      if (p.y > height + 10) p.y = -10;
+      // Wrap around edges
+      if (s.x < -10) s.x = width + 10;
+      if (s.x > width + 10) s.x = -10;
+      if (s.y < -10) s.y = height + 10;
+      if (s.y > height + 10) s.y = -10;
     }
 
-    // Draw rich constellation connection network between particles
-    for (let i = 0; i < this.particles.length; i++) {
-      const p1 = this.particles[i];
-      for (let j = i + 1; j < this.particles.length; j++) {
-        const p2 = this.particles[j];
-        const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+    // Draw Constellation Lines (Gold & Starlight)
+    for (let i = 0; i < this.stars.length; i++) {
+      const s1 = this.stars[i];
+      for (let j = i + 1; j < this.stars.length; j++) {
+        const s2 = this.stars[j];
+        const dist = Math.hypot(s1.x - s2.x, s1.y - s2.y);
 
         if (dist < this.maxDistance) {
-          const alpha = (1 - dist / this.maxDistance) * 0.35;
+          const alpha = (1 - dist / this.maxDistance) * 0.38;
           this.ctx.beginPath();
-          this.ctx.moveTo(p1.x, p1.y);
-          this.ctx.lineTo(p2.x, p2.y);
+          this.ctx.moveTo(s1.x, s1.y);
+          this.ctx.lineTo(s2.x, s2.y);
           this.ctx.strokeStyle = `rgba(245, 158, 11, ${alpha})`;
-          this.ctx.lineWidth = dist < 70 ? 1.1 : 0.8;
+          this.ctx.lineWidth = dist < 65 ? 1.1 : 0.75;
           this.ctx.stroke();
 
-          // Subtle glowing triangular mesh fill for tightly clustered triplets
-          if (dist < 60 && j + 1 < this.particles.length) {
-            const p3 = this.particles[j + 1];
-            const dist3 = Math.hypot(p1.x - p3.x, p1.y - p3.y);
-            if (dist3 < 60) {
+          // Subtle constellation triangle mesh facets
+          if (dist < 55 && j + 1 < this.stars.length) {
+            const s3 = this.stars[j + 1];
+            const dist3 = Math.hypot(s1.x - s3.x, s1.y - s3.y);
+            if (dist3 < 55) {
               this.ctx.beginPath();
-              this.ctx.moveTo(p1.x, p1.y);
-              this.ctx.lineTo(p2.x, p2.y);
-              this.ctx.lineTo(p3.x, p3.y);
+              this.ctx.moveTo(s1.x, s1.y);
+              this.ctx.lineTo(s2.x, s2.y);
+              this.ctx.lineTo(s3.x, s3.y);
               this.ctx.closePath();
               this.ctx.fillStyle = 'rgba(245, 158, 11, 0.04)';
               this.ctx.fill();
@@ -332,16 +333,33 @@ export class InteractiveBgComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Draw glowing golden particles and hubs
-    for (let i = 0; i < this.particles.length; i++) {
-      const p = this.particles[i];
+    // Draw Shining Stars with Twinkle & Cross Sparkles
+    for (let i = 0; i < this.stars.length; i++) {
+      const s = this.stars[i];
+      const twinkle = Math.sin(this.tick * s.twinkleSpeed * 50 + s.phase);
+      const alpha = Math.min(1, Math.max(0.2, s.baseAlpha + twinkle * 0.25));
+
       this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-      this.ctx.fillStyle = `${p.color}${p.baseAlpha})`;
-      this.ctx.shadowBlur = 10;
-      this.ctx.shadowColor = 'rgba(245, 158, 11, 0.9)';
+      this.ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+      this.ctx.fillStyle = `rgba(${s.color}, ${alpha})`;
+      this.ctx.shadowBlur = s.isGlitter ? 12 : 7;
+      this.ctx.shadowColor = `rgba(${s.color}, 0.9)`;
       this.ctx.fill();
-      this.ctx.shadowBlur = 0; // reset
+
+      // For bright glitter stars, draw a 4-point starlight cross
+      if (s.isGlitter && alpha > 0.6) {
+        const spikeLen = s.radius * 2.8;
+        this.ctx.strokeStyle = `rgba(${s.color}, ${alpha * 0.65})`;
+        this.ctx.lineWidth = 0.8;
+        this.ctx.beginPath();
+        this.ctx.moveTo(s.x - spikeLen, s.y);
+        this.ctx.lineTo(s.x + spikeLen, s.y);
+        this.ctx.moveTo(s.x, s.y - spikeLen);
+        this.ctx.lineTo(s.x, s.y + spikeLen);
+        this.ctx.stroke();
+      }
+
+      this.ctx.shadowBlur = 0; // reset shadow
     }
 
     this.animationFrameId = requestAnimationFrame(this.animate);
