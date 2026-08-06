@@ -36,14 +36,14 @@ import { AuthService } from '../../core/services/auth.service';
         <!-- Right Side Actions -->
         <div class="navbar-actions">
           @if (!authService.isLoggedIn()) {
-            <a routerLink="/confirm-email" class="btn btn-ghost btn-sm">
-              ✉️ Doğrula
-            </a>
-            <a routerLink="/login" class="btn btn-secondary btn-sm">
+            <a routerLink="/login" class="btn btn-navy-outline btn-sm">
               🔐 Giriş Yap
             </a>
-            <a routerLink="/register" class="btn btn-primary btn-sm">
+            <a routerLink="/register" class="btn btn-navy-outline btn-sm">
               ✨ Kayıt Ol
+            </a>
+            <a routerLink="/confirm-email" class="btn btn-navy-outline btn-sm">
+              ✉️ Doğrula
             </a>
           } @else {
             <!-- User Menu Dropdown -->
@@ -206,6 +206,28 @@ import { AuthService } from '../../core/services/auth.service';
       display: flex;
       align-items: center;
       gap: 10px;
+    }
+
+    .btn-navy-outline {
+      background-color: #ffffff;
+      border: 1.5px solid #1e3a8a;
+      color: #1e3a8a;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(30, 58, 138, 0.08);
+      text-decoration: none;
+    }
+
+    .btn-navy-outline:hover {
+      background-color: #f0f5ff;
+      border-color: #1d4ed8;
+      color: #1d4ed8;
+      box-shadow: 0 4px 10px rgba(30, 58, 138, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .btn-navy-outline:active {
+      transform: translateY(0);
     }
 
     .btn-ghost {
