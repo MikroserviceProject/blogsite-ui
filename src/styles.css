@@ -96,6 +96,8 @@ a:hover {
   flex: 1;
   padding-top: 80px;
   padding-bottom: 60px;
+  position: relative;
+  z-index: 1;
 }
 
 /* Buttons */
@@ -222,12 +224,16 @@ a:hover {
 
 /* Cards */
 .card {
-  background: var(--bg-surface);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
   padding: 24px;
   transition: var(--transition);
+  position: relative;
+  z-index: 1;
 }
 
 .card:hover {
