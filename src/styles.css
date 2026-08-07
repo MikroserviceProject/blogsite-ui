@@ -61,6 +61,128 @@
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* 🌤️ Aydınlık Tema - klasik beyaz görünüm */
+:root.light-theme {
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --bg-muted: #e2e8f0;
+  --bg-input: #ffffff;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-light: rgba(79, 70, 229, 0.1);
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+
+  --border: rgba(15, 23, 42, 0.12);
+  --border-focus: #4f46e5;
+
+  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12);
+  --shadow-xl: 0 20px 45px rgba(15, 23, 42, 0.16);
+}
+
+:root.light-theme body {
+  background-color: #f8fafc;
+}
+
+:root.light-theme h1,
+:root.light-theme h2,
+:root.light-theme h3,
+:root.light-theme h4,
+:root.light-theme h5,
+:root.light-theme h6 {
+  color: #0f172a;
+}
+
+:root.light-theme a {
+  color: #4f46e5;
+}
+
+:root.light-theme a:hover {
+  color: #4338ca;
+}
+
+:root.light-theme .btn-navy-outline {
+  background: #ffffff;
+  color: #4f46e5;
+  border: 1.5px solid #4f46e5;
+}
+
+:root.light-theme .btn-navy-outline:hover:not(:disabled) {
+  background: #eef2ff;
+  border-color: #4338ca;
+  color: #4338ca;
+}
+
+:root.light-theme .card {
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 10px 25px -8px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+:root.light-theme .card:hover {
+  border-color: rgba(15, 23, 42, 0.18);
+  box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.16);
+}
+
+:root.light-theme .btn-secondary {
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+}
+
+:root.light-theme .btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: rgba(15, 23, 42, 0.2);
+}
+
+:root.light-theme .form-control {
+  border: 1.5px solid rgba(15, 23, 42, 0.14);
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+:root.light-theme .form-control::placeholder {
+  color: #94a3b8;
+}
+
+:root.light-theme .modal-backdrop {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+:root.light-theme .modal-dialog {
+  background: #ffffff;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2);
+  color: #0f172a;
+}
+
+:root.light-theme .modal-title {
+  color: #0f172a;
+}
+
+:root.light-theme ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+:root.light-theme ::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.15);
+}
+
+:root.light-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.28);
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;

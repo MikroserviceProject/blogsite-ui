@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-navbar',
@@ -38,6 +39,15 @@ import { AuthService } from '../../core/services/auth.service';
 
         <!-- Right Side Actions -->
         <div class="navbar-actions">
+          <button
+            class="theme-toggle"
+            [class.is-light]="themeService.theme() === 'light'"
+            (click)="themeService.toggle()"
+            [attr.aria-label]="themeService.theme() === 'light' ? 'Koyu temaya geç' : 'Aydınlık temaya geç'"
+          >
+            <span class="theme-toggle-knob">{{ themeService.theme() === 'light' ? '☀️' : '🌙' }}</span>
+          </button>
+
           @if (!authService.isLoggedIn()) {
             <a routerLink="/login" class="btn btn-navy-outline btn-sm">
               🔐 Giriş Yap
@@ -46,6 +56,11 @@ import { AuthService } from '../../core/services/auth.service';
               ✨ Kayıt Ol
             </a>
           } @else {
+            @if (authService.isAuthor() || authService.isAdmin()) {
+              <a routerLink="/create-post" class="btn btn-primary btn-sm">
+                <span>✍️</span> Gönderi Oluştur
+              </a>
+            }
             <!-- User Menu Dropdown -->
             <div class="user-menu-wrapper">
               <button class="user-menu-btn" (click)="toggleDropdown()">
@@ -80,6 +95,14 @@ import { AuthService } from '../../core/services/auth.service';
                   <a routerLink="/profile" class="dropdown-item" (click)="closeDropdown()">
                     <span>👤</span> Profilim & Hesap Ayarları
                   </a>
+                  @if (authService.isAuthor() || authService.isAdmin()) {
+                    <a routerLink="/create-post" class="dropdown-item" (click)="closeDropdown()">
+                      <span>✍️</span> Yeni Gönderi Oluştur
+                    </a>
+                    <a routerLink="/taslaklarim" class="dropdown-item" (click)="closeDropdown()">
+                      <span>📝</span> Taslaklarım
+                    </a>
+                  }
                   @if (authService.isAdmin()) {
                     <a routerLink="/admin/author-approvals" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
                       <span>👑</span> Yazar Başvuru Yönetimi
@@ -111,6 +134,46 @@ import { AuthService } from '../../core/services/auth.service';
       z-index: 900;
       display: flex;
       align-items: center;
+    }
+
+    :host-context(.light-theme) .navbar-header {
+      background: #ffffff;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+    }
+
+    .theme-toggle {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      border-radius: var(--radius-full);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      padding: 2px;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .theme-toggle-knob {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      line-height: 1;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateX(0);
+    }
+
+    .theme-toggle.is-light .theme-toggle-knob {
+      transform: translateX(24px);
     }
 
     .navbar-container {
@@ -154,6 +217,10 @@ import { AuthService } from '../../core/services/auth.service';
       letter-spacing: -0.5px;
     }
 
+    :host-context(.light-theme) .brand-name {
+      color: #4f46e5;
+    }
+
     .brand-badge {
       font-size: 11px;
       font-weight: 700;
@@ -188,6 +255,15 @@ import { AuthService } from '../../core/services/auth.service';
 
     .nav-link:hover, .nav-active {
       color: #ffffff;
+    }
+
+    :host-context(.light-theme) .nav-link {
+      color: #475569;
+    }
+
+    :host-context(.light-theme) .nav-link:hover,
+    :host-context(.light-theme) .nav-active {
+      color: #0f172a;
     }
 
     .nav-unconfirmed {
@@ -261,6 +337,15 @@ import { AuthService } from '../../core/services/auth.service';
       transition: var(--transition);
     }
 
+    :host-context(.light-theme) .user-menu-btn {
+      background: #f1f5f9;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+    }
+
+    :host-context(.light-theme) .user-menu-btn:hover {
+      background: #e2e8f0;
+    }
+
     .user-menu-btn:hover {
       background: rgba(255, 255, 255, 0.18);
       border-color: #f59e0b;
@@ -301,6 +386,10 @@ import { AuthService } from '../../core/services/auth.service';
       font-size: 13px;
       font-weight: 700;
       color: #ffffff;
+    }
+
+    :host-context(.light-theme) .user-name {
+      color: #0f172a;
     }
 
     .dropdown-chevron {
@@ -381,6 +470,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class NavbarComponent {
   authService = inject(AuthService);
+  themeService = inject(ThemeService);
   isDropdownOpen = signal<boolean>(false);
 
   toggleDropdown() {

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -257,7 +257,7 @@ import { BlogService } from '../../../core/services/blog.service';
     }
   `]
 })
-export class PostCreateComponent {
+export class PostCreateComponent implements OnDestroy {
   authService = inject(AuthService);
   toastService = inject(ToastService);
   blogService = inject(BlogService);
@@ -272,6 +272,7 @@ export class PostCreateComponent {
 
   submitting = signal<boolean>(false);
   submitError = signal<string | null>(null);
+  private saved = false;
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -309,6 +310,7 @@ export class PostCreateComponent {
       photo: this.selectedFile()
     }).subscribe({
       next: () => {
+        this.saved = true;
         this.submitting.set(false);
         if (status === 'Published') {
           this.toastService.success('Yazı Yayında! 🎉', 'Yazınız başarıyla yayınlandı ve listelendi.');
@@ -322,5 +324,22 @@ export class PostCreateComponent {
         this.submitError.set('Yazı kaydedilemedi. Backend\'in çalıştığından emin olun.');
       }
     });
+  }
+
+  ngOnDestroy() {
+    const hasContent = this.title.trim().length > 0 || this.content.trim().length > 0;
+    if (this.saved || !hasContent) {
+      return;
+    }
+
+    const type: 'Blog' | 'Koseyazisi' = this.selectedFile() ? 'Blog' : 'Koseyazisi';
+
+    this.blogService.create({
+      title: this.title || 'Başlıksız Taslak',
+      content: this.content,
+      type: type,
+      status: 'Draft',
+      photo: this.selectedFile()
+    }).subscribe();
   }
 }

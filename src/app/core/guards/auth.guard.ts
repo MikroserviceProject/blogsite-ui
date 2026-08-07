@@ -28,7 +28,7 @@ export const authorGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  if (authService.isAuthor()) {
+  if (authService.isAuthor() || authService.isAdmin()) {
     return true;
   }
 

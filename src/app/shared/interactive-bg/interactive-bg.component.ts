@@ -61,6 +61,16 @@ interface Star {
       background: #060b18;
     }
 
+    :host-context(.light-theme) .starry-sky-wrapper {
+      background: #f8fafc;
+    }
+
+    :host-context(.light-theme) .sky-cosmic-glow,
+    :host-context(.light-theme) .star-canvas,
+    :host-context(.light-theme) .starlight-cursor-glow {
+      display: none;
+    }
+
     /* Derin Lacivert Gece Gökyüzü Katmanı (Sıfır Morluk, Asil Lacivert) */
     .sky-cosmic-glow {
       position: absolute;

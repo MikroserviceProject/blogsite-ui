@@ -42,4 +42,8 @@ export class BlogService {
 
         return this.http.post<BlogPost>(this.apiUrl, formData);
     }
+
+    delete(id: number): Observable<void> {
+        return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    }
 }

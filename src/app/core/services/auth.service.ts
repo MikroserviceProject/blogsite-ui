@@ -23,7 +23,7 @@ import {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private apiUrl = 'http://localhost:5001/api/auth';
+  private apiUrl = 'https://localhost:7235/api/auth';
 
   private tokenSignal = signal<string | null>(localStorage.getItem('lumina_auth_token'));
   currentUser = signal<User | null>(null);

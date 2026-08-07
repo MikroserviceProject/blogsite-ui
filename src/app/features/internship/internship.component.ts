@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BlogPost } from '../../core/models/blog.model';
@@ -15,24 +15,10 @@ import { BlogService } from '../../core/services/blog.service';
         <aside class="side-column">
           <h4 class="side-title">📄 Bloglar</h4>
           @if (blogPosts().length > 0) {
-            <div class="scroll-viewport">
-              <div class="scroll-track">
-                @for (post of blogPosts(); track $index) {
+            <div class="scroll-viewport" #blogViewport (mousemove)="onBlogMouseMove($event)">
+              <div class="scroll-track" #blogTrack [style.transform]="'translateY(' + blogScrollOffset() + 'px)'">
+                @for (post of blogPosts(); track post.id) {
                   <a [routerLink]="['/post', post.id]" class="mini-card">
-                    @if (post.photoUrl) {
-                      <img [src]="photoSrc(post.photoUrl)" [alt]="post.title" class="mini-cover" />
-                    } @else {
-                      <div class="mini-cover mini-cover-placeholder">📄</div>
-                    }
-                    <div class="mini-overlay">
-                      <span class="mini-title">{{ post.title }}</span>
-                      <span class="mini-excerpt">{{ excerptPreview(post.content) }}</span>
-                    </div>
-                    <span class="mini-read-circle">Oku</span>
-                  </a>
-                }
-                @for (post of blogPosts(); track $index) {
-                  <a [routerLink]="['/post', post.id]" class="mini-card" aria-hidden="true">
                     @if (post.photoUrl) {
                       <img [src]="photoSrc(post.photoUrl)" [alt]="post.title" class="mini-cover" />
                     } @else {
@@ -109,18 +95,10 @@ import { BlogService } from '../../core/services/blog.service';
         <aside class="side-column">
           <h4 class="side-title">✍️ Köşe Yazıları</h4>
           @if (columnPosts().length > 0) {
-            <div class="scroll-viewport">
-              <div class="scroll-track scroll-track-reverse">
-                @for (post of columnPosts(); track $index) {
+            <div class="scroll-viewport" #columnViewport (mousemove)="onColumnMouseMove($event)">
+              <div class="scroll-track" #columnTrack [style.transform]="'translateY(' + columnScrollOffset() + 'px)'">
+                @for (post of columnPosts(); track post.id) {
                   <a [routerLink]="['/post', post.id]" class="mini-card mini-card-column">
-                    <span class="mini-quote-icon">❝</span>
-                    <span class="mini-title">{{ post.title }}</span>
-                    <span class="mini-excerpt">{{ excerptPreviewLong(post.content) }}</span>
-                    <span class="mini-read-circle">Oku</span>
-                  </a>
-                }
-                @for (post of columnPosts(); track $index) {
-                  <a [routerLink]="['/post', post.id]" class="mini-card mini-card-column" aria-hidden="true">
                     <span class="mini-quote-icon">❝</span>
                     <span class="mini-title">{{ post.title }}</span>
                     <span class="mini-excerpt">{{ excerptPreviewLong(post.content) }}</span>
@@ -197,21 +175,12 @@ import { BlogService } from '../../core/services/blog.service';
       display: flex;
       flex-direction: column;
       gap: 14px;
-      animation: scrollUp 25s linear infinite;
+      transition: transform 0.15s ease-out;
+      will-change: transform;
     }
 
-    .scroll-track-reverse {
-      animation-duration: 32s;
-      animation-direction: reverse;
-    }
-
-    .scroll-viewport:hover .scroll-track {
-      animation-play-state: paused;
-    }
-
-    @keyframes scrollUp {
-      from { transform: translateY(0); }
-      to { transform: translateY(-50%); }
+    .scroll-viewport {
+      cursor: ns-resize;
     }
 
     .mini-card {
@@ -393,8 +362,16 @@ import { BlogService } from '../../core/services/blog.service';
 export class InternshipComponent implements OnInit {
   private blogService = inject(BlogService);
 
+  @ViewChild('blogViewport') blogViewportRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('blogTrack') blogTrackRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('columnViewport') columnViewportRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('columnTrack') columnTrackRef?: ElementRef<HTMLDivElement>;
+
   blogPosts = signal<BlogPost[]>([]);
   columnPosts = signal<BlogPost[]>([]);
+
+  blogScrollOffset = signal(0);
+  columnScrollOffset = signal(0);
 
   ngOnInit() {
     this.blogService.getAll('Published', 'Blog').subscribe({
@@ -418,5 +395,36 @@ export class InternshipComponent implements OnInit {
 
   excerptPreviewLong(content: string): string {
     return content.length > 160 ? content.slice(0, 160) + '...' : content;
+  }
+
+  onBlogMouseMove(event: MouseEvent) {
+    this.updateScrollOffset(event, this.blogViewportRef, this.blogTrackRef, this.blogScrollOffset);
+  }
+
+  onColumnMouseMove(event: MouseEvent) {
+    this.updateScrollOffset(event, this.columnViewportRef, this.columnTrackRef, this.columnScrollOffset);
+  }
+
+  private updateScrollOffset(
+    event: MouseEvent,
+    viewportRef: ElementRef<HTMLDivElement> | undefined,
+    trackRef: ElementRef<HTMLDivElement> | undefined,
+    offsetSignal: ReturnType<typeof signal<number>>
+  ) {
+    if (!viewportRef || !trackRef) return;
+
+    const viewportRect = viewportRef.nativeElement.getBoundingClientRect();
+    const trackHeight = trackRef.nativeElement.scrollHeight;
+    const viewportHeight = viewportRect.height;
+    const maxScroll = Math.max(0, trackHeight - viewportHeight);
+
+    if (maxScroll === 0) {
+      offsetSignal.set(0);
+      return;
+    }
+
+    const relativeY = (event.clientY - viewportRect.top) / viewportHeight;
+    const clamped = Math.min(1, Math.max(0, relativeY));
+    offsetSignal.set(-clamped * maxScroll);
   }
 }
