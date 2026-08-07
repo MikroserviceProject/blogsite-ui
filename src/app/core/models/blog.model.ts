@@ -19,7 +19,7 @@ export interface AdminDeletePostRequest {
 export interface UpdatePostRequest {
   title: string;
   content: string;
-  type: 'Blog' | 'Koseyazisi';
+  type?: 'Blog' | 'Koseyazisi';
   status: 'Draft' | 'Published';
   photo?: File | null;
 }
