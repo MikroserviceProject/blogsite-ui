@@ -26,14 +26,19 @@ import { ThemeService } from '../../core/services/theme.service';
               👤 Hesabım
             </a>
             @if (authService.isAdmin()) {
+              <a routerLink="/admin/users" routerLinkActive="nav-active" class="nav-link nav-admin">
+                👥 Kullanıcı & İçerik Yönetimi
+              </a>
               <a routerLink="/admin/author-approvals" routerLinkActive="nav-active" class="nav-link nav-admin">
                 👑 Yazar Başvuruları
               </a>
             }
           }
-          <a routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Ana Sayfa</a>
-          <a routerLink="/bloglar" routerLinkActive="nav-active" class="nav-link">Bloglar</a>
-          <a routerLink="/kose-yazilari" routerLinkActive="nav-active" class="nav-link">Köşe Yazıları</a>
+          @if (!authService.isBanned()) {
+            <a routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Ana Sayfa</a>
+            <a routerLink="/bloglar" routerLinkActive="nav-active" class="nav-link">Bloglar</a>
+            <a routerLink="/kose-yazilari" routerLinkActive="nav-active" class="nav-link">Köşe Yazıları</a>
+          }
         </nav>
 
         <!-- Right Side Actions -->
@@ -53,7 +58,7 @@ import { ThemeService } from '../../core/services/theme.service';
               ✨ Kayıt Ol
             </a>
           } @else {
-            @if (authService.isAuthor() || authService.isAdmin()) {
+            @if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin())) {
               <a routerLink="/create-post" class="btn-create-post">
                 <span>✍️</span> Gönderi Oluştur
               </a>
@@ -99,15 +104,15 @@ import { ThemeService } from '../../core/services/theme.service';
                   <a routerLink="/profile" class="dropdown-item" (click)="closeDropdown()">
                     <span>👤</span> Profilim & Hesap Ayarları
                   </a>
-                  @if (authService.isAuthor() || authService.isAdmin()) {
+                  @if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin())) {
                     <a routerLink="/create-post" class="dropdown-item dropdown-item-cta" (click)="closeDropdown()">
                       <span>✍️</span> Yeni Gönderi Oluştur
                     </a>
-                    <a routerLink="/taslaklarim" class="dropdown-item" (click)="closeDropdown()">
-                      <span>📝</span> Taslaklarım
-                    </a>
                   }
                   @if (authService.isAdmin()) {
+                    <a routerLink="/admin/users" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
+                      <span>👥</span> Kullanıcı & İçerik Yönetimi
+                    </a>
                     <a routerLink="/admin/author-approvals" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
                       <span>👑</span> Yazar Başvuru Yönetimi
                     </a>

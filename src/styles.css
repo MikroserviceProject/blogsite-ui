@@ -154,13 +154,33 @@
 }
 
 :root.light-theme .form-control {
-  border: 1.5px solid rgba(15, 23, 42, 0.14);
+  border: 1.5px solid rgba(15, 23, 42, 0.2);
   background-color: #ffffff;
   color: #0f172a;
 }
 
+:root.light-theme .form-control:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  background-color: #ffffff;
+}
+
 :root.light-theme .form-label {
-  color: #0f172a;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+:root.light-theme .form-label-sub {
+  color: #334155;
+  font-weight: 600;
+}
+
+:root.light-theme .form-hint {
+  color: #475569;
+}
+
+:root.light-theme .check-text {
+  color: #1e293b;
 }
 
 :root.light-theme .form-control::placeholder {
@@ -168,13 +188,14 @@
 }
 
 :root.light-theme .modal-backdrop {
-  background: rgba(15, 23, 42, 0.4);
+  background: rgba(15, 23, 42, 0.6);
 }
 
-:root.light-theme .modal-dialog {
+:root.light-theme .modal-dialog,
+:root.light-theme .modal-card {
   background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.2);
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25);
   color: #0f172a;
 }
 

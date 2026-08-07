@@ -476,6 +476,7 @@ export class LoginComponent implements OnInit {
   ngOnInit() {
     this.emailOrUsername = '';
     this.password = '';
+    this.authService.clearSessionWarning();
   }
 
   togglePassword() {

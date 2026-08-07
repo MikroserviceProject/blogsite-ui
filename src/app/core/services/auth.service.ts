@@ -14,7 +14,12 @@ import {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   ChangePasswordRequest,
-  AuthorApplication
+  AuthorApplication,
+  AdminUserDto,
+  BanUserRequest,
+  AdminSendNotificationRequest,
+  UserNotification,
+  ConfirmAccountDeletionRequest
 } from '../models/auth.model';
 
 @Injectable({
@@ -25,8 +30,17 @@ export class AuthService {
   private router = inject(Router);
   private apiUrl = 'https://localhost:7235/api/auth';
 
+  private getInitialUser(): User | null {
+    try {
+      const userJson = localStorage.getItem('lumina_auth_user');
+      return userJson ? JSON.parse(userJson) : null;
+    } catch {
+      return null;
+    }
+  }
+
   private tokenSignal = signal<string | null>(localStorage.getItem('lumina_auth_token'));
-  currentUser = signal<User | null>(null);
+  currentUser = signal<User | null>(this.getInitialUser());
   sessionWarning = signal<string | null>(null);
 
   // Computed state
@@ -44,6 +58,7 @@ export class AuthService {
   isAdmin = computed(() => this.currentUser()?.role === 'Admin');
   isAuthor = computed(() => this.currentUser()?.role === 'Author');
   isReader = computed(() => this.currentUser()?.role === 'User' || !this.currentUser()?.role);
+  isBanned = computed(() => this.currentUser()?.isBanned === true);
 
   // Global Modals / State
   pendingConfirmEmail = signal<string>('');
@@ -51,11 +66,16 @@ export class AuthService {
   private sessionCheckSub: Subscription | null = null;
 
   constructor() {
-    // Sayfa ilk yüklendiğinde hafızada token varsa profili otomatik getir ve oturum takibini başlat
+    // Sayfa ilk yüklendiğinde / yenilendiğinde hafızada token varsa profili arka planda tazele ve oturum takibini başlat
     if (this.tokenSignal()) {
       this.getMe().subscribe({
         next: () => this.startSessionHeartbeat(),
-        error: () => this.handleSessionTerminated('Oturumunuz geçerli değil veya sonlandırılmış.')
+        error: (err) => {
+          // Token geçersizse sessizce temizle, ilk açılışta uyarı basma
+          if (err?.status === 401) {
+            this.logoutQuietly();
+          }
+        }
       });
     }
   }
@@ -64,15 +84,15 @@ export class AuthService {
     return this.tokenSignal();
   }
 
-  // 5 saniyede bir oturumun hala geçerli olup olmadığını (başka cihazdan girilip girilmediğini) kontrol eder
+  // 15 saniyede bir oturumun hala geçerli olup olmadığını (başka cihazdan girilip girilmediğini) kontrol eder
   private startSessionHeartbeat() {
     this.stopSessionHeartbeat();
-    this.sessionCheckSub = interval(5000).subscribe(() => {
+    this.sessionCheckSub = interval(15000).subscribe(() => {
       if (this.tokenSignal()) {
         this.http.get<ApiResponse<boolean>>(`${this.apiUrl}/validate-session`).subscribe({
           error: (err) => {
             if (err.status === 401) {
-              const msg = err.error?.message || 'Hesabınıza başka bir sekmeden veya cihazdan giriş yapıldığı için bu oturumunuz sonlandırıldı.';
+              const msg = err.error?.message || 'Hesabınıza başka bir sekmeden veya cihazdan giriş yapıldığı için oturumunuz sonlandırıldı.';
               this.handleSessionTerminated(msg);
             }
           }
@@ -88,12 +108,19 @@ export class AuthService {
     }
   }
 
-  handleSessionTerminated(message: string) {
+  logoutQuietly() {
     this.stopSessionHeartbeat();
     localStorage.removeItem('lumina_auth_token');
+    localStorage.removeItem('lumina_auth_user');
     this.tokenSignal.set(null);
     this.currentUser.set(null);
-    this.sessionWarning.set(message);
+  }
+
+  handleSessionTerminated(message?: string) {
+    this.logoutQuietly();
+    if (message) {
+      this.sessionWarning.set(message);
+    }
     this.router.navigate(['/login']);
   }
 
@@ -138,6 +165,7 @@ export class AuthService {
       tap(res => {
         if (res.success && res.data) {
           this.currentUser.set(res.data);
+          localStorage.setItem('lumina_auth_user', JSON.stringify(res.data));
         }
       })
     );
@@ -148,6 +176,7 @@ export class AuthService {
       tap(res => {
         if (res.success && res.data) {
           this.currentUser.set(res.data);
+          localStorage.setItem('lumina_auth_user', JSON.stringify(res.data));
           if (!res.data.isEmailConfirmed) {
             this.pendingConfirmEmail.set(res.data.email);
           }
@@ -163,6 +192,7 @@ export class AuthService {
       tap(res => {
         if (res.success && res.data) {
           this.currentUser.set(res.data);
+          localStorage.setItem('lumina_auth_user', JSON.stringify(res.data));
         }
       })
     );
@@ -180,8 +210,12 @@ export class AuthService {
     return `http://localhost:5001${path}`;
   }
 
-  resendConfirmation(email: string): Observable<ApiResponse<boolean>> {
+  resendEmailConfirmation(email: string): Observable<ApiResponse<boolean>> {
     return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/resend-confirmation`, { email });
+  }
+
+  resendConfirmation(email: string): Observable<ApiResponse<boolean>> {
+    return this.resendEmailConfirmation(email);
   }
 
   forgotPassword(request: ForgotPasswordRequest): Observable<ApiResponse<boolean>> {
@@ -213,6 +247,41 @@ export class AuthService {
     return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/admin/reject-author/${id}`, { reason });
   }
 
+  // Admin Kullanıcı Yönetimi & Moderasyon
+  getAllUsers(): Observable<ApiResponse<AdminUserDto[]>> {
+    return this.http.get<ApiResponse<AdminUserDto[]>>(`${this.apiUrl}/admin/users`);
+  }
+
+  banUser(request: BanUserRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/admin/ban-user`, request);
+  }
+
+  unbanUser(userId: string): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/admin/unban-user/${userId}`, {});
+  }
+
+  sendAdminNotification(request: AdminSendNotificationRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/admin/send-notification`, request);
+  }
+
+  // Kullanıcı Bildirimleri
+  getUserNotifications(): Observable<ApiResponse<UserNotification[]>> {
+    return this.http.get<ApiResponse<UserNotification[]>>(`${this.apiUrl}/notifications`);
+  }
+
+  markNotificationAsRead(id: string): Observable<ApiResponse<boolean>> {
+    return this.http.put<ApiResponse<boolean>>(`${this.apiUrl}/notifications/${id}/read`, {});
+  }
+
+  // Hesap Silme İşlemleri (Tüm kullanıcılar ve Banlananlar için)
+  requestAccountDeletion(): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/request-account-deletion`, {});
+  }
+
+  confirmAccountDeletion(request: ConfirmAccountDeletionRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/confirm-account-deletion`, request);
+  }
+
   logout() {
     const token = this.tokenSignal();
     if (token) {
@@ -221,16 +290,15 @@ export class AuthService {
         error: () => {}
       });
     }
-    this.stopSessionHeartbeat();
-    localStorage.removeItem('lumina_auth_token');
-    this.tokenSignal.set(null);
-    this.currentUser.set(null);
+    this.logoutQuietly();
     this.router.navigate(['/login']);
   }
 
   private setSession(token: string, user: User) {
     localStorage.setItem('lumina_auth_token', token);
+    localStorage.setItem('lumina_auth_user', JSON.stringify(user));
     this.tokenSignal.set(token);
     this.currentUser.set(user);
   }
 }
+

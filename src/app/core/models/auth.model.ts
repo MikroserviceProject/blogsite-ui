@@ -16,8 +16,55 @@ export interface User {
   authorApprovalStatus?: 'Pending' | 'Approved' | 'Rejected';
   authorApplicationDate?: string;
   isEmailConfirmed: boolean;
+  isBanned?: boolean;
+  bannedUntil?: string | null;
+  banReason?: string | null;
   createdAt: string;
   lastLoginAt?: string;
+}
+
+export interface AdminUserDto {
+  id: string;
+  username: string;
+  email: string;
+  role: 'Admin' | 'Author' | 'User';
+  profilePictureUrl?: string;
+  university?: string;
+  cvUrl?: string;
+  authorApprovalStatus?: 'Pending' | 'Approved' | 'Rejected';
+  authorApplicationDate?: string;
+  isEmailConfirmed: boolean;
+  isBanned: boolean;
+  bannedUntil?: string | null;
+  banReason?: string | null;
+  createdAt: string;
+  lastLoginAt?: string;
+}
+
+export interface BanUserRequest {
+  userId: string;
+  isBanned?: boolean;
+  durationMinutes?: number | null;
+  bannedUntil?: string | null;
+  banReason: string;
+  reason?: string;
+}
+
+export interface AdminSendNotificationRequest {
+  userId: string;
+  title: string;
+  message: string;
+  type?: 'Warning' | 'Info' | 'PostDeleted' | 'AccountBanned';
+}
+
+export interface UserNotification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  createdAt: string;
 }
 
 export interface RegisterRequest {
@@ -85,3 +132,9 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
 }
+
+export interface ConfirmAccountDeletionRequest {
+  email?: string;
+  token: string;
+}
+
