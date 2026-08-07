@@ -123,6 +123,13 @@
   color: #4338ca;
 }
 
+:root.light-theme .badge-admin,
+:root.light-theme .badge-author {
+  background: rgba(217, 119, 6, 0.14);
+  color: #d97706;
+  border: 1px solid rgba(217, 119, 6, 0.35);
+}
+
 :root.light-theme .card {
   background: #ffffff;
   backdrop-filter: none;
@@ -149,6 +156,10 @@
 :root.light-theme .form-control {
   border: 1.5px solid rgba(15, 23, 42, 0.14);
   background-color: #ffffff;
+  color: #0f172a;
+}
+
+:root.light-theme .form-label {
   color: #0f172a;
 }
 
@@ -435,15 +446,15 @@ a:hover {
 }
 
 .badge-admin {
-  background: rgba(219, 39, 119, 0.2);
-  color: #f472b6;
-  border: 1px solid rgba(244, 114, 182, 0.4);
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.4);
 }
 
 .badge-author {
-  background: rgba(37, 99, 235, 0.25);
-  color: #93c5fd;
-  border: 1px solid rgba(147, 197, 253, 0.4);
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .badge-user {

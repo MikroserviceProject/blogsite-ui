@@ -51,7 +51,7 @@ import { ToastService } from '../../../core/services/toast.service';
                   <span class="draft-date">{{ draft.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
                 </div>
                 <div class="draft-actions">
-                  <a [routerLink]="['/post', draft.id]" class="btn btn-secondary btn-sm">Görüntüle</a>
+                  <a [routerLink]="['/create-post', draft.id]" class="btn btn-secondary btn-sm">Düzenle</a>
                   <button class="btn btn-danger btn-sm" (click)="deleteDraft(draft.id)">Sil</button>
                 </div>
               </div>

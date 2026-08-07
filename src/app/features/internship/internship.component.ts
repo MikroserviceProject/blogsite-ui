@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, OnInit, AfterViewInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BlogPost } from '../../core/models/blog.model';
@@ -15,8 +15,8 @@ import { BlogService } from '../../core/services/blog.service';
         <aside class="side-column">
           <h4 class="side-title">📄 Bloglar</h4>
           @if (blogPosts().length > 0) {
-            <div class="scroll-viewport" #blogViewport (mousemove)="onBlogMouseMove($event)">
-              <div class="scroll-track" #blogTrack [style.transform]="'translateY(' + blogScrollOffset() + 'px)'">
+            <div class="scroll-viewport" #blogViewport (wheel)="onBlogWheel()">
+              <div class="scroll-track">
                 @for (post of blogPosts(); track post.id) {
                   <a [routerLink]="['/post', post.id]" class="mini-card">
                     @if (post.photoUrl) {
@@ -95,8 +95,8 @@ import { BlogService } from '../../core/services/blog.service';
         <aside class="side-column">
           <h4 class="side-title">✍️ Köşe Yazıları</h4>
           @if (columnPosts().length > 0) {
-            <div class="scroll-viewport" #columnViewport (mousemove)="onColumnMouseMove($event)">
-              <div class="scroll-track" #columnTrack [style.transform]="'translateY(' + columnScrollOffset() + 'px)'">
+            <div class="scroll-viewport" #columnViewport (wheel)="onColumnWheel()">
+              <div class="scroll-track">
                 @for (post of columnPosts(); track post.id) {
                   <a [routerLink]="['/post', post.id]" class="mini-card mini-card-column">
                     <span class="mini-quote-icon">❝</span>
@@ -159,10 +159,18 @@ import { BlogService } from '../../core/services/blog.service';
 
     .scroll-viewport {
       height: 65vh;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       position: relative;
       -webkit-mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
       mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      scroll-behavior: smooth;
+    }
+
+    .scroll-viewport::-webkit-scrollbar {
+      display: none;
     }
 
     @media (max-width: 980px) {
@@ -175,12 +183,6 @@ import { BlogService } from '../../core/services/blog.service';
       display: flex;
       flex-direction: column;
       gap: 14px;
-      transition: transform 0.15s ease-out;
-      will-change: transform;
-    }
-
-    .scroll-viewport {
-      cursor: ns-resize;
     }
 
     .mini-card {
@@ -359,19 +361,22 @@ import { BlogService } from '../../core/services/blog.service';
     }
   `]
 })
-export class InternshipComponent implements OnInit {
+export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
   private blogService = inject(BlogService);
 
   @ViewChild('blogViewport') blogViewportRef?: ElementRef<HTMLDivElement>;
-  @ViewChild('blogTrack') blogTrackRef?: ElementRef<HTMLDivElement>;
   @ViewChild('columnViewport') columnViewportRef?: ElementRef<HTMLDivElement>;
-  @ViewChild('columnTrack') columnTrackRef?: ElementRef<HTMLDivElement>;
 
   blogPosts = signal<BlogPost[]>([]);
   columnPosts = signal<BlogPost[]>([]);
 
-  blogScrollOffset = signal(0);
-  columnScrollOffset = signal(0);
+  private blogPaused = false;
+  private columnPaused = false;
+  private blogResumeTimeout?: ReturnType<typeof setTimeout>;
+  private columnResumeTimeout?: ReturnType<typeof setTimeout>;
+  private blogRafId?: number;
+  private columnRafId?: number;
+  private columnInitialized = false;
 
   ngOnInit() {
     this.blogService.getAll('Published', 'Blog').subscribe({
@@ -383,6 +388,18 @@ export class InternshipComponent implements OnInit {
       next: (posts) => this.columnPosts.set(posts),
       error: () => this.columnPosts.set([])
     });
+  }
+
+  ngAfterViewInit() {
+    this.blogRafId = requestAnimationFrame(() => this.autoScrollStep('blog'));
+    this.columnRafId = requestAnimationFrame(() => this.autoScrollStep('column'));
+  }
+
+  ngOnDestroy() {
+    if (this.blogRafId) cancelAnimationFrame(this.blogRafId);
+    if (this.columnRafId) cancelAnimationFrame(this.columnRafId);
+    clearTimeout(this.blogResumeTimeout);
+    clearTimeout(this.columnResumeTimeout);
   }
 
   photoSrc(photoUrl: string): string {
@@ -397,34 +414,48 @@ export class InternshipComponent implements OnInit {
     return content.length > 160 ? content.slice(0, 160) + '...' : content;
   }
 
-  onBlogMouseMove(event: MouseEvent) {
-    this.updateScrollOffset(event, this.blogViewportRef, this.blogTrackRef, this.blogScrollOffset);
+  onBlogWheel() {
+    this.blogPaused = true;
+    clearTimeout(this.blogResumeTimeout);
+    this.blogResumeTimeout = setTimeout(() => { this.blogPaused = false; }, 1800);
   }
 
-  onColumnMouseMove(event: MouseEvent) {
-    this.updateScrollOffset(event, this.columnViewportRef, this.columnTrackRef, this.columnScrollOffset);
+  onColumnWheel() {
+    this.columnPaused = true;
+    clearTimeout(this.columnResumeTimeout);
+    this.columnResumeTimeout = setTimeout(() => { this.columnPaused = false; }, 1800);
   }
 
-  private updateScrollOffset(
-    event: MouseEvent,
-    viewportRef: ElementRef<HTMLDivElement> | undefined,
-    trackRef: ElementRef<HTMLDivElement> | undefined,
-    offsetSignal: ReturnType<typeof signal<number>>
-  ) {
-    if (!viewportRef || !trackRef) return;
+  private autoScrollStep(which: 'blog' | 'column') {
+    const viewportRef = which === 'blog' ? this.blogViewportRef : this.columnViewportRef;
+    const paused = which === 'blog' ? this.blogPaused : this.columnPaused;
+    const speed = which === 'blog' ? 0.7 : 0.55;
 
-    const viewportRect = viewportRef.nativeElement.getBoundingClientRect();
-    const trackHeight = trackRef.nativeElement.scrollHeight;
-    const viewportHeight = viewportRect.height;
-    const maxScroll = Math.max(0, trackHeight - viewportHeight);
+    if (viewportRef && !paused) {
+      const el = viewportRef.nativeElement;
+      const maxScroll = el.scrollHeight - el.clientHeight;
 
-    if (maxScroll === 0) {
-      offsetSignal.set(0);
-      return;
+      if (maxScroll > 0) {
+        if (which === 'column') {
+          if (!this.columnInitialized) {
+            el.scrollTop = maxScroll;
+            this.columnInitialized = true;
+          } else {
+            el.scrollTop -= speed;
+            if (el.scrollTop <= 0) {
+              el.scrollTop = maxScroll;
+            }
+          }
+        } else {
+          el.scrollTop += speed;
+          if (el.scrollTop >= maxScroll) {
+            el.scrollTop = 0;
+          }
+        }
+      }
     }
 
-    const relativeY = (event.clientY - viewportRect.top) / viewportHeight;
-    const clamped = Math.min(1, Math.max(0, relativeY));
-    offsetSignal.set(-clamped * maxScroll);
+    const rafId = requestAnimationFrame(() => this.autoScrollStep(which));
+    if (which === 'blog') this.blogRafId = rafId; else this.columnRafId = rafId;
   }
 }

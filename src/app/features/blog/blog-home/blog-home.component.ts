@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { BlogPost } from '../../../core/models/blog.model';
-import { AuthService } from '../../../core/services/auth.service';
 import { BlogService } from '../../../core/services/blog.service';
 
 @Component({
@@ -51,11 +50,6 @@ import { BlogService } from '../../../core/services/blog.service';
           <h2 class="section-title">{{ fixedType() === 'Koseyazisi' ? 'Tüm Köşe Yazıları' : 'Tüm Bloglar' }}</h2>
           <p class="section-subtitle">Toplam {{ filteredPosts().length }} yayın bulundu</p>
         </div>
-        @if (authService.isAuthor()) {
-          <a routerLink="/create-post" class="btn btn-primary btn-sm">
-            <span>✍️</span> Yeni Yazı Ekle
-          </a>
-        }
       </div>
 
       <!-- Loading state -->
@@ -94,11 +88,13 @@ import { BlogService } from '../../../core/services/blog.service';
                         {{ post.type === 'Koseyazisi' ? '✍️ Köşe Yazısı' : '📄 Blog' }}
                       </span>
                     }
-                    <span class="post-category">{{ post.status === 'Draft' ? 'Taslak' : 'Yayında' }}</span>
+                    @if (post.status === 'Draft') {
+                      <span class="post-category">Taslak</span>
+                    }
                   </div>
                   <span class="post-read-time">
                     @if (isNew(post.createdAt)) {
-                      <span class="new-badge">🆕 Yeni</span>
+                      <span class="new-badge"><span class="new-badge-dot"></span>Yeni</span>
                     }
                     {{ post.createdAt | date:'dd.MM.yyyy' }}
                   </span>
@@ -387,13 +383,27 @@ import { BlogService } from '../../../core/services/blog.service';
     }
 
     .new-badge {
-      background: #16a34a;
-      color: #ffffff;
-      padding: 2px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(16, 185, 129, 0.12);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 2px 8px 2px 6px;
       border-radius: var(--radius-full);
       font-size: 10px;
       font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
       margin-right: 6px;
+    }
+
+    .new-badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 4px rgba(16, 185, 129, 0.6);
     }
 
     .post-meta-top {
@@ -534,7 +544,6 @@ import { BlogService } from '../../../core/services/blog.service';
   `]
 })
 export class BlogHomeComponent implements OnInit {
-  authService = inject(AuthService);
   private blogService = inject(BlogService);
   private route = inject(ActivatedRoute);
 
@@ -569,7 +578,7 @@ export class BlogHomeComponent implements OnInit {
     this.loading.set(true);
     this.loadError.set(null);
 
-    this.blogService.getAll().subscribe({
+    this.blogService.getAll('Published', this.fixedType()).subscribe({
       next: (posts) => {
         const sorted = [...posts].sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

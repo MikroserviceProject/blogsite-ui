@@ -11,6 +11,13 @@ export interface CreatePostRequest {
     photo?: File | null;
 }
 
+export interface UpdatePostRequest {
+    title: string;
+    content: string;
+    status: 'Draft' | 'Published';
+    photo?: File | null;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -41,6 +48,18 @@ export class BlogService {
         }
 
         return this.http.post<BlogPost>(this.apiUrl, formData);
+    }
+
+    update(id: number, request: UpdatePostRequest): Observable<void> {
+        const formData = new FormData();
+        formData.append('Title', request.title);
+        formData.append('Content', request.content);
+        formData.append('Status', request.status);
+        if (request.photo) {
+            formData.append('photo', request.photo);
+        }
+
+        return this.http.put<void>(`${this.apiUrl}/${id}`, formData);
     }
 
     delete(id: number): Observable<void> {

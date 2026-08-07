@@ -16,7 +16,6 @@ import { ThemeService } from '../../core/services/theme.service';
           <div class="logo-icon">✨</div>
           <div class="logo-text">
             <span class="brand-name">Lumina</span>
-            <span class="brand-badge">Kimlik Portalı</span>
           </div>
         </a>
 
@@ -39,16 +38,14 @@ import { ThemeService } from '../../core/services/theme.service';
 
         <!-- Right Side Actions -->
         <div class="navbar-actions">
-          <button
-            class="theme-toggle"
-            [class.is-light]="themeService.theme() === 'light'"
-            (click)="themeService.toggle()"
-            [attr.aria-label]="themeService.theme() === 'light' ? 'Koyu temaya geç' : 'Aydınlık temaya geç'"
-          >
-            <span class="theme-toggle-knob">{{ themeService.theme() === 'light' ? '☀️' : '🌙' }}</span>
-          </button>
-
           @if (!authService.isLoggedIn()) {
+            <button
+              class="theme-toggle"
+              (click)="themeService.toggle()"
+              [attr.aria-label]="themeService.theme() === 'light' ? 'Koyu temaya geç' : 'Aydınlık temaya geç'"
+            >
+              {{ themeService.theme() === 'light' ? '☀️' : '🌙' }}
+            </button>
             <a routerLink="/login" class="btn btn-navy-outline btn-sm">
               🔐 Giriş Yap
             </a>
@@ -57,10 +54,17 @@ import { ThemeService } from '../../core/services/theme.service';
             </a>
           } @else {
             @if (authService.isAuthor() || authService.isAdmin()) {
-              <a routerLink="/create-post" class="btn btn-primary btn-sm">
+              <a routerLink="/create-post" class="btn-create-post">
                 <span>✍️</span> Gönderi Oluştur
               </a>
             }
+            <button
+              class="theme-toggle"
+              (click)="themeService.toggle()"
+              [attr.aria-label]="themeService.theme() === 'light' ? 'Koyu temaya geç' : 'Aydınlık temaya geç'"
+            >
+              {{ themeService.theme() === 'light' ? '☀️' : '🌙' }}
+            </button>
             <!-- User Menu Dropdown -->
             <div class="user-menu-wrapper">
               <button class="user-menu-btn" (click)="toggleDropdown()">
@@ -96,7 +100,7 @@ import { ThemeService } from '../../core/services/theme.service';
                     <span>👤</span> Profilim & Hesap Ayarları
                   </a>
                   @if (authService.isAuthor() || authService.isAdmin()) {
-                    <a routerLink="/create-post" class="dropdown-item" (click)="closeDropdown()">
+                    <a routerLink="/create-post" class="dropdown-item dropdown-item-cta" (click)="closeDropdown()">
                       <span>✍️</span> Yeni Gönderi Oluştur
                     </a>
                     <a routerLink="/taslaklarim" class="dropdown-item" (click)="closeDropdown()">
@@ -144,36 +148,28 @@ import { ThemeService } from '../../core/services/theme.service';
     }
 
     .theme-toggle {
-      position: relative;
-      width: 52px;
-      height: 28px;
-      border-radius: var(--radius-full);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
       background: var(--bg-subtle);
       border: 1px solid var(--border);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      padding: 2px;
+      justify-content: center;
+      font-size: 17px;
+      line-height: 1;
       transition: var(--transition);
       flex-shrink: 0;
     }
 
-    .theme-toggle-knob {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--primary-gradient);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      line-height: 1;
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      transform: translateX(0);
+    :host-context(.light-theme) .theme-toggle {
+      background: #ffffff;
     }
 
-    .theme-toggle.is-light .theme-toggle-knob {
-      transform: translateX(24px);
+    .theme-toggle:hover {
+      background: var(--bg-muted);
+      border-color: var(--primary);
     }
 
     .navbar-container {
@@ -194,13 +190,11 @@ import { ThemeService } from '../../core/services/theme.service';
       height: 36px;
       border-radius: 10px;
       background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
-      border: 1px solid rgba(245, 158, 11, 0.5);
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
     }
 
     .logo-text {
@@ -219,18 +213,6 @@ import { ThemeService } from '../../core/services/theme.service';
 
     :host-context(.light-theme) .brand-name {
       color: #4f46e5;
-    }
-
-    .brand-badge {
-      font-size: 11px;
-      font-weight: 700;
-      background: rgba(30, 58, 138, 0.6);
-      color: #93c5fd;
-      border: 1px solid rgba(147, 197, 253, 0.3);
-      padding: 3px 8px;
-      border-radius: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
     .navbar-nav {
@@ -289,25 +271,52 @@ import { ThemeService } from '../../core/services/theme.service';
     }
 
     .btn-navy-outline {
-      background-color: #ffffff;
-      border: 1.5px solid #1e3a8a;
-      color: #1e3a8a;
+      background-color: var(--bg-surface);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      color: #ffffff;
       font-weight: 700;
       transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
       text-decoration: none;
     }
 
     .btn-navy-outline:hover {
-      background-color: #eff6ff;
-      border-color: #2563eb;
-      color: #1d4ed8;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      background-color: var(--bg-subtle);
+      border-color: rgba(255, 255, 255, 0.5);
       transform: translateY(-1px);
     }
 
     .btn-navy-outline:active {
       transform: translateY(0);
+    }
+
+    :host-context(.light-theme) .btn-navy-outline {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    :host-context(.light-theme) .btn-navy-outline:hover {
+      border-color: var(--primary-hover);
+      color: var(--primary-hover);
+    }
+
+    .btn-create-post {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--bg-surface);
+      border: 1.5px solid var(--border);
+      color: var(--text-primary);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn-create-post:hover {
+      background-color: var(--bg-subtle);
+      border-color: var(--primary);
     }
 
     .btn-ghost {
@@ -338,18 +347,16 @@ import { ThemeService } from '../../core/services/theme.service';
     }
 
     :host-context(.light-theme) .user-menu-btn {
-      background: #f1f5f9;
+      background: #ffffff;
       border: 1px solid rgba(15, 23, 42, 0.14);
     }
 
     :host-context(.light-theme) .user-menu-btn:hover {
-      background: #e2e8f0;
+      background: #f8fafc;
     }
 
     .user-menu-btn:hover {
       background: rgba(255, 255, 255, 0.18);
-      border-color: #f59e0b;
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
     }
 
     .user-avatar {
@@ -365,7 +372,6 @@ import { ThemeService } from '../../core/services/theme.service';
       font-size: 14px;
       overflow: hidden;
       flex-shrink: 0;
-      border: 1px solid rgba(245, 158, 11, 0.5);
     }
 
     .user-avatar-img {
@@ -411,6 +417,12 @@ import { ThemeService } from '../../core/services/theme.service';
       z-index: 1000;
     }
 
+    :host-context(.light-theme) .dropdown-menu {
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+    }
+
     .dropdown-header {
       padding: 10px 12px;
     }
@@ -419,6 +431,10 @@ import { ThemeService } from '../../core/services/theme.service';
       font-size: 14px;
       font-weight: 700;
       color: #ffffff;
+    }
+
+    :host-context(.light-theme) .dh-name {
+      color: #0f172a;
     }
 
     .dh-email {
@@ -433,6 +449,10 @@ import { ThemeService } from '../../core/services/theme.service';
       height: 1px;
       background: rgba(255, 255, 255, 0.1);
       margin: 4px 0;
+    }
+
+    :host-context(.light-theme) .dropdown-divider {
+      background: rgba(15, 23, 42, 0.1);
     }
 
     .dropdown-item {
@@ -453,9 +473,39 @@ import { ThemeService } from '../../core/services/theme.service';
       transition: var(--transition);
     }
 
+    .dropdown-item.dropdown-item-cta {
+      background: rgba(30, 58, 138, 0.35);
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .dropdown-item.dropdown-item-cta:hover {
+      background: rgba(30, 58, 138, 0.55);
+      color: #ffffff;
+    }
+
     .dropdown-item:hover {
       background: rgba(255, 255, 255, 0.1);
       color: #ffffff;
+    }
+
+    :host-context(.light-theme) .dropdown-item {
+      color: #475569;
+    }
+
+    :host-context(.light-theme) .dropdown-item:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    :host-context(.light-theme) .dropdown-item.dropdown-item-cta {
+      background: rgba(79, 70, 229, 0.1);
+      color: #4f46e5;
+    }
+
+    :host-context(.light-theme) .dropdown-item.dropdown-item-cta:hover {
+      background: rgba(79, 70, 229, 0.18);
+      color: #4338ca;
     }
 
     .dropdown-logout {

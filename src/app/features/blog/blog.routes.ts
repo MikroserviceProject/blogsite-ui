@@ -12,5 +12,6 @@ export const blogRoutes: Routes = [
   { path: 'kose-yazilari', component: BlogHomeComponent, data: { fixedType: 'Koseyazisi' } },
   { path: 'post/:id', component: BlogDetailComponent },
   { path: 'create-post', component: PostCreateComponent, canActivate: [authorGuard] },
+  { path: 'create-post/:id', component: PostCreateComponent, canActivate: [authorGuard] },
   { path: 'taslaklarim', component: DraftsComponent, canActivate: [authorGuard] }
 ];

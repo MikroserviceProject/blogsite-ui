@@ -1,8 +1,7 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastService } from '../../../core/services/toast.service';
 import { BlogService } from '../../../core/services/blog.service';
 
@@ -15,12 +14,8 @@ import { BlogService } from '../../../core/services/blog.service';
       <div class="header-row">
         <div>
           <a routerLink="/" class="back-link">← Ana Sayfaya Dön</a>
-          <h1 class="page-title">✍️ Yeni İçerik / Köşe Yazısı Oluştur</h1>
+          <h1 class="page-title">{{ editingId() ? '✏️ Yazıyı Düzenle' : '✍️ Yeni İçerik / Köşe Yazısı Oluştur' }}</h1>
           <p class="page-desc">Lumina okurları için yeni bir makale veya köşe yazısı hazırlayın.</p>
-        </div>
-        <div class="author-badge-card">
-          <span class="badge badge-author">{{ authService.currentUser()?.role }}</span>
-          <span class="author-author-name">{{ authService.currentUser()?.username }}</span>
         </div>
       </div>
 
@@ -42,7 +37,8 @@ import { BlogService } from '../../../core/services/blog.service';
 
             <!-- Fotoğraf Yükleme Alanı -->
             <div class="form-group">
-              <label class="form-label">📸 Kapak Fotoğrafı (fotoğraf eklerseniz "Blog", eklemezseniz "Köşe Yazısı" olarak yayınlanır)</label>
+              <label class="form-label">📸 Kapak Fotoğrafı</label>
+              <p class="field-hint">Fotoğraflı gönderiler "Blog" başlığı altında, fotoğrafsız olanlar "Köşe Yazısı" olarak yayınlanır.</p>
               <div class="photo-upload-container">
                 <input
                   type="file"
@@ -53,13 +49,15 @@ import { BlogService } from '../../../core/services/blog.service';
                 />
                 <button
                   type="button"
-                  class="btn btn-outline-primary upload-trigger-btn"
+                  class="upload-trigger-btn"
                   (click)="fileInput.click()"
                 >
                   📁 Bilgisayardan Fotoğraf Seç
                 </button>
                 @if (selectedFileName()) {
                   <span class="upload-or-text">{{ selectedFileName() }}</span>
+                } @else if (existingPhotoUrl()) {
+                  <span class="upload-or-text">Mevcut fotoğraf korunuyor</span>
                 }
               </div>
             </div>
@@ -85,7 +83,7 @@ import { BlogService } from '../../../core/services/blog.service';
                 {{ submitting() ? 'Kaydediliyor...' : 'Taslak Olarak Kaydet' }}
               </button>
               <button type="submit" class="btn btn-primary btn-lg" [disabled]="submitting()">
-                {{ submitting() ? 'Kaydediliyor...' : 'Yayına Al' }}
+                {{ submitting() ? 'Kaydediliyor...' : 'Yayınla' }}
               </button>
             </div>
           </form>
@@ -93,19 +91,17 @@ import { BlogService } from '../../../core/services/blog.service';
 
         <!-- Live Preview Sidebar -->
         <div class="card preview-card">
-          <h3 class="preview-title">👁️ Canlı Önizleme</h3>
+          <div class="preview-card-header">
+            <h3 class="preview-title">Önizleme ✨</h3>
+            <span class="preview-type-tag">{{ (selectedFile() || existingPhotoUrl()) ? 'Blog' : 'Köşe Yazısı' }}</span>
+          </div>
           <div class="preview-box">
-            <div class="preview-cover" *ngIf="previewUrl()">
-              <img [src]="previewUrl()" alt="Kapak" />
-            </div>
-            <div class="preview-body">
-              <span class="badge badge-primary">{{ selectedFile() ? 'Blog' : 'Köşe Yazısı' }}</span>
-              <h3 class="preview-heading">{{ title || 'Yazı Başlığı Buraya Gelecek' }}</h3>
-              <p class="preview-summary">{{ content ? (content.slice(0, 150) + (content.length > 150 ? '...' : '')) : 'Yazının içeriği burada görünecektir...' }}</p>
-              <div class="preview-author-row">
-                <strong>{{ authService.currentUser()?.username }}</strong>
-                <span class="text-muted">• Şimdi</span>
-              </div>
+            @if (previewUrl() || existingPhotoUrl()) {
+              <img [src]="previewUrl() || photoSrc(existingPhotoUrl()!)" alt="Kapak önizleme" class="preview-photo" />
+            }
+            <div class="preview-text">
+              <h4 class="preview-heading">{{ title || 'Yazı başlığı burada görünecek' }}</h4>
+              <p class="preview-summary">{{ content ? (content.slice(0, 150) + (content.length > 150 ? '...' : '')) : 'İçerik burada görünecek...' }}</p>
             </div>
           </div>
         </div>
@@ -143,19 +139,10 @@ import { BlogService } from '../../../core/services/blog.service';
       color: var(--text-muted);
     }
 
-    .author-badge-card {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      padding: 8px 16px;
-      border-radius: var(--radius-md);
-    }
-
-    .author-author-name {
-      font-weight: 700;
-      font-size: 14px;
+    .field-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: -2px 0 8px 0;
     }
 
     .create-grid {
@@ -186,10 +173,18 @@ import { BlogService } from '../../../core/services/blog.service';
       top: 90px;
     }
 
+    .preview-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
     .preview-title {
       font-size: 16px;
       font-weight: 700;
-      margin-bottom: 16px;
+      margin: 0;
     }
 
     .photo-upload-container {
@@ -199,9 +194,24 @@ import { BlogService } from '../../../core/services/blog.service';
       flex-wrap: wrap;
     }
     .upload-trigger-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       white-space: nowrap;
       font-size: 13px;
-      padding: 8px 12px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border);
+      color: var(--primary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .upload-trigger-btn:hover {
+      background: var(--bg-subtle);
+      border-color: var(--primary);
     }
     .upload-or-text {
       font-size: 12px;
@@ -215,56 +225,63 @@ import { BlogService } from '../../../core/services/blog.service';
       margin-top: 12px;
     }
     .preview-box {
+      min-height: 140px;
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
       overflow: hidden;
       background: var(--bg-surface);
     }
 
-    .preview-cover {
-      height: 160px;
-      overflow: hidden;
-    }
-
-    .preview-cover img {
+    .preview-photo {
+      display: block;
       width: 100%;
-      height: 100%;
+      height: 140px;
       object-fit: cover;
     }
 
-    .preview-body {
-      padding: 16px;
+    .preview-text {
+      padding: 14px;
     }
 
     .preview-heading {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      margin: 10px 0 6px 0;
+      color: var(--text-primary);
+      margin: 0 0 6px 0;
+      line-height: 1.35;
     }
 
     .preview-summary {
       font-size: 13px;
       color: var(--text-secondary);
-      margin-bottom: 12px;
       line-height: 1.5;
+      margin: 0;
     }
 
-    .preview-author-row {
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .preview-type-tag {
+      flex-shrink: 0;
+      background: #ffffff;
+      color: #7c3aed;
+      border: 1px solid rgba(124, 58, 237, 0.25);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
     }
   `]
 })
-export class PostCreateComponent implements OnDestroy {
-  authService = inject(AuthService);
+export class PostCreateComponent implements OnInit, OnDestroy {
   toastService = inject(ToastService);
   blogService = inject(BlogService);
   router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   title = '';
   content = '';
+
+  editingId = signal<number | null>(null);
+  existingPhotoUrl = signal<string | null>(null);
 
   selectedFile = signal<File | null>(null);
   selectedFileName = signal<string>('');
@@ -273,6 +290,27 @@ export class PostCreateComponent implements OnDestroy {
   submitting = signal<boolean>(false);
   submitError = signal<string | null>(null);
   private saved = false;
+
+  ngOnInit() {
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (!idParam) return;
+
+    const id = Number(idParam);
+    if (isNaN(id)) return;
+
+    this.editingId.set(id);
+    this.blogService.getById(id).subscribe({
+      next: (post) => {
+        this.title = post.title;
+        this.content = post.content;
+        this.existingPhotoUrl.set(post.photoUrl);
+      },
+      error: () => {
+        this.toastService.warning('Yazı Bulunamadı', 'Düzenlenecek yazı yüklenemedi.');
+        this.router.navigate(['/taslaklarim']);
+      }
+    });
+  }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -299,6 +337,33 @@ export class PostCreateComponent implements OnDestroy {
 
     this.submitting.set(true);
     this.submitError.set(null);
+
+    const editingId = this.editingId();
+
+    if (editingId) {
+      this.blogService.update(editingId, {
+        title: this.title,
+        content: this.content,
+        status: status,
+        photo: this.selectedFile()
+      }).subscribe({
+        next: () => {
+          this.saved = true;
+          this.submitting.set(false);
+          if (status === 'Published') {
+            this.toastService.success('Yazı Yayında! 🎉', 'Yazınız güncellendi ve yayınlandı.');
+          } else {
+            this.toastService.info('Taslak Güncellendi', 'Değişiklikleriniz taslak olarak kaydedildi.');
+          }
+          this.router.navigate(['/']);
+        },
+        error: () => {
+          this.submitting.set(false);
+          this.submitError.set('Yazı güncellenemedi. Backend\'in çalıştığından emin olun.');
+        }
+      });
+      return;
+    }
 
     const type: 'Blog' | 'Koseyazisi' = this.selectedFile() ? 'Blog' : 'Koseyazisi';
 
@@ -327,6 +392,10 @@ export class PostCreateComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.editingId()) {
+      return;
+    }
+
     const hasContent = this.title.trim().length > 0 || this.content.trim().length > 0;
     if (this.saved || !hasContent) {
       return;
@@ -341,5 +410,9 @@ export class PostCreateComponent implements OnDestroy {
       status: 'Draft',
       photo: this.selectedFile()
     }).subscribe();
+  }
+
+  photoSrc(photoUrl: string): string {
+    return `https://localhost:7296${photoUrl}`;
   }
 }
