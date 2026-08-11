@@ -773,6 +773,7 @@ export class BlogHomeComponent implements OnInit {
     if (p < 1 || p > this.totalPages() || p === this.page()) return;
     this.page.set(p);
     this.loadPosts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   submitSearch() {

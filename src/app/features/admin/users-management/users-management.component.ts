@@ -1545,6 +1545,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   changePage(page: number) {
     this.currentPage.set(page);
     this.loadUsers();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   loadUsers() {

@@ -405,7 +405,7 @@ import { ThemeService } from '../../core/services/theme.service';
     }
 
     :host-context(.light-theme) .brand-name {
-      color: #4f46e5;
+      color: #2563eb;
     }
 
     .navbar-nav {

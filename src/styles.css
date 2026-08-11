@@ -20,11 +20,11 @@
   --text-light: #6b7280;
   --text-gold: #fbbf24;
 
-  /* Primary Brand: Deep Indigo / Violet */
-  --primary: #4f46e5;
-  --primary-hover: #6366f1;
-  --primary-light: rgba(79, 70, 229, 0.2);
-  --primary-gradient: linear-gradient(135deg, #4338ca 0%, #4f46e5 50%, #3730a3 100%);
+  /* Primary Brand: Deep Blue / Ocean */
+  --primary: #2563eb;
+  --primary-hover: #3b82f6;
+  --primary-light: rgba(37, 99, 235, 0.2);
+  --primary-gradient: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #1e40af 100%);
 
   /* Accents */
   --accent: #10b981; /* Zümrüt Yeşili detaylar (Modern web vibe) */
@@ -41,7 +41,7 @@
 
   /* Borders */
   --border: rgba(255, 255, 255, 0.08);
-  --border-focus: #4f46e5;
+  --border-focus: #2563eb;
 
   /* Shadows - Derin ama yumuşak */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -74,13 +74,13 @@
   --text-muted: #334155; /* Okunabilir gri */
   --text-light: #475569; /* Daha koyu açık gri */
 
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: rgba(79, 70, 229, 0.1);
-  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: rgba(37, 99, 235, 0.1);
+  --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
 
   --border: rgba(15, 23, 42, 0.12);
-  --border-focus: #4f46e5;
+  --border-focus: #2563eb;
 
   --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
@@ -102,23 +102,23 @@
 }
 
 :root.light-theme a {
-  color: #4f46e5;
+  color: #2563eb;
 }
 
 :root.light-theme a:hover {
-  color: #4338ca;
+  color: #1d4ed8;
 }
 
 :root.light-theme .btn-navy-outline {
   background: #ffffff;
-  color: #4f46e5;
-  border: 1.5px solid #4f46e5;
+  color: #2563eb;
+  border: 1.5px solid #2563eb;
 }
 
 :root.light-theme .btn-navy-outline:hover:not(:disabled) {
   background: #eef2ff;
-  border-color: #4338ca;
-  color: #4338ca;
+  border-color: #1d4ed8;
+  color: #1d4ed8;
 }
 
 :root.light-theme .badge-admin,
@@ -158,8 +158,8 @@
 }
 
 :root.light-theme .form-control:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
   background-color: #ffffff;
 }
 
@@ -295,13 +295,13 @@ a:hover {
   background: var(--primary-gradient);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
   border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
   color: #ffffff;
   transform: translateY(-1px);
 }

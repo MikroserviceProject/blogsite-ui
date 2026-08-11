@@ -1817,10 +1817,11 @@ interface PasswordRules {
 
     .my-post-actions {
       display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      margin-top: auto;
-      padding-top: 12px;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .btn-icon {

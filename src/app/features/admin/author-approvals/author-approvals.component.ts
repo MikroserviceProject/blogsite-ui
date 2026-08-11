@@ -647,7 +647,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     :host-context(.light-theme) .stat-label {
       color: #64748b;
     }
-    :host-context(.light-theme) .text-navy { color: #4f46e5; }
+    :host-context(.light-theme) .text-navy { color: #2563eb; }
     
     .stat-card.active-tab {
       background: rgba(255, 255, 255, 0.08);
