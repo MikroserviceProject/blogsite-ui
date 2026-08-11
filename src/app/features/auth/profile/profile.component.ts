@@ -2231,6 +2231,27 @@ interface PasswordRules {
       from { opacity: 0; transform: scale(0.96); }
       to { opacity: 1; transform: scale(1); }
     }
+
+    @media (max-width: 768px) {
+      .my-post-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .my-post-content {
+        min-width: 150px;
+      }
+      .my-post-actions {
+        width: 100%;
+        margin-right: 0;
+        justify-content: flex-end;
+        padding-top: 12px;
+        margin-top: 4px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      :host-context(.light-theme) .my-post-actions {
+        border-top-color: rgba(15, 23, 42, 0.1);
+      }
+    }
   `]
 })
 export class ProfileComponent implements OnInit, OnDestroy {
