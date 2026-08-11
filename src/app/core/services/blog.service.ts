@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { BlogPost, AdminDeletePostRequest, UpdatePostRequest } from '../models/blog.model';
 
 export interface CreatePostRequest {
@@ -9,6 +10,8 @@ export interface CreatePostRequest {
     type: 'Blog' | 'Koseyazisi';
     status: 'Draft' | 'Published';
     photo?: File | null;
+    tags?: string[];
+    authorId: string;
 }
 
 
@@ -17,13 +20,14 @@ export interface CreatePostRequest {
 })
 export class BlogService {
     private http = inject(HttpClient);
-    private apiUrl = 'https://localhost:7296/api/posts';
+    private apiUrl = `${environment.blogApiUrl}/api/posts`;
 
-    getAll(status?: 'Draft' | 'Published', type?: 'Blog' | 'Koseyazisi', authorId?: string): Observable<BlogPost[]> {
+    getAll(status?: 'Draft' | 'Published', type?: 'Blog' | 'Koseyazisi', authorId?: string, tag?: string): Observable<BlogPost[]> {
         const params: Record<string, string> = {};
         if (status) params['status'] = status;
         if (type) params['type'] = type;
         if (authorId) params['authorId'] = authorId;
+        if (tag) params['tag'] = tag;
 
         return this.http.get<BlogPost[]>(this.apiUrl, { params });
     }
@@ -45,6 +49,10 @@ export class BlogService {
         if (request.photo) {
             formData.append('photo', request.photo);
         }
+        if (request.tags && request.tags.length > 0) {
+            request.tags.forEach(tag => formData.append('Tags', tag));
+        }
+        formData.append('AuthorId', request.authorId);
 
         return this.http.post<BlogPost>(this.apiUrl, formData);
     }
@@ -60,6 +68,9 @@ export class BlogService {
         if (request.photo) {
             formData.append('photo', request.photo);
         }
+        if (request.tags && request.tags.length > 0) {
+            request.tags.forEach(tag => formData.append('Tags', tag));
+        }
 
         return this.http.put<BlogPost>(`${this.apiUrl}/${id}`, formData);
     }
@@ -72,9 +83,10 @@ export class BlogService {
         return this.http.post<{ success: boolean; message: string }>(`${this.apiUrl}/${id}/admin-delete`, request);
     }
 
-    getPhotoUrl(path: string | null | undefined): string {
+    getPhotoUrl(path: string | undefined): string {
         if (!path) return '';
         if (path.startsWith('http') || path.startsWith('data:image')) return path;
-        return `https://localhost:7296${path}`;
+        
+        return `${environment.blogApiUrl}${path}`;
     }
 }

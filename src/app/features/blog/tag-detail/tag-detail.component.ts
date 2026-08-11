@@ -1,64 +1,34 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute, Router } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { BlogPost } from '../../../core/models/blog.model';
 import { BlogService } from '../../../core/services/blog.service';
 
 @Component({
-  selector: 'app-blog-home',
+  selector: 'app-tag-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, RouterLink],
   template: `
     <!-- Hero Banner -->
     <section class="hero-section">
       <div class="container hero-container">
         <h1 class="hero-title">
-          @if (fixedType() === 'Koseyazisi') {
-            <span class="text-gradient">Köşe Yazıları</span>
-          } @else {
-            <span class="text-gradient">Bloglar</span>
-          }
+          <span class="text-gradient">{{ currentTag() }}</span> Ekosistemi
         </h1>
         <p class="hero-subtitle">
-          Fikirlerin teknolojiyle, teknolojinin gelecekle buluştuğu yer.
+          {{ currentTag() }} ile ilgili yazılmış tüm bloglar ve köşe yazıları.
         </p>
-
-        <!-- Search Bar -->
-        <div class="hero-search-wrapper">
-          <div class="hero-search-box">
-            <span class="search-icon">🔍</span>
-            <input
-              type="text"
-              class="hero-search-input"
-              [(ngModel)]="searchQuery"
-              placeholder="Başlık veya içerikte ara..."
-            />
-            @if (searchQuery()) {
-              <button class="clear-search" (click)="searchQuery.set('')"></button>
-            }
-          </div>
-        </div>
       </div>
     </section>
 
     <!-- Main Content Area -->
     <section class="container blog-content-section">
-      <!-- Section Header -->
       <div class="section-header">
         <div>
-          <h2 class="section-title">{{ fixedType() === 'Koseyazisi' ? 'Tüm Köşe Yazıları' : 'Tüm Bloglar' }}</h2>
-          <p class="section-subtitle">Toplam {{ filteredPosts().length }} yayın bulundu</p>
+          <h2 class="section-title">Tüm İçerikler</h2>
+          <p class="section-subtitle">Toplam {{ posts().length }} yayın bulundu</p>
         </div>
       </div>
-
-      @if (currentTag()) {
-        <div class="tag-filter-banner">
-          <span class="tag-filter-icon">🏷️</span>
-          <span class="tag-filter-text">Şu an <strong>{{ currentTag() }}</strong> ile ilgili içerikleri görüntülüyorsunuz.</span>
-          <button class="btn-clear-filter" (click)="clearTagFilter()">Tümünü Göster </button>
-        </div>
-      }
 
       <!-- Loading state -->
       @if (loading()) {
@@ -77,7 +47,7 @@ import { BlogService } from '../../../core/services/blog.service';
       <!-- Articles Grid -->
       @if (!loading() && !loadError()) {
         <div class="posts-grid">
-          @for (post of filteredPosts(); track post.id) {
+          @for (post of posts(); track post.id) {
             <article class="post-card card">
               @if (post.photoUrl) {
                 <div class="post-cover-wrapper">
@@ -108,7 +78,7 @@ import { BlogService } from '../../../core/services/blog.service';
                 @if (post.tags && post.tags.length > 0) {
                   <div class="post-tags">
                     @for (t of post.tags; track t) {
-                      <a [routerLink]="[]" [queryParams]="{ tag: t }" class="tag-link">{{ t }}</a>
+                      <span class="tag-link">{{ t }}</span>
                     }
                   </div>
                 }
@@ -130,39 +100,20 @@ import { BlogService } from '../../../core/services/blog.service';
         </div>
 
         <!-- Empty State -->
-        @if (filteredPosts().length === 0) {
+        @if (posts().length === 0) {
           <div class="empty-state card">
             <div class="empty-icon">🔍</div>
-            <h3>Aradığınız kriterde yazı bulunamadı</h3>
-            <p>Farklı bir arama kelimesi deneyebilir veya filtreyi sıfırlayabilirsiniz.</p>
-            <button class="btn btn-secondary btn-sm" (click)="searchQuery.set('')">
-              Aramayı Temizle
-            </button>
+            <h3>Bu etikete sahip içerik bulunamadı</h3>
           </div>
         }
       }
-    </section>
-
-    <!-- Newsletter CTA -->
-    <section class="container newsletter-section">
-      <div class="newsletter-card card">
-        <div class="newsletter-content">
-          <span class="newsletter-badge"> Haftalık Bülten</span>
-          <h2 class="newsletter-title">Yeni Yazıları ve Gelişmeleri Kaçırmayın</h2>
-          <p class="newsletter-desc">En güncel teknoloji ve köşe yazılarını her pazartesi sabahı e-posta kutunuza ulaştıralım.</p>
-        </div>
-        <div class="newsletter-form">
-          <input type="email" placeholder="E-posta adresiniz..." class="form-control" />
-          <button class="btn btn-primary" (click)="subscribeNewsletter()">Abone Ol</button>
-        </div>
-      </div>
     </section>
   `,
   styles: [`
     .hero-section {
       background: transparent;
       border-bottom: 1px solid var(--border);
-      padding: 28px 0 20px 0;
+      padding: 40px 0 30px 0;
       text-align: center;
     }
 
@@ -170,19 +121,6 @@ import { BlogService } from '../../../core/services/blog.service';
       display: flex;
       flex-direction: column;
       align-items: center;
-    }
-
-    .hero-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: var(--radius-full);
-      background: var(--primary-light);
-      color: var(--primary);
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 12px;
     }
 
     .hero-title {
@@ -194,10 +132,6 @@ import { BlogService } from '../../../core/services/blog.service';
       letter-spacing: -1px;
     }
 
-    @media (max-width: 768px) {
-      .hero-title { font-size: 26px; }
-    }
-
     .text-gradient {
       background: var(--primary-gradient);
       -webkit-background-clip: text;
@@ -205,120 +139,17 @@ import { BlogService } from '../../../core/services/blog.service';
     }
 
     .hero-subtitle {
-      font-size: 14px;
+      font-size: 16px;
       color: var(--text-secondary);
       max-width: 620px;
       margin-bottom: 16px;
       line-height: 1.5;
     }
 
-    .hero-search-wrapper {
-      width: 100%;
-      max-width: 520px;
-      margin-bottom: 0;
-    }
-
-    .hero-search-box {
-      position: relative;
-      display: flex;
-      align-items: center;
-      background: var(--bg-surface);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-full);
-      padding: 6px 16px;
-      box-shadow: var(--shadow-sm);
-      transition: var(--transition);
-    }
-
-    .hero-search-box:focus-within {
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
-    }
-
-    .search-icon {
-      font-size: 16px;
-      margin-right: 8px;
-    }
-
-    .hero-search-input {
-      border: none;
-      background: none;
-      outline: none;
-      width: 100%;
-      font-size: 14px;
-      font-family: inherit;
-      color: var(--text-primary);
-    }
-
-    .clear-search {
-      background: none;
-      border: none;
-      color: var(--text-light);
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .category-chips {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .chip-btn {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      color: var(--text-secondary);
-      padding: 6px 16px;
-      border-radius: var(--radius-full);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-
-    .chip-btn:hover {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    .chip-active {
-      background: var(--primary);
-      color: #ffffff !important;
-      border-color: var(--primary);
-    }
-
     .blog-content-section {
-      padding-top: 24px;
-      padding-bottom: 40px;
+      padding-top: 32px;
+      padding-bottom: 60px;
     }
-
-    .tag-filter-banner {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      padding: 12px 20px;
-      border-radius: var(--radius-md);
-      margin-bottom: 24px;
-      animation: fadeIn 0.3s ease-out;
-    }
-    .tag-filter-icon { font-size: 20px; }
-    .tag-filter-text { font-size: 14px; color: #1e3a8a; flex: 1; }
-    
-    .btn-clear-filter {
-      background: #ffffff;
-      border: 1px solid #bfdbfe;
-      color: #1e3a8a;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    .btn-clear-filter:hover { background: #dbeafe; }
 
     .section-header {
       display: flex;
@@ -336,7 +167,7 @@ import { BlogService } from '../../../core/services/blog.service';
     .section-subtitle {
       font-size: 14px;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 4px;
     }
 
     .posts-grid {
@@ -433,7 +264,6 @@ import { BlogService } from '../../../core/services/blog.service';
       border-radius: var(--radius-full);
       font-size: 10px;
       font-weight: 700;
-      letter-spacing: 0.3px;
       text-transform: uppercase;
       margin-right: 6px;
     }
@@ -443,7 +273,6 @@ import { BlogService } from '../../../core/services/blog.service';
       height: 5px;
       border-radius: 50%;
       background: #10b981;
-      box-shadow: 0 0 4px rgba(16, 185, 129, 0.6);
     }
 
     .post-meta-top {
@@ -460,13 +289,6 @@ import { BlogService } from '../../../core/services/blog.service';
       gap: 8px;
     }
 
-    .post-category {
-      color: var(--primary);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
     .post-tags {
       display: flex;
       gap: 6px;
@@ -481,12 +303,6 @@ import { BlogService } from '../../../core/services/blog.service';
       font-weight: 600;
       padding: 3px 8px;
       border-radius: var(--radius-sm);
-      text-decoration: none;
-      transition: var(--transition);
-    }
-    .tag-link:hover {
-      background: var(--primary-light);
-      color: var(--primary);
     }
 
     .post-read-time {
@@ -502,6 +318,7 @@ import { BlogService } from '../../../core/services/blog.service';
 
     .post-title a {
       color: var(--text-primary);
+      text-decoration: none;
     }
 
     .post-title a:hover {
@@ -532,6 +349,7 @@ import { BlogService } from '../../../core/services/blog.service';
       font-size: 13px;
       font-weight: 700;
       color: var(--primary);
+      text-decoration: none;
     }
 
     .read-more-btn:hover {
@@ -548,102 +366,24 @@ import { BlogService } from '../../../core/services/blog.service';
       font-size: 40px;
       margin-bottom: 12px;
     }
-
-    .newsletter-section {
-      margin-top: 20px;
-      margin-bottom: 40px;
-    }
-
-    .newsletter-card {
-      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-      border: 1.5px solid var(--border);
-      padding: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 40px;
-    }
-
-    @media (max-width: 768px) {
-      .newsletter-card {
-        flex-direction: column;
-        text-align: center;
-      }
-    }
-
-    .newsletter-badge {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 8px;
-    }
-
-    .newsletter-title {
-      font-size: 24px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .newsletter-desc {
-      font-size: 14px;
-      color: var(--text-secondary);
-      max-width: 500px;
-    }
-
-    .newsletter-form {
-      display: flex;
-      gap: 10px;
-      width: 100%;
-      max-width: 420px;
-    }
-
-    @media (max-width: 480px) {
-      .newsletter-form {
-        flex-direction: column;
-      }
-    }
   `]
 })
-export class BlogHomeComponent implements OnInit {
+export class TagDetailComponent implements OnInit {
   private blogService = inject(BlogService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
 
-  searchQuery = signal<string>('');
-  fixedType = signal<'Blog' | 'Koseyazisi'>('Blog');
-  currentTag = signal<string | null>(null);
+  currentTag = signal<string>('');
   loading = signal<boolean>(false);
   loadError = signal<string | null>(null);
-
   posts = signal<BlogPost[]>([]);
 
-  filteredPosts = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const type = this.fixedType();
-
-    return this.posts().filter(p => {
-      const matchType = p.type === type;
-      const matchQuery = !query ||
-        p.title.toLowerCase().includes(query) ||
-        p.content.toLowerCase().includes(query);
-
-      return matchType && matchQuery;
-    });
-  });
-
   ngOnInit() {
-    const routeType = this.route.snapshot.data['fixedType'];
-    this.fixedType.set(routeType === 'Koseyazisi' ? 'Koseyazisi' : 'Blog');
-    
-    this.route.queryParams.subscribe(params => {
-      const tag = params['tag'];
+    this.route.paramMap.subscribe(params => {
+      const tag = params.get('tag');
       if (tag) {
         this.currentTag.set(tag);
-      } else {
-        this.currentTag.set(null);
+        this.loadPosts();
       }
-      this.loadPosts();
     });
   }
 
@@ -651,9 +391,8 @@ export class BlogHomeComponent implements OnInit {
     this.loading.set(true);
     this.loadError.set(null);
 
-    const tag = this.currentTag() || undefined;
-
-    this.blogService.getAll('Published', this.fixedType(), undefined, tag).subscribe({
+    // Call API without fixing type (so we get both Blog and Koseyazisi)
+    this.blogService.getAll('Published', undefined, undefined, this.currentTag()).subscribe({
       next: (posts) => {
         const sorted = [...posts].sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -662,17 +401,9 @@ export class BlogHomeComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.loadError.set('Yazılar backend\'den alınamadı. API\'nin çalıştığından emin olun.');
+        this.loadError.set('Yazılar alınamadı.');
         this.loading.set(false);
       }
-    });
-  }
-
-  clearTagFilter() {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { tag: null },
-      queryParamsHandling: 'merge'
     });
   }
 
@@ -687,9 +418,5 @@ export class BlogHomeComponent implements OnInit {
 
   photoSrc(photoUrl: string): string {
     return `https://localhost:7296${photoUrl}`;
-  }
-
-  subscribeNewsletter() {
-    alert('Bültene başarıyla abone oldunuz! Teşekkür ederiz.');
   }
 }

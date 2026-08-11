@@ -14,118 +14,60 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="container admin-page">
-      <!-- Top Banner Header -->
-      <div class="admin-header-card card">
-        <div class="admin-header-left">
-          <div class="admin-icon-badge">👑</div>
+    <div class="admin-tab-seamless-container">
+      <div class="admin-main-card">
+        <!-- Top Actions Bar -->
+        <div class="admin-actions-bar" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 24px;">
           <div>
-            <h1 class="admin-title">Yazar & Başvuru Yönetimi</h1>
-            <p class="admin-subtitle">Sisteme yazar olarak başvuran adayların CV belgelerini inceleyin, başvuruları onaylayın veya yönetin.</p>
+            <h2 class="card-section-title" style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 800;">Yazar & Başvuru Yönetimi</h2>
+            <p class="card-section-desc" style="margin: 0; color: #94a3b8; font-size: 13px;">Sisteme yazar olarak başvuran adayların CV'lerini inceleyin ve onaylayın.</p>
           </div>
+          <button class="btn btn-navy-outline btn-sm" (click)="loadAuthors()" [disabled]="isLoading()">
+            <span></span> Listeyi Yenile
+          </button>
         </div>
-        <button class="btn btn-navy-outline btn-sm" (click)="loadAuthors()" [disabled]="isLoading()">
-          <span>🔄</span> Listeyi Yenile
-        </button>
-      </div>
-
-      <!-- Stats Grid / Tabs Switcher -->
-      <div class="stats-grid">
-        <div 
-          class="stat-card card tab-card" 
-          [class.active-tab]="activeTab() === 'pending'"
-          (click)="setTab('pending')"
-        >
-          <div class="stat-icon icon-pending">⏳</div>
-          <div class="stat-details">
-            <span class="stat-label">Onay Bekleyenler</span>
-            <span class="stat-value text-warning">{{ pendingList().length }}</span>
-          </div>
-          @if (activeTab() === 'pending') {
-            <span class="tab-indicator"></span>
-          }
-        </div>
-
-        <div 
-          class="stat-card card tab-card" 
-          [class.active-tab]="activeTab() === 'approved'"
-          (click)="setTab('approved')"
-        >
-          <div class="stat-icon icon-approved">✅</div>
-          <div class="stat-details">
-            <span class="stat-label">Onaylanan Yazarlar</span>
-            <span class="stat-value text-success">{{ approvedList().length }}</span>
-          </div>
-          @if (activeTab() === 'approved') {
-            <span class="tab-indicator"></span>
-          }
-        </div>
-
-        <div 
-          class="stat-card card tab-card" 
-          [class.active-tab]="activeTab() === 'rejected'"
-          (click)="setTab('rejected')"
-        >
-          <div class="stat-icon icon-rejected">❌</div>
-          <div class="stat-details">
-            <span class="stat-label">Reddedilenler</span>
-            <span class="stat-value text-danger">{{ rejectedList().length }}</span>
-          </div>
-          @if (activeTab() === 'rejected') {
-            <span class="tab-indicator"></span>
-          }
-        </div>
-
-        <div 
-          class="stat-card card tab-card" 
-          [class.active-tab]="activeTab() === 'all'"
-          (click)="setTab('all')"
-        >
-          <div class="stat-icon icon-all">👥</div>
-          <div class="stat-details">
-            <span class="stat-label">Toplam Başvuru</span>
-            <span class="stat-value text-navy">{{ allAuthors().length }}</span>
-          </div>
-          @if (activeTab() === 'all') {
-            <span class="tab-indicator"></span>
-          }
-        </div>
-      </div>
 
       <!-- Main Applications Table Card -->
-      <div class="card applications-card">
-        <div class="card-table-header">
-          <div class="tab-title-group">
-            <h2 class="tab-current-heading">
-              @if (activeTab() === 'pending') { ⏳ Onay Bekleyen Yazar Başvuruları }
-              @else if (activeTab() === 'approved') { ✅ Onaylanmış Aktif Yazarlar }
-              @else if (activeTab() === 'rejected') { ❌ Reddedilen Başvurular }
-              @else { 👥 Tüm Yazar Kayıtları }
-            </h2>
-            <span class="count-badge">{{ displayedAuthors().length }} Kayıt</span>
+      <div class="applications-card">
+        <!-- Filter Toolbar -->
+        <div class="posts-filter-bar" style="margin-bottom: 20px;">
+          <div class="pills-row">
+            <button class="filter-pill" [class.active]="activeTab() === 'pending'" (click)="setTab('pending')">
+               Onay Bekleyenler ({{ pendingList().length }})
+            </button>
+            <button class="filter-pill" [class.active]="activeTab() === 'approved'" (click)="setTab('approved')">
+               Onaylanan Yazarlar ({{ approvedList().length }})
+            </button>
+            <button class="filter-pill" [class.active]="activeTab() === 'rejected'" (click)="setTab('rejected')">
+              ❌ Reddedilenler ({{ rejectedList().length }})
+            </button>
+            <button class="filter-pill" [class.active]="activeTab() === 'all'" (click)="setTab('all')">
+               Tümü ({{ allAuthors().length }})
+            </button>
           </div>
 
-          <div class="search-box">
+          <div class="post-search-box" style="display:flex; gap:8px;">
             <input 
               type="text" 
-              class="form-control form-control-sm search-input" 
+              class="form-control form-control-sm" 
               placeholder="İsim, e-posta veya üniversite ara..."
               [(ngModel)]="searchQuery"
+              style="min-width: 240px;"
             />
           </div>
         </div>
 
         @if (isLoading()) {
           <div class="loading-container">
-            <span class="spinner-icon">⏳</span>
+            <span class="spinner-icon"></span>
             <p>Veriler yükleniyor, lütfen bekleyin...</p>
           </div>
         } @else if (filteredAuthors().length === 0) {
           <div class="empty-state">
             <span class="empty-icon">
-              @if (activeTab() === 'pending') { 🎉 }
-              @else if (activeTab() === 'approved') { 📝 }
-              @else { 📭 }
+              @if (activeTab() === 'pending') {  }
+              @else if (activeTab() === 'approved') {  }
+              @else {  }
             </span>
             <h3>
               @if (activeTab() === 'pending') { Bekleyen Başvuru Bulunmuyor }
@@ -181,7 +123,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
                             (click)="openCvPreview(author)"
                             title="CV'yi Sayfa İçinde İncele"
                           >
-                            👁️ Önizle
+                            Önizle
                           </button>
                           <a 
                             [href]="authService.getCvUrl(author.cvUrl)" 
@@ -190,7 +132,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
                             class="btn btn-xs btn-open-cv"
                             title="Yeni Sekmede Aç"
                           >
-                            📄 PDF ↗
+                            PDF ↗
                           </a>
                         </div>
                       } @else {
@@ -198,25 +140,21 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
                       }
                     </td>
                     <td>
-                      <div class="status-cell">
+                      <div class="status-cell" style="display: flex; gap: 8px; justify-content: center; align-items: center;">
                         <!-- Başvuru Durum Rozeti -->
-                        @if (isStatus(author, 'Approved')) {
-                          <span class="badge badge-success">✓ Onaylandı</span>
+                        @if (isStatus(author, 'Pending')) {
+                          <i class="fa-solid fa-hourglass-half text-warning" title="Başvuru Bekliyor" style="font-size: 1.2rem;"></i>
+                        } @else if (isStatus(author, 'Approved')) {
+                          <i class="fa-solid fa-circle-check text-success" title="Başvuru Onaylandı" style="font-size: 1.2rem;"></i>
                         } @else if (isStatus(author, 'Rejected')) {
-                          <span class="badge badge-danger">✕ Reddedildi</span>
-                        } @else {
-                          <span class="badge badge-warning">⏳ Onay Bekliyor</span>
+                          <i class="fa-solid fa-circle-xmark text-danger" title="Başvuru Reddedildi" style="font-size: 1.2rem;"></i>
                         }
 
                         <!-- E-Posta Onay Durumu -->
                         @if (author.isEmailConfirmed) {
-                          <span class="badge badge-email-confirmed" title="Kullanıcı e-postasını onaylamış ve giriş yapabilir">
-                            📧 E-Posta Onaylı
-                          </span>
+                          <i class="fa-solid fa-envelope-circle-check text-success" title="Kullanıcı e-postasını onaylamış ve giriş yapabilir" style="font-size: 1.2rem;"></i>
                         } @else {
-                          <span class="badge badge-email-unconfirmed" title="Kullanıcı henüz aktivasyon e-postasındaki linke tıklamamış">
-                            ✉️ Doğrulama Bekliyor
-                          </span>
+                          <i class="fa-regular fa-envelope text-warning" title="Kullanıcı henüz aktivasyon e-postasındaki linke tıklamamış (Doğrulama Bekliyor)" style="font-size: 1.2rem;"></i>
                         }
                       </div>
                     </td>
@@ -240,11 +178,11 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
                             (click)="openRejectModal(author)"
                             [disabled]="isProcessing(author.id)"
                           >
-                            ✕ Reddet
+                             Reddet
                           </button>
                         </div>
                       } @else if (isStatus(author, 'Approved')) {
-                        <span class="text-success-label">✅ İşlem Tamam</span>
+                        <!-- Boş bırakıldı (İşlem Tamam yazısı kaldırıldı) -->
                       } @else if (isStatus(author, 'Rejected')) {
                         <button 
                           type="button" 
@@ -263,7 +201,8 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
             </table>
           </div>
         }
-      </div>
+      </div> <!-- /applications-card -->
+      </div> <!-- /admin-main-card -->
 
       <!-- CV Görüntüleme Modalı -->
       @if (cvPreviewModal()) {
@@ -271,7 +210,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
           <div class="modal-card modal-cv-card card" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <div class="modal-header-title">
-                <span class="modal-header-icon">📄</span>
+                <span class="modal-header-icon"></span>
                 <div>
                   <h3 class="modal-title">{{ cvPreviewModal()?.username }} - Özgeçmiş (CV)</h3>
                   <p class="modal-sub">{{ cvPreviewModal()?.email }} | {{ cvPreviewModal()?.university || 'Üniversite belirtilmemiş' }}</p>
@@ -286,7 +225,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
                 >
                   Tam Ekranda Aç ↗
                 </a>
-                <button type="button" class="btn-close" (click)="closeCvPreview()">✕</button>
+                <button type="button" class="btn-close" (click)="closeCvPreview()"></button>
               </div>
             </div>
             <div class="modal-body-cv">
@@ -307,8 +246,8 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
         <div class="modal-backdrop" (click)="closeRejectModal()">
           <div class="modal-card card" (click)="$event.stopPropagation()">
             <div class="modal-header">
-              <h3 class="modal-title">⚠️ Yazar Başvurusunu Reddet</h3>
-              <button type="button" class="btn-close" (click)="closeRejectModal()">✕</button>
+              <h3 class="modal-title"> Yazar Başvurusunu Reddet</h3>
+              <button type="button" class="btn-close" (click)="closeRejectModal()"></button>
             </div>
             <div class="modal-body">
               <p class="modal-desc">
@@ -351,10 +290,17 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       gap: 20px;
     }
 
+    .admin-main-card {
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
     /* Header Banner */
     .admin-header-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 24px 30px;
       display: flex;
@@ -362,7 +308,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       align-items: center;
       flex-wrap: wrap;
       gap: 16px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      box-shadow: var(--shadow-sm);
     }
 
     .admin-header-left {
@@ -398,17 +344,19 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       margin: 0;
     }
 
-    /* Tabs & Stats Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+    @media (max-width: 576px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .tab-card {
-      background: #ffffff;
-      border: 2px solid #e2e8f0;
-      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-xl);
+      border-radius: var(--radius-md);
       padding: 18px 22px;
       display: flex;
       align-items: center;
@@ -416,7 +364,6 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       cursor: pointer;
       position: relative;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .tab-card:hover {
@@ -425,69 +372,71 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
 
-    .tab-card.active-tab {
-      border-color: #1e3a8a;
-      background: #f8fafc;
-      box-shadow: 0 8px 25px rgba(30, 58, 138, 0.2);
-    }
-
-    .tab-indicator {
-      position: absolute;
-      bottom: 0;
-      left: 20px;
-      right: 20px;
-      height: 3px;
-      background: #1e3a8a;
-      border-radius: 3px 3px 0 0;
-    }
-
-    .stat-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: var(--radius-md);
+    /* Filter Bar Styles (borrowed from profile.component.ts) */
+    .posts-filter-bar {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
 
-    .icon-pending { background: #fffbeb; }
-    .icon-approved { background: #ecfdf5; }
-    .icon-rejected { background: #fef2f2; }
-    .icon-all { background: #eff6ff; }
-
-    .stat-details {
+    .pills-row {
       display: flex;
-      flex-direction: column;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
-    .stat-label {
-      font-size: 12px;
-      color: #64748b;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .filter-pill {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
     }
 
-    .stat-value {
-      font-size: 24px;
-      font-weight: 800;
-      line-height: 1.2;
+    .filter-pill:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
     }
 
-    .text-warning { color: #d97706; }
-    .text-success { color: #059669; }
-    .text-danger { color: #dc2626; }
-    .text-navy { color: #1e3a8a; }
+    .filter-pill.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
+
+    :host-context(.light-theme) .filter-pill {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #475569;
+    }
+
+    :host-context(.light-theme) .filter-pill:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    :host-context(.light-theme) .filter-pill.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
 
     /* Applications Card */
     .applications-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: var(--radius-lg);
-      padding: 26px;
-      box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.35);
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-xl);
+      border-radius: var(--radius-md);
+      padding: 24px;
     }
 
     .card-table-header {
@@ -498,7 +447,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       gap: 16px;
       margin-bottom: 20px;
       padding-bottom: 16px;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid var(--border);
     }
 
     .tab-title-group {
@@ -510,7 +459,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     .tab-current-heading {
       font-size: 18px;
       font-weight: 800;
-      color: #0f172a;
+      color: var(--text-primary);
       margin: 0;
     }
 
@@ -526,18 +475,18 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
 
     .search-input {
       width: 280px;
-      background: #f8fafc;
-      border: 1.5px solid #cbd5e1;
-      color: #0f172a;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
       border-radius: var(--radius-md);
       padding: 8px 14px;
       font-size: 13px;
     }
 
     .search-input:focus {
-      background: #ffffff;
-      border-color: #1e3a8a;
-      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+      background: var(--bg-main);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
     }
 
     /* Table Styles */
@@ -552,26 +501,26 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .applications-table th {
-      background: #f8fafc;
-      color: #475569;
+      background: var(--bg-muted);
+      color: var(--text-secondary);
       font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       padding: 12px 16px;
-      border-bottom: 2px solid #e2e8f0;
+      border-bottom: 1px solid var(--border);
     }
 
     .applications-table td {
       padding: 16px;
-      border-bottom: 1px solid #f1f5f9;
-      color: #1e293b;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
       font-size: 13px;
       vertical-align: middle;
     }
 
     .table-row:hover td {
-      background: #f8fafc;
+      background: var(--bg-card-hover);
     }
 
     /* User Cell */
@@ -602,7 +551,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
 
     .uname {
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-primary);
       font-size: 14px;
     }
 
@@ -672,6 +621,39 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       flex-direction: column;
       gap: 4px;
       align-items: flex-start;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      font-family: var(--font-heading);
+      line-height: 1;
+      margin-top: 2px;
+    }
+    
+    .text-warning { color: #f59e0b; }
+    .text-success { color: #10b981; }
+    .text-danger { color: #ef4444; }
+    .text-navy { color: #93c5fd; }
+    
+    :host-context(.light-theme) .stat-label {
+      color: #64748b;
+    }
+    :host-context(.light-theme) .text-navy { color: #4f46e5; }
+    
+    .stat-card.active-tab {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      transform: translateY(-4px);
     }
 
     .badge {
@@ -837,6 +819,16 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       padding: 24px;
       color: #0f172a;
       animation: modalFadeIn 0.2s ease-out;
+    }
+
+    /* Admin Tab Seamless Integration */
+    .admin-tab-seamless-container {
+      width: 100%;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
     .modal-cv-card {
@@ -1044,7 +1036,7 @@ export class AuthorApprovalsComponent implements OnInit {
 
         if (res.success) {
           this.toastService.success(
-            'Başvuru Onaylandı 🎉',
+            'Başvuru Onaylandı ',
             `'${author.username}' başarıyla onaylandı ve aktivasyon e-postası iletildi.`
           );
 

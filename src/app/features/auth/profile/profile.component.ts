@@ -1,13 +1,16 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BlogService } from '../../../core/services/blog.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { BlogPost, UpdatePostRequest } from '../../../core/models/blog.model';
 import { UserNotification } from '../../../core/models/auth.model';
 import { parseAuthError } from '../../../core/utils/auth-error-parser';
+
+import { UsersManagementComponent } from '../../admin/users-management/users-management.component';
+import { AuthorApprovalsComponent } from '../../admin/author-approvals/author-approvals.component';
 
 interface PasswordRules {
   hasMinLength: boolean;
@@ -20,7 +23,7 @@ interface PasswordRules {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, UsersManagementComponent, AuthorApprovalsComponent],
   template: `
     <div class="container profile-page">
       <div class="profile-container">
@@ -31,7 +34,7 @@ interface PasswordRules {
         @if (authService.isBanned()) {
           <div class="banned-screen-card card">
             <div class="banned-header">
-              <div class="banned-icon-wrap">⛔</div>
+              <div class="banned-icon-wrap"></div>
               <div class="banned-title-wrap">
                 <h1 class="banned-title">Hesabınız Askıya Alındı (Yasaklandı)</h1>
                 <p class="banned-subtitle">
@@ -78,7 +81,7 @@ interface PasswordRules {
                 <span>🚪</span> Güvenli Çıkış Yap
               </button>
               <button class="btn btn-danger" (click)="openAccountDeletionModal()">
-                <span>🗑️</span> Hesabımı Kalıcı Olarak Sil
+                <span></span> Hesabımı Kalıcı Olarak Sil
               </button>
             </div>
           </div>
@@ -103,7 +106,7 @@ interface PasswordRules {
                 }
                 <div class="avatar-overlay">
                   @if (isUploadingAvatar()) {
-                    <span class="spinner-small">⏳</span>
+                    <span class="spinner-small"></span>
                   } @else {
                     <span>📷</span>
                   }
@@ -123,7 +126,7 @@ interface PasswordRules {
                 @if (authService.currentUser()?.profilePictureUrl) {
                   <span class="action-sep">•</span>
                   <button type="button" class="btn-link-action text-danger" (click)="removeAvatar()" [disabled]="isUploadingAvatar()">
-                    🗑️ Kaldır
+                     Kaldır
                   </button>
                 }
               </div>
@@ -138,7 +141,7 @@ interface PasswordRules {
                 @if (authService.currentUser()?.isEmailConfirmed) {
                   <span class="badge badge-success">✓ E-Posta Onaylı</span>
                 } @else {
-                  <span class="badge badge-warning">⏳ E-Posta Onay Bekliyor</span>
+                  <span class="badge badge-warning"> E-Posta Onay Bekliyor</span>
                 }
               </div>
               <p class="profile-email">{{ authService.currentUser()?.email }}</p>
@@ -156,7 +159,7 @@ interface PasswordRules {
           <!-- E-Posta Doğrulanmamışsa Uyarı Kutusu -->
           @if (!authService.currentUser()?.isEmailConfirmed) {
             <div class="alert-card warning-alert-card card">
-              <div class="alert-icon-large">⚠️</div>
+              <div class="alert-icon-large"></div>
               <div class="alert-details">
                 <h3>E-Posta Adresiniz Doğrulanmamış</h3>
                 <p>
@@ -172,7 +175,7 @@ interface PasswordRules {
                     @if (isResending()) {
                       <span>Gönderiliyor...</span>
                     } @else {
-                      <span>🔄 Doğrulama Bağlantısını Tekrar Gönder</span>
+                      <span> Doğrulama Bağlantısını Tekrar Gönder</span>
                     }
                   </button>
                 </div>
@@ -187,7 +190,7 @@ interface PasswordRules {
               [class.active]="activeTab() === 'PROFILE'"
               (click)="activeTab.set('PROFILE')"
             >
-              👤 Profil & Güvenlik
+               Profil & Güvenlik
             </button>
 
             @if (authService.isAuthor() || authService.isAdmin()) {
@@ -196,7 +199,7 @@ interface PasswordRules {
                 [class.active]="activeTab() === 'POSTS'"
                 (click)="switchTab('POSTS')"
               >
-                📄 Yazılarım & Köşe Yazılarım
+                 Yazılarım & Köşe Yazılarım
                 @if (myPosts().length > 0) {
                   <span class="tab-badge">{{ myPosts().length }}</span>
                 }
@@ -208,27 +211,48 @@ interface PasswordRules {
               [class.active]="activeTab() === 'NOTIFICATIONS'"
               (click)="switchTab('NOTIFICATIONS')"
             >
-              📬 Bildirimlerim
+               Bildirimlerim
               @if (unreadNotificationCount() > 0) {
                 <span class="tab-badge badge-unread">{{ unreadNotificationCount() }}</span>
               }
             </button>
 
             @if (authService.isAdmin()) {
-              <a routerLink="/admin/users" class="tab-btn tab-btn-admin">
-                👥 Kullanıcı Yönetimi
-              </a>
-              <a routerLink="/admin/author-approvals" class="tab-btn tab-btn-admin">
-                👑 Yazar Onayları
-              </a>
+              <button class="tab-btn" 
+                [class.active]="activeTab() === 'ADMIN_USERS'"
+                (click)="activeTab.set('ADMIN_USERS')">
+                 Kullanıcı Yönetimi
+              </button>
+              
+              <button class="tab-btn" 
+                [class.active]="activeTab() === 'ADMIN_AUTHORS'"
+                (click)="activeTab.set('ADMIN_AUTHORS')">
+                 Yazar Onayları
+              </button>
             }
 
             <button
-              class="tab-btn tab-btn-danger"
-              [class.active]="activeTab() === 'SETTINGS'"
-              (click)="activeTab.set('SETTINGS')"
+              class="tab-btn"
+              [class.active]="activeTab() === 'SUPPORT'"
+              (click)="activeTab.set('SUPPORT')"
             >
-              ⚙️ Hesap Ayarları & Silme
+               Destek & Şikayet
+            </button>
+
+            <button
+              class="tab-btn tab-btn-warning"
+              [class.active]="activeTab() === 'FREEZE'"
+              (click)="activeTab.set('FREEZE')"
+            >
+               Hesap Dondurma
+            </button>
+
+            <button
+              class="tab-btn tab-btn-danger"
+              [class.active]="activeTab() === 'DELETE'"
+              (click)="activeTab.set('DELETE')"
+            >
+               Hesabı Kalıcı Sil
             </button>
           </div>
 
@@ -241,7 +265,7 @@ interface PasswordRules {
               <div class="card author-details-card">
                 <div class="card-header-flex">
                   <div>
-                    <h2 class="card-section-title">🎓 Yazar ve Akademik Bilgiler</h2>
+                    <h2 class="card-section-title"> Yazar ve Akademik Bilgiler</h2>
                     <p class="card-section-desc">Onaylanmış yazar profilinizin detayları</p>
                   </div>
                 </div>
@@ -255,7 +279,7 @@ interface PasswordRules {
                     <span class="info-value">
                       @if (authService.currentUser()?.cvUrl) {
                         <a [href]="authService.getCvUrl(authService.currentUser()?.cvUrl)" target="_blank" class="cv-link">
-                          📄 Yüklenen CV Dosyasını Görüntüle
+                           Yüklenen CV Dosyasını Görüntüle
                         </a>
                       } @else {
                         <span class="text-muted">CV dosyası bulunmuyor</span>
@@ -272,16 +296,106 @@ interface PasswordRules {
               </div>
             }
 
+            <!-- Yazar Başvurusu Kartı (Eğer Rol User İse) -->
+            @if (authService.userRole() === 'User') {
+              <div class="card author-details-card mb-4">
+                <div class="card-header-flex">
+                  <div>
+                    <h2 class="card-section-title"> Yazar Olmak İçin Başvurun</h2>
+                    <p class="card-section-desc">Lumina platformunda içerik üretmek ve yazar olmak için bilgilerinizi gönderin.</p>
+                  </div>
+                </div>
+                
+                @if (authService.currentUser()?.authorApprovalStatus === 'Pending') {
+                  <div class="alert-card warning-alert-card mt-3">
+                    <div class="alert-details">
+                      <h4>Başvurunuz Değerlendirmede</h4>
+                      <p>Yazar başvurunuz başarıyla alınmış olup sistem yöneticilerimiz tarafından incelenmektedir. Sonuçlandığında e-posta ve bildirim ile bilgilendirileceksiniz.</p>
+                      <p class="mt-2 text-muted" style="font-size:12px;">Başvuru Tarihi: {{ authService.currentUser()?.authorApplicationDate | date:'d MMMM y, HH:mm' }}</p>
+                    </div>
+                  </div>
+                } @else {
+                  @if (!showAuthorForm()) {
+                    <div class="mt-3 text-center p-3" style="background: rgba(255,255,255,0.05); border-radius: 8px;">
+                      <p class="mb-3">Yazar olmak ister misiniz? Profilinize yazar özellikleri eklemek için başvuru yapabilirsiniz.</p>
+                      <button type="button" class="btn btn-primary" (click)="showAuthorForm.set(true)">
+                        <span>📝</span> Başvuru Formunu Aç
+                      </button>
+                    </div>
+                  } @else {
+                    <form (ngSubmit)="onApplyAuthorSubmit()" class="mt-3">
+                      <div class="form-group mb-3">
+                      <label class="form-label" for="author-university">Mezun Olduğunuz Üniversite / Bölüm <span class="required-star">*</span></label>
+                      <input
+                        id="author-university"
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="authorApplyUniversity"
+                        name="authorApplyUniversity"
+                        placeholder="Örn: Hacettepe Üniversitesi - Bilgisayar Mühendisliği"
+                        required
+                      />
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                      <label class="form-label">Özgeçmiş / CV Dosyası (PDF) <span class="required-star">*</span></label>
+                      <div class="file-dropzone" [class.file-selected]="!!authorApplyCvFile">
+                        <input
+                          type="file"
+                          id="author-cv-input"
+                          class="file-input-hidden"
+                          accept=".pdf"
+                          (change)="onAuthorApplyCvSelected($event)"
+                        />
+                        <label for="author-cv-input" class="file-dropzone-label">
+                          @if (authorApplyCvFile) {
+                            <div class="file-info-badge">
+                              <span class="file-icon">📄</span>
+                              <div class="file-text">
+                                <span class="file-name">{{ authorApplyCvFile.name }}</span>
+                                <span class="file-size">({{ getFormattedFileSize(authorApplyCvFile.size) }})</span>
+                              </div>
+                              <button type="button" class="btn-remove-file" (click)="removeAuthorApplyCv($event)">✖</button>
+                            </div>
+                          } @else {
+                            <span class="upload-icon">📤</span>
+                            <span class="upload-title">CV Dosyanızı Buraya Yükleyin</span>
+                            <span class="upload-hint">Yalnızca PDF formatı (Maksimum 10 MB)</span>
+                          }
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end" style="gap: 12px;">
+                      <button type="button" class="btn btn-secondary" (click)="showAuthorForm.set(false)">İptal</button>
+                      <button 
+                        type="submit" 
+                        class="btn btn-primary" 
+                        [disabled]="isApplyingAuthor() || !authorApplyUniversity || !authorApplyCvFile"
+                      >
+                        @if (isApplyingAuthor()) {
+                          <span><i class="fa fa-spinner fa-spin" style="margin-right:8px;"></i> Gönderiliyor...</span>
+                        } @else {
+                          <span> Yazar Başvurusunu Gönder</span>
+                        }
+                      </button>
+                    </div>
+                  </form>
+                }
+                }
+              </div>
+            }
+
             <!-- Profil Bilgileri & Düzenleme Kartı -->
             <div class="card profile-info-card">
               <div class="card-header-flex">
                 <div>
-                  <h2 class="card-section-title">👤 Profil Bilgileri</h2>
+                  <h2 class="card-section-title"> Profil Bilgileri</h2>
                   <p class="card-section-desc">Kullanıcı adı ve e-posta adresinizi buradan güncelleyebilirsiniz.</p>
                 </div>
                 @if (!isEditing()) {
                   <button class="btn btn-primary btn-sm" (click)="startEditing()">
-                    <span>✏️</span> Profili Düzenle
+                    <span></span> Profili Düzenle
                   </button>
                 }
               </div>
@@ -310,7 +424,7 @@ interface PasswordRules {
                       @if (authService.currentUser()?.isEmailConfirmed) {
                         <span class="text-success font-bold">✓ Doğrulanmış</span>
                       } @else {
-                        <span class="text-warning font-bold">⏳ Doğrulama Bekliyor</span>
+                        <span class="text-warning font-bold"> Doğrulama Bekliyor</span>
                       }
                     </span>
                   </div>
@@ -346,12 +460,12 @@ interface PasswordRules {
                       placeholder="Yeni e-posta adresiniz"
                       required
                     />
-                    <div class="form-hint alert-hint">⚠️ Dikkat: E-posta adresinizi değiştirirseniz güvenlik nedeniyle oturumunuz kapatılacak ve yeni adresinize onay bağlantısı gönderilecektir.</div>
+                    <div class="form-hint alert-hint"> Dikkat: E-posta adresinizi değiştirirseniz güvenlik nedeniyle oturumunuz kapatılacak ve yeni adresinize onay bağlantısı gönderilecektir.</div>
                   </div>
 
                   @if (errorMessage()) {
                     <div class="error-alert">
-                      <span>⚠️</span>
+                      <span></span>
                       <span>{{ errorMessage() }}</span>
                     </div>
                   }
@@ -385,7 +499,7 @@ interface PasswordRules {
             <div class="card password-change-card">
               <div class="card-header-flex">
                 <div>
-                  <h2 class="card-section-title">🔒 Şifre Değiştir</h2>
+                  <h2 class="card-section-title"> Şifre Değiştir</h2>
                   <p class="card-section-desc">Hesabınızın güvenliği için mevcut şifrenizi güncelleyin.</p>
                 </div>
                 @if (!isChangingPassword()) {
@@ -424,7 +538,7 @@ interface PasswordRules {
                     />
 
                     @if (currentPassword && newPassword && currentPassword === newPassword) {
-                      <div class="form-hint text-danger mt-1">⚠️ Yeni şifre eski şifrenizle aynı olamaz.</div>
+                      <div class="form-hint text-danger mt-1"> Yeni şifre eski şifrenizle aynı olamaz.</div>
                     }
 
                     @if (newPassword) {
@@ -466,7 +580,7 @@ interface PasswordRules {
 
                   @if (passwordError()) {
                     <div class="error-alert">
-                      <span>⚠️</span>
+                      <span></span>
                       <span>{{ passwordError() }}</span>
                     </div>
                   }
@@ -504,11 +618,11 @@ interface PasswordRules {
             <div class="card posts-management-card">
               <div class="card-header-flex">
                 <div>
-                  <h2 class="card-section-title">✍️ Yayınlarım & Yazılarım</h2>
+                  <h2 class="card-section-title"> Yayınlarım & Yazılarım</h2>
                   <p class="card-section-desc">Yayınladığınız blogları ve köşe yazılarını buradan yönetebilir veya düzenleyebilirsiniz.</p>
                 </div>
                 <a routerLink="/create-post" class="btn btn-primary btn-sm">
-                  <span>✍️</span> Yeni Yazı Ekle
+                  <span></span> Yeni Yazı Ekle
                 </a>
               </div>
 
@@ -527,21 +641,21 @@ interface PasswordRules {
                     [class.active]="postTypeFilter() === 'Blog'"
                     (click)="postTypeFilter.set('Blog')"
                   >
-                    📄 Bloglar
+                     Bloglar
                   </button>
                   <button
                     class="filter-pill"
                     [class.active]="postTypeFilter() === 'Koseyazisi'"
                     (click)="postTypeFilter.set('Koseyazisi')"
                   >
-                    ✍️ Köşe Yazıları
+                     Köşe Yazıları
                   </button>
                   <button
                     class="filter-pill"
                     [class.active]="postTypeFilter() === 'Draft'"
                     (click)="postTypeFilter.set('Draft')"
                   >
-                    📝 Taslaklar
+                     Taslaklar
                   </button>
                 </div>
 
@@ -563,11 +677,11 @@ interface PasswordRules {
                 </div>
               } @else if (filteredMyPosts().length === 0) {
                 <div class="empty-state-card">
-                  <div class="empty-icon">📭</div>
+                  <div class="empty-icon"></div>
                   <h3>Henüz Bu Kriterde Yazı Bulunmuyor</h3>
                   <p>Yeni bir blog veya köşe yazısı oluşturarak düşüncelerinizi okurlarınızla paylaşmaya başlayabilirsiniz.</p>
                   <a routerLink="/create-post" class="btn btn-primary btn-sm mt-3">
-                    ✍️ İlk Yazınızı Yazın
+                     İlk Yazınızı Yazın
                   </a>
                 </div>
               } @else {
@@ -578,14 +692,14 @@ interface PasswordRules {
                         @if (post.photoUrl) {
                           <img [src]="blogService.getPhotoUrl(post.photoUrl)" [alt]="post.title" />
                         } @else {
-                          <div class="thumb-empty">{{ post.type === 'Koseyazisi' ? '✍️' : '📄' }}</div>
+                          <div class="thumb-empty">{{ post.type === 'Koseyazisi' ? '' : '' }}</div>
                         }
                       </div>
 
                       <div class="my-post-content">
                         <div class="my-post-badges">
                           <span class="badge" [class.badge-primary]="post.type === 'Blog'" [class.badge-author]="post.type === 'Koseyazisi'">
-                            {{ post.type === 'Koseyazisi' ? '✍️ Köşe Yazısı' : '📄 Blog' }}
+                            {{ post.type === 'Koseyazisi' ? ' Köşe Yazısı' : ' Blog' }}
                           </span>
                           <span class="badge" [class.badge-success]="post.status === 'Published'" [class.badge-warning]="post.status === 'Draft'">
                             {{ post.status === 'Published' ? 'Yayında' : 'Taslak' }}
@@ -598,13 +712,13 @@ interface PasswordRules {
 
                         <div class="my-post-actions">
                           <a [routerLink]="['/post', post.id]" class="btn btn-secondary btn-xs">
-                            👁️ Oku
+                             Oku
                           </a>
                           <button class="btn btn-primary btn-xs" (click)="openEditPostModal(post)">
-                            ✏️ Düzenle
+                             Düzenle
                           </button>
                           <button class="btn btn-danger btn-xs" (click)="deletePost(post)">
-                            🗑️ Sil
+                             Sil
                           </button>
                         </div>
                       </div>
@@ -622,11 +736,11 @@ interface PasswordRules {
             <div class="card notifications-card">
               <div class="card-header-flex">
                 <div>
-                  <h2 class="card-section-title">📬 Bildirimler & Uyarılar</h2>
+                  <h2 class="card-section-title"> Bildirimler & Uyarılar</h2>
                   <p class="card-section-desc">Yönetimden gelen uyarılar, yazı durumu bildirimleri ve önemli güncellemeler.</p>
                 </div>
                 <button class="btn btn-secondary btn-sm" (click)="loadNotifications()" [disabled]="isLoadingNotifications()">
-                  🔄 Yenile
+                   Yenile
                 </button>
               </div>
 
@@ -637,21 +751,21 @@ interface PasswordRules {
                 </div>
               } @else if (notifications().length === 0) {
                 <div class="empty-state-card">
-                  <div class="empty-icon">🎉</div>
+                  <div class="empty-icon"></div>
                   <h3>Her Şey Yolunda!</h3>
                   <p>Henüz gelen herhangi bir bildirim veya uyarınız bulunmuyor.</p>
                 </div>
               } @else {
                 <div class="notifications-list">
-                  @for (notif of notifications(); track notif.id) {
-                    <div class="notif-item card" [class.notif-unread]="!notif.isRead">
+                  @for (notif of paginatedNotifications(); track notif.id) {
+                    <div class="notif-item card" [class.notif-unread]="!notif.isRead" (click)="toggleNotification(notif)" style="cursor: pointer;">
                       <div class="notif-icon">
                         @if (notif.type === 'Warning') {
-                          ⚠️
+                          
                         } @else if (notif.type === 'PostDeleted') {
-                          🗑️
+                          
                         } @else if (notif.type === 'AccountBanned') {
-                          ⛔
+                          
                         } @else {
                           ℹ️
                         }
@@ -662,14 +776,20 @@ interface PasswordRules {
                           <h4 class="notif-title">{{ notif.title }}</h4>
                           <span class="notif-time">{{ notif.createdAt | date:'d MMMM y, HH:mm' }}</span>
                         </div>
-                        <p class="notif-msg">{{ notif.message }}</p>
+                        <p class="notif-msg" [class.expanded]="notif.isExpanded">{{ notif.message }}</p>
                       </div>
 
                       @if (!notif.isRead) {
-                        <button class="btn btn-outline-info btn-xs" (click)="markAsRead(notif)">
-                          ✓ Okundu
-                        </button>
+                        <div class="notif-indicator"></div>
                       }
+                    </div>
+                  }
+                  
+                  @if (notifications().length > 10) {
+                    <div class="nd-pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() === 1" (click)="currentNotifPage.set(currentNotifPage() - 1)">Önceki</button>
+                      <span style="font-size: 14px;">Sayfa {{ currentNotifPage() }} / {{ Math.ceil(notifications().length / 10) }}</span>
+                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() >= Math.ceil(notifications().length / 10)" (click)="currentNotifPage.set(currentNotifPage() + 1)">Sonraki</button>
                     </div>
                   }
                 </div>
@@ -678,38 +798,165 @@ interface PasswordRules {
           }
 
           <!-- ==================================================== -->
-          <!-- TAB 4: HESAP AYARLARI & KALICI HESAP SİLME           -->
+          <!-- TAB: ADMIN USERS -->
           <!-- ==================================================== -->
-          @if (activeTab() === 'SETTINGS') {
-            <div class="card danger-zone-card">
+          @if (activeTab() === 'ADMIN_USERS' && authService.isAdmin()) {
+            <div class="content-section fade-in">
+
+              <div class="admin-tab-container">
+                <app-users-management></app-users-management>
+              </div>
+            </div>
+          }
+
+          <!-- ==================================================== -->
+          <!-- TAB: ADMIN AUTHORS -->
+          <!-- ==================================================== -->
+          @if (activeTab() === 'ADMIN_AUTHORS' && authService.isAdmin()) {
+            <div class="content-section fade-in">
+
+              <div class="admin-tab-container">
+                <app-author-approvals></app-author-approvals>
+              </div>
+            </div>
+          }
+
+          <!-- ==================================================== -->
+          <!-- TAB 4: DESTEK & ŞİKAYET BİLDİRİMİ                    -->
+          <!-- ==================================================== -->
+          @if (activeTab() === 'SUPPORT') {
+            <div class="card mb-4">
               <div class="card-header-flex">
                 <div>
-                  <h2 class="card-section-title text-danger">⚠️ Tehlikeli Bölge: Hesabı Sil</h2>
+                  <h2 class="card-section-title"> İstek ve Şikayet Bildirimi</h2>
+                  <p class="card-section-desc">Sistem yöneticilerine istek, öneri veya şikayetlerinizi iletebilirsiniz.</p>
+                </div>
+              </div>
+              <form (ngSubmit)="submitSupportRequest()" class="mt-3">
+                <div class="form-group mb-3">
+                  <label class="form-label">Bildirim Türü</label>
+                  <select class="form-control" [(ngModel)]="supportRequestType" name="supportRequestType" required>
+                    <option value="Istek">İstek / Öneri</option>
+                    <option value="Sikayet">Şikayet</option>
+                  </select>
+                </div>
+                <div class="form-group mb-3">
+                  <label class="form-label">Mesajınız (En az 10 karakter) *</label>
+                  <textarea
+                    class="form-control"
+                    rows="4"
+                    [(ngModel)]="supportRequestMessage"
+                    name="supportRequestMessage"
+                    placeholder="Mesajınızı buraya yazınız..."
+                    required
+                  ></textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                  <button type="submit" class="btn btn-primary" [disabled]="isSubmittingSupport() || supportRequestMessage.length < 10">
+                    @if (isSubmittingSupport()) {
+                      <span>Gönderiliyor...</span>
+                    } @else {
+                      <span> Gönder</span>
+                    }
+                  </button>
+                </div>
+              </form>
+            </div>
+          }
+
+          <!-- ==================================================== -->
+          <!-- TAB 5: HESAP DONDURMA                                -->
+          <!-- ==================================================== -->
+          @if (activeTab() === 'FREEZE') {
+            <div class="danger-zone-card mb-4 card">
+              <div class="card-header-flex">
+                <div>
+                  <h2 class="card-section-title text-warning"> Hesap Dondurma</h2>
+                  <p class="card-section-desc">Geçici olarak hesabınızı askıya alın</p>
+                </div>
+              </div>
+              <div class="danger-info mt-3">
+                <h3>Hesabınızı dondurmak istediğinize emin misiniz?</h3>
+                <p>
+                  Hesabınızı dondurduğunuzda profiliniz ve yazılarınız gizlenir. Sisteme tekrar giriş yaptığınızda hesabınız otomatik olarak aktifleşecektir.
+                </p>
+              </div>
+              <button class="btn btn-warning mt-3" (click)="openAccountDeactivationModal()">
+                Hesabı Dondur
+              </button>
+            </div>
+          }
+
+          <!-- ==================================================== -->
+          <!-- TAB 6: KALICI HESAP SİLME                            -->
+          <!-- ==================================================== -->
+          @if (activeTab() === 'DELETE') {
+            <div class="danger-zone-card card">
+              <div class="card-header-flex">
+                <div>
+                  <h2 class="card-section-title text-danger"> Tehlikeli Bölge: Hesabı Sil</h2>
                   <p class="card-section-desc">Hesabınızı kalıcı olarak silme işlemleri</p>
                 </div>
               </div>
+              <div class="danger-info mt-3">
+                <h3>Hesabınızı silmek istediğinize emin misiniz?</h3>
+                <p>
+                  Hesabınızı sildiğinizde, profil bilgileriniz, yayınladığınız tüm yazılar ve etkileşimleriniz kalıcı olarak silinir. Bu işlem <strong>geri alınamaz</strong>.
+                </p>
+                <p class="sub-danger">
+                  Güvenliğiniz için kayıtlı e-posta adresinize tek tıkla onaylayabileceğiniz hesap silme bağlantısı gönderilecektir.
+                </p>
+              </div>
 
-              <div class="danger-box">
-                <div class="danger-info">
-                  <h3>Hesabınızı silmek istediğinize emin misiniz?</h3>
-                  <p>
-                    Hesabınızı sildiğinizde, profil bilgileriniz, yayınladığınız tüm yazılar ve etkileşimleriniz kalıcı olarak silinir. Bu işlem <strong>geri alınamaz</strong>.
-                  </p>
-                  <p class="sub-danger">
-                    Güvenliğiniz için kayıtlı e-posta adresinize tek tıkla onaylayabileceğiniz hesap silme bağlantısı gönderilecektir.
-                  </p>
-                </div>
-
-                <div class="danger-action">
-                  <button class="btn btn-danger" (click)="openAccountDeletionModal()">
-                    <span>🗑️</span> Hesabımı Kalıcı Olarak Sil
-                  </button>
-                </div>
+              <div class="danger-action mt-3">
+                <button class="btn btn-danger" (click)="openAccountDeletionModal()">
+                  <span></span> Hesabımı Kalıcı Olarak Sil
+                </button>
               </div>
             </div>
           }
         }
       </div>
+
+      <!-- ==================================================== -->
+      <!-- NOTIFICATION DETAILS MODAL                           -->
+      <!-- ==================================================== -->
+      @if (selectedNotification()) {
+        <div class="modal-backdrop" (click)="closeNotificationModal()">
+          <div class="modal-card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <div class="modal-title-wrap">
+                <div class="modal-icon">
+                  @if (selectedNotification()?.type === 'Warning') {
+                    ⚠️
+                  } @else if (selectedNotification()?.type === 'Success') {
+                    ✅
+                  } @else if (selectedNotification()?.type === 'Info') {
+                    ℹ️
+                  } @else if (selectedNotification()?.type === 'PostDeleted') {
+                    🗑️
+                  } @else if (selectedNotification()?.type === 'AccountBanned') {
+                    ⛔
+                  } @else {
+                    🔔
+                  }
+                </div>
+                <div>
+                  <h3 class="modal-title">{{ selectedNotification()?.title }}</h3>
+                  <p class="modal-subtitle">{{ selectedNotification()?.createdAt | date:'d MMMM y, HH:mm' }}</p>
+                </div>
+              </div>
+              <button class="modal-close-btn" (click)="closeNotificationModal()">✖</button>
+            </div>
+            <div class="modal-body" style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">
+              <span class="notif-modal-text">{{ selectedNotification()?.message }}</span>
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-secondary" (click)="closeNotificationModal()">Kapat</button>
+            </div>
+          </div>
+        </div>
+      }
 
       <!-- ==================================================== -->
       <!-- MODAL: YAZI DÜZENLEME MODALI (EDIT POST MODAL)       -->
@@ -719,13 +966,13 @@ interface PasswordRules {
           <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <div class="modal-title-wrap">
-                <span class="modal-icon">✏️</span>
+                <span class="modal-icon"></span>
                 <div>
                   <h3 class="modal-title">Yazıyı Düzenle</h3>
                   <p class="modal-subtitle">"{{ editingPost()?.title }}"</p>
                 </div>
               </div>
-              <button class="modal-close-btn" (click)="closeEditPostModal()">✕</button>
+              <button class="modal-close-btn" (click)="closeEditPostModal()"></button>
             </div>
 
             <form (ngSubmit)="savePostChanges()">
@@ -746,16 +993,16 @@ interface PasswordRules {
                   <div class="form-group">
                     <label class="form-label">Yazı Türü</label>
                     <select class="form-control" [(ngModel)]="editPostType" name="editPostType">
-                      <option value="Blog">📄 Blog Yazısı</option>
-                      <option value="Koseyazisi">✍️ Köşe Yazısı</option>
+                      <option value="Blog"> Blog Yazısı</option>
+                      <option value="Koseyazisi"> Köşe Yazısı</option>
                     </select>
                   </div>
 
                   <div class="form-group">
                     <label class="form-label">Yayın Durumu</label>
                     <select class="form-control" [(ngModel)]="editPostStatus" name="editPostStatus">
-                      <option value="Published">🚀 Yayında (Herkes Görebilir)</option>
-                      <option value="Draft">📝 Taslak (Sadece Ben)</option>
+                      <option value="Published"> Yayında (Herkes Görebilir)</option>
+                      <option value="Draft"> Taslak (Sadece Ben)</option>
                     </select>
                   </div>
                 </div>
@@ -776,7 +1023,7 @@ interface PasswordRules {
                   <label class="form-label">Kapak Görseli</label>
                   @if (editingPost()?.photoUrl && !newPostPhotoFile) {
                     <div class="current-photo-preview mb-2">
-                      <img [src]="blogService.getPhotoUrl(editingPost()?.photoUrl)" alt="Mevcut Görsel" />
+                      <img [src]="blogService.getPhotoUrl(editingPost()?.photoUrl || undefined)" alt="Mevcut Görsel" />
                       <span class="photo-hint">Mevcut görsel korunuyor. Değiştirmek için yeni dosya seçebilirsiniz.</span>
                     </div>
                   }
@@ -807,6 +1054,47 @@ interface PasswordRules {
       }
 
       <!-- ==================================================== -->
+      <!-- MODAL: HESAP DONDURMA ONAY MODALI                    -->
+      <!-- ==================================================== -->
+      @if (showAccountDeactivationModal()) {
+        <div class="modal-backdrop" (click)="closeAccountDeactivationModal()">
+          <div class="modal-card" (click)="$event.stopPropagation()">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(245, 158, 11, 0.2);">
+              <div class="modal-title-wrap">
+                <span class="modal-icon">❄️</span>
+                <div>
+                  <h3 class="modal-title" style="color: #d97706;">Hesabı Dondur</h3>
+                  <p class="modal-subtitle">Geçici olarak askıya alınacak</p>
+                </div>
+              </div>
+              <button class="modal-close-btn" (click)="closeAccountDeactivationModal()"></button>
+            </div>
+
+            <div class="modal-body">
+              <div class="alert-box-warning" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 16px; margin-bottom: 24px; color: #b45309; font-weight: 500;">
+                Hesabınızı dondurmak istediğinize emin misiniz? Bu işlem sonucunda oturumunuz kapatılacak ve profiliniz gizlenecektir. İstediğiniz zaman e-posta ve şifrenizle giriş yaparak hesabınızı tekrar aktifleştirebilirsiniz.
+              </div>
+              <div class="text-center py-3">
+                <button class="btn btn-warning btn-block" (click)="deactivateAccount()" [disabled]="isDeactivating()" style="background: #f59e0b; color: #fff; border: none;">
+                  @if (isDeactivating()) {
+                    <span>Donduruluyor...</span>
+                  } @else {
+                    <span>Evet, Hesabımı Dondur</span>
+                  }
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button class="btn btn-secondary" (click)="closeAccountDeactivationModal()">
+                İptal
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ==================================================== -->
       <!-- MODAL: HESAP SİLME ONAY & BAĞLANTI GÖNDERME MODALI   -->
       <!-- ==================================================== -->
       @if (showAccountDeletionModal()) {
@@ -814,40 +1102,40 @@ interface PasswordRules {
           <div class="modal-card" (click)="$event.stopPropagation()">
             <div class="modal-header modal-header-danger">
               <div class="modal-title-wrap">
-                <span class="modal-icon">🗑️</span>
+                <span class="modal-icon"></span>
                 <div>
                   <h3 class="modal-title">Hesap Silme Onayı</h3>
                   <p class="modal-subtitle">{{ authService.currentUser()?.email }}</p>
                 </div>
               </div>
-              <button class="modal-close-btn" (click)="closeAccountDeletionModal()">✕</button>
+              <button class="modal-close-btn" (click)="closeAccountDeletionModal()"></button>
             </div>
 
             <div class="modal-body">
               @if (!deletionLinkSent()) {
-                <div class="alert-box-danger">
-                  ⚠️ Hesabınızı silmek üzeresiniz. Bu işlem kalıcıdır ve geri alınamaz. Devam etmek için e-posta adresinize tek tıkla onaylayabileceğiniz bir <strong>hesap silme onay bağlantısı (buton)</strong> göndereceğiz.
+                <div class="alert-box-danger" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 10px; padding: 16px; margin-bottom: 24px; color: #f87171; font-weight: 500;">
+                   Hesabınızı silmek üzeresiniz. Bu işlem kalıcıdır ve geri alınamaz. Devam etmek için e-posta adresinize tek tıkla onaylayabileceğiniz bir <strong style="color: #fca5a5;">hesap silme onay bağlantısı (buton)</strong> göndereceğiz.
                 </div>
                 <div class="text-center py-3">
                   <button class="btn btn-danger btn-block" (click)="requestDeletionLink()" [disabled]="isRequestingDeletionCode()">
                     @if (isRequestingDeletionCode()) {
                       <span>Bağlantı Gönderiliyor...</span>
                     } @else {
-                      <span>✉️ E-Postama Silme Bağlantısı Gönder</span>
+                      <span> E-Postama Silme Bağlantısı Gönder</span>
                     }
                   </button>
                 </div>
               } @else {
                 <div class="alert-box-success" style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
-                  <div style="font-weight: 700; color: #22c55e; margin-bottom: 6px;">📬 Silme Bağlantısı E-Postanıza Gönderildi!</div>
+                  <div style="font-weight: 700; color: #22c55e; margin-bottom: 6px;"> Silme Bağlantısı E-Postanıza Gönderildi!</div>
                   <p style="margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--text-main, #e2e8f0);">
-                    <strong>{{ authService.currentUser()?.email }}</strong> adresinize tek tıkla hesabınızı silebileceğiniz bir e-posta gönderdik. Lütfen gelen kutunuzu (ve <em>Spam / Gereksiz</em> klasörünü) kontrol edip içerisindeki <strong>'🗑️ Hesabımı Kalıcı Olarak Sil'</strong> butonuna tıklayarak işlemi tamamlayınız.
+                    <strong>{{ authService.currentUser()?.email }}</strong> adresinize tek tıkla hesabınızı silebileceğiniz bir e-posta gönderdik. Lütfen gelen kutunuzu (ve <em>Spam / Gereksiz</em> klasörünü) kontrol edip içerisindeki <strong>' Hesabımı Kalıcı Olarak Sil'</strong> butonuna tıklayarak işlemi tamamlayınız.
                   </p>
                 </div>
 
                 <div class="d-flex justify-between items-center text-sm mt-3">
                   <button type="button" class="btn-link-action" (click)="requestDeletionLink()" [disabled]="isRequestingDeletionCode()">
-                    🔄 Bağlantıyı Tekrar Gönder
+                     Bağlantıyı Tekrar Gönder
                   </button>
                 </div>
               }
@@ -874,7 +1162,7 @@ interface PasswordRules {
 
     .profile-container {
       width: 100%;
-      max-width: 860px;
+      max-width: 1140px;
       display: flex;
       flex-direction: column;
       gap: 24px;
@@ -999,11 +1287,13 @@ interface PasswordRules {
       align-items: center;
       gap: 24px;
       padding: 32px;
-      background: #0d1b3e;
-      color: #ffffff;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+      box-shadow: var(--shadow-xl);
     }
 
     :host-context(.light-theme) .profile-header {
@@ -1209,8 +1499,10 @@ interface PasswordRules {
 
     /* Cards */
     .card {
-      background: #0d1b3e;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 28px;
     }
@@ -1551,6 +1843,7 @@ interface PasswordRules {
 
     .notif-content {
       flex: 1;
+      min-width: 0;
     }
 
     .notif-header-row {
@@ -1581,6 +1874,27 @@ interface PasswordRules {
       color: #cbd5e1;
       margin: 0;
       line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-height: 18px; /* Yaklaşık 1 satır */
+      transition: all 0.3s ease;
+    }
+    
+    .notif-msg.expanded {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      max-height: 500px;
+    }
+
+    .notif-indicator {
+      width: 10px;
+      height: 10px;
+      background-color: var(--danger, #ef4444);
+      border-radius: 50%;
+      margin-left: 10px;
+      flex-shrink: 0;
     }
 
     :host-context(.light-theme) .notif-msg {
@@ -1719,6 +2033,17 @@ interface PasswordRules {
       gap: 16px;
     }
 
+    .notif-modal-text {
+      color: #cbd5e1;
+      word-wrap: break-word;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    :host-context(.light-theme) .notif-modal-text {
+      color: #334155;
+    }
+
     .modal-footer {
       padding: 16px 24px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -1810,6 +2135,7 @@ export class ProfileComponent implements OnInit {
   blogService = inject(BlogService);
   toastService = inject(ToastService);
   router = inject(Router);
+  route = inject(ActivatedRoute);
 
   // Active Tab: 'PROFILE', 'POSTS', 'NOTIFICATIONS', 'SETTINGS'
   activeTab = signal<string>('PROFILE');
@@ -1883,6 +2209,15 @@ export class ProfileComponent implements OnInit {
   notifications = signal<UserNotification[]>([]);
   isLoadingNotifications = signal<boolean>(false);
   unreadNotificationCount = computed(() => this.notifications().filter(n => !n.isRead).length);
+  
+  currentNotifPage = signal<number>(1);
+  paginatedNotifications = computed(() => {
+    const start = (this.currentNotifPage() - 1) * 10;
+    return this.notifications().slice(start, start + 10);
+  });
+  
+  Math = Math;
+
 
   // --- Account Deletion State ---
   showAccountDeletionModal = signal<boolean>(false);
@@ -1890,7 +2225,37 @@ export class ProfileComponent implements OnInit {
   isRequestingDeletionCode = signal<boolean>(false);
   isDeletingAccount = signal<boolean>(false);
 
+  // --- Account Deactivation State ---
+  showAccountDeactivationModal = signal<boolean>(false);
+  isDeactivating = signal<boolean>(false);
+
+  // --- Support Request State ---
+  supportRequestType: string = 'Istek';
+  supportRequestMessage: string = '';
+  isSubmittingSupport = signal<boolean>(false);
+
+  // --- Author Application State ---
+  showAuthorForm = signal<boolean>(false);
+  authorApplyUniversity: string = '';
+  authorApplyCvFile: File | null = null;
+  isApplyingAuthor = signal<boolean>(false);
+  
+  // --- Selected Notification State ---
+  selectedNotification = signal<UserNotification | null>(null);
+  expandNotifId: string | null = null;
+
   ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.switchTab(params['tab']);
+      }
+      if (params['expandId']) {
+        this.expandNotifId = params['expandId'];
+        if (this.notifications().length > 0) {
+          this.autoExpandNotification();
+        }
+      }
+    });
     this.initFormData();
     this.loadUserData();
   }
@@ -1983,7 +2348,7 @@ export class ProfileComponent implements OnInit {
     this.blogService.update(post.id, updateReq).subscribe({
       next: (updated) => {
         this.isSavingPost.set(false);
-        this.toastService.success('Yazı Güncellendi 🎉', 'Değişiklikleriniz başarıyla kaydedildi.');
+        this.toastService.success('Yazı Güncellendi ', 'Değişiklikleriniz başarıyla kaydedildi.');
         this.closeEditPostModal();
         this.loadMyPosts();
       },
@@ -2001,7 +2366,7 @@ export class ProfileComponent implements OnInit {
 
     this.blogService.delete(post.id).subscribe({
       next: () => {
-        this.toastService.success('Yazı Silindi 🗑️', 'Yazınız başarıyla kaldırıldı.');
+        this.toastService.success('Yazı Silindi ', 'Yazınız başarıyla kaldırıldı.');
         this.myPosts.update(list => list.filter(p => p.id !== post.id));
       },
       error: (err) => {
@@ -2023,6 +2388,7 @@ export class ProfileComponent implements OnInit {
         this.isLoadingNotifications.set(false);
         if (res.success && res.data) {
           this.notifications.set(res.data);
+          this.autoExpandNotification();
         }
       },
       error: () => {
@@ -2031,12 +2397,61 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  autoExpandNotification() {
+    if (this.expandNotifId && this.notifications().length > 0) {
+      const notifToExpand = this.notifications().find(n => n.id === this.expandNotifId);
+      if (notifToExpand) {
+        this.toggleNotification(notifToExpand);
+        this.expandNotifId = null; // Sadece bir kere aç
+      }
+    }
+  }
+
+  toggleNotification(notif: UserNotification) {
+    this.selectedNotification.set(notif);
+    if (!notif.isRead) {
+      this.markAsRead(notif);
+    }
+  }
+  
+  closeNotificationModal() {
+    this.selectedNotification.set(null);
+  }
+
   markAsRead(notif: UserNotification) {
     this.authService.markNotificationAsRead(notif.id).subscribe({
       next: () => {
         this.notifications.update(list =>
           list.map(n => n.id === notif.id ? { ...n, isRead: true } : n)
         );
+      }
+    });
+  }
+
+  // --- ACCOUNT DEACTIVATION ---
+  openAccountDeactivationModal() {
+    this.showAccountDeactivationModal.set(true);
+  }
+
+  closeAccountDeactivationModal() {
+    this.showAccountDeactivationModal.set(false);
+  }
+
+  deactivateAccount() {
+    this.isDeactivating.set(true);
+    this.authService.deactivateAccount().subscribe({
+      next: (res: any) => {
+        this.isDeactivating.set(false);
+        if(res.success) {
+          this.toastService.success('Hesap Donduruldu ❄️', 'Hesabınız başarıyla donduruldu. Çıkış yapılıyor...');
+          this.closeAccountDeactivationModal();
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        }
+      },
+      error: (err: any) => {
+        this.isDeactivating.set(false);
+        this.toastService.error('Hata', 'Hesap dondurma işlemi başarısız oldu.');
       }
     });
   }
@@ -2059,7 +2474,7 @@ export class ProfileComponent implements OnInit {
         this.isRequestingDeletionCode.set(false);
         if (res.success) {
           this.deletionLinkSent.set(true);
-          this.toastService.success('Bağlantı Gönderildi 📬', 'Hesap silme onay bağlantınız e-posta adresinize iletildi.');
+          this.toastService.success('Bağlantı Gönderildi ', 'Hesap silme onay bağlantınız e-posta adresinize iletildi.');
         } else {
           this.toastService.error('Hata', res.message);
         }
@@ -2144,7 +2559,7 @@ export class ProfileComponent implements OnInit {
       next: (res) => {
         this.isUploadingAvatar.set(false);
         if (res.success) {
-          this.toastService.success('Fotoğraf Güncellendi ✨', 'Yeni profil resminiz başarıyla kaydedildi.');
+          this.toastService.success('Fotoğraf Güncellendi ', 'Yeni profil resminiz başarıyla kaydedildi.');
         } else {
           this.toastService.error('Hata', res.message);
         }
@@ -2235,7 +2650,7 @@ export class ProfileComponent implements OnInit {
       next: (res) => {
         this.isSavingPassword.set(false);
         if (res.success) {
-          this.toastService.success('Şifreniz Değiştirildi 🎉', 'Yeni şifreniz başarıyla kaydedildi.');
+          this.toastService.success('Şifreniz Değiştirildi ', 'Yeni şifreniz başarıyla kaydedildi.');
           this.cancelPasswordChange();
         } else {
           this.passwordError.set(res.message);
@@ -2251,6 +2666,75 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+
+
+  // --- AUTHOR APPLICATION ---
+  onAuthorApplyCvSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      if (file.type !== 'application/pdf') {
+        this.toastService.error('Geçersiz Dosya', 'Lütfen sadece PDF formatında CV dosyası yükleyiniz.');
+        input.value = '';
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        this.toastService.error('Boyut Sınırı', 'Dosya boyutu en fazla 10 MB olabilir.');
+        input.value = '';
+        return;
+      }
+      this.authorApplyCvFile = file;
+    }
+  }
+
+  removeAuthorApplyCv(event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.authorApplyCvFile = null;
+    const input = document.getElementById('author-cv-input') as HTMLInputElement;
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  getFormattedFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  onApplyAuthorSubmit() {
+    if (!this.authorApplyUniversity || !this.authorApplyUniversity.trim() || !this.authorApplyCvFile) {
+      this.toastService.warning('Eksik Bilgi', 'Lütfen üniversite bilginizi giriniz ve CV dosyanızı yükleyiniz.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('university', this.authorApplyUniversity.trim());
+    formData.append('cvFile', this.authorApplyCvFile);
+
+    this.isApplyingAuthor.set(true);
+    this.authService.applyForAuthor(formData).subscribe({
+      next: (res) => {
+        this.isApplyingAuthor.set(false);
+        if (res.success) {
+          this.toastService.success('Başvuru Gönderildi', res.message || 'Yazar başvurunuz başarıyla alınmıştır.');
+          this.authorApplyUniversity = '';
+          this.authorApplyCvFile = null;
+          this.loadUserData(); // Reload to update status to Pending
+        } else {
+          this.toastService.error('Başvuru Hatası', res.message || 'Başvuru gönderilirken bir sorun oluştu.');
+        }
+      },
+      error: (err) => {
+        this.isApplyingAuthor.set(false);
+        this.toastService.error('Bağlantı Hatası', err?.error?.message || 'Yazar başvurusu tamamlanamadı.');
+      }
+    });
+  }
+
   resendCode() {
     const email = this.authService.currentUser()?.email;
     if (!email) return;
@@ -2260,13 +2744,35 @@ export class ProfileComponent implements OnInit {
       next: (res) => {
         this.isResending.set(false);
         if (res.success) {
-          this.toastService.success('Bağlantı Gönderildi 📬', 'Doğrulama bağlantısı e-posta adresinize iletildi.');
+          this.toastService.success('Bağlantı Gönderildi ', 'Doğrulama bağlantısı e-posta adresinize iletildi.');
         } else {
           this.toastService.error('Hata', res.message);
         }
       },
       error: (err) => {
         this.isResending.set(false);
+        const parsed = parseAuthError(err);
+        this.toastService.error('Hata', parsed.generalMessage);
+      }
+    });
+  }
+
+  submitSupportRequest() {
+    if (this.supportRequestMessage.trim().length < 10) return;
+    
+    this.isSubmittingSupport.set(true);
+    this.authService.sendSupportRequest(this.supportRequestType, this.supportRequestMessage).subscribe({
+      next: (res) => {
+        this.isSubmittingSupport.set(false);
+        if (res.success) {
+          this.toastService.success('Başarılı', res.message);
+          this.supportRequestMessage = '';
+        } else {
+          this.toastService.error('Hata', res.message);
+        }
+      },
+      error: (err) => {
+        this.isSubmittingSupport.set(false);
         const parsed = parseAuthError(err);
         this.toastService.error('Hata', parsed.generalMessage);
       }

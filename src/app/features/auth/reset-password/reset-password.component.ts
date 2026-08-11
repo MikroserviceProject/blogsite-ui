@@ -14,14 +14,14 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     <div class="auth-page-container container">
       <div class="auth-card card reset-card">
         <div class="auth-header">
-          <div class="auth-icon-badge">🔒</div>
+          <div class="auth-icon-badge"></div>
           <h1 class="auth-title">Yeni Şifre Belirleyin</h1>
           <p class="auth-subtitle">Hesabınız için güçlü ve yeni bir şifre oluşturun</p>
         </div>
 
         @if (isSuccess()) {
           <div class="success-box card">
-            <div class="success-icon">🎉</div>
+            <div class="success-icon"></div>
             <h3 class="success-title">Şifreniz Güncellendi!</h3>
             <p class="success-desc">
               Hesap şifreniz başarıyla sıfırlandı. Yeni şifrenizle hemen giriş yapabilirsiniz.
@@ -82,7 +82,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                   (click)="showPassword.set(!showPassword())"
                   tabindex="-1"
                 >
-                  {{ showPassword() ? '👁️' : '🔒' }}
+                  {{ showPassword() ? '🙈' : '🐵' }}
                 </button>
               </div>
             </div>
@@ -101,7 +101,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                 />
               </div>
               @if (confirmPassword && newPassword !== confirmPassword) {
-                <div class="text-danger font-xs mt-1">⚠️ Şifreler birbiriyle eşleşmiyor.</div>
+                <div class="text-danger font-xs mt-1"> Şifreler birbiriyle eşleşmiyor.</div>
               }
             </div>
 
@@ -127,7 +127,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
             @if (errorMessage()) {
               <div class="alert alert-danger">
-                <span>⚠️</span>
+                <span></span>
                 <span>{{ errorMessage() }}</span>
               </div>
             }
@@ -138,10 +138,10 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
               [disabled]="isLoading() || !isFormValid()"
             >
               @if (isLoading()) {
-                <span class="spinner-small">⏳</span>
+                <span class="spinner-small"></span>
                 <span>Güncelleniyor...</span>
               } @else {
-                <span>🔒 Şifremi Yenile</span>
+                <span> Şifremi Yenile</span>
               }
             </button>
 
@@ -415,7 +415,7 @@ export class ResetPasswordComponent implements OnInit {
         this.isLoading.set(false);
         if (res.success) {
           this.isSuccess.set(true);
-          this.toast.success('Başarılı 🎉', 'Şifreniz başarıyla güncellendi!');
+          this.toast.success('Başarılı ', 'Şifreniz başarıyla güncellendi!');
         } else {
           this.errorMessage.set(res.message || 'Şifre sıfırlanamadı.');
         }

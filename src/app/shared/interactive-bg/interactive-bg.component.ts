@@ -62,12 +62,19 @@ interface Star {
     }
 
     :host-context(.light-theme) .starry-sky-wrapper {
-      background: #f8fafc;
+      background: #f3f4f6; /* updated to new light theme body bg */
+    }
+
+    :host-context(.true-dark-theme) .starry-sky-wrapper {
+      background: #050505;
     }
 
     :host-context(.light-theme) .sky-cosmic-glow,
     :host-context(.light-theme) .star-canvas,
-    :host-context(.light-theme) .starlight-cursor-glow {
+    :host-context(.light-theme) .starlight-cursor-glow,
+    :host-context(.true-dark-theme) .sky-cosmic-glow,
+    :host-context(.true-dark-theme) .star-canvas,
+    :host-context(.true-dark-theme) .starlight-cursor-glow {
       display: none;
     }
 

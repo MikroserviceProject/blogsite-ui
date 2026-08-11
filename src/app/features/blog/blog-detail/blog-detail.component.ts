@@ -20,7 +20,7 @@ import { BlogService } from '../../../core/services/blog.service';
 
       @if (loadError()) {
         <div class="empty-state card">
-          <div class="empty-icon">⚠️</div>
+          <div class="empty-icon"></div>
           <h3>Yazı yüklenemedi</h3>
           <p>{{ loadError() }}</p>
         </div>
@@ -32,9 +32,9 @@ import { BlogService } from '../../../core/services/blog.service';
           <header class="article-header">
             <div class="article-meta">
               <span class="badge" [class.badge-primary]="p.type === 'Blog'" [class.badge-author]="p.type === 'Koseyazisi'">
-                {{ p.type === 'Koseyazisi' ? '✍️ Köşe Yazısı' : '📄 Blog Makalesi' }}
+                {{ p.type === 'Koseyazisi' ? ' Köşe Yazısı' : ' Blog Makalesi' }}
               </span>
-              <span class="article-cat">{{ p.status === 'Draft' ? 'Taslak' : 'Yayında' }}</span>
+              <span class="article-cat">Yayında</span>
               <span class="article-date">• {{ p.createdAt | date:'dd.MM.yyyy' }}</span>
             </div>
 

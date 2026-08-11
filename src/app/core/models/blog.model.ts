@@ -9,6 +9,7 @@ export interface BlogPost {
   authorName?: string;
   createdAt: string;
   updatedAt: string | null;
+  tags: string[];
 }
 
 export interface AdminDeletePostRequest {
@@ -22,4 +23,5 @@ export interface UpdatePostRequest {
   type?: 'Blog' | 'Koseyazisi';
   status: 'Draft' | 'Published';
   photo?: File | null;
+  tags?: string[];
 }

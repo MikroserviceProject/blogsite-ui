@@ -11,16 +11,16 @@ import { ToastService } from '../../core/services/toast.service';
       @for (toast of toastService.toasts(); track toast.id) {
         <div class="toast-item" [ngClass]="'toast-' + toast.type">
           <div class="toast-icon">
-            @if (toast.type === 'success') { <span>✅</span> }
+            @if (toast.type === 'success') { <span></span> }
             @else if (toast.type === 'error') { <span>❌</span> }
-            @else if (toast.type === 'warning') { <span>⚠️</span> }
+            @else if (toast.type === 'warning') { <span></span> }
             @else { <span>ℹ️</span> }
           </div>
           <div class="toast-content">
             <div class="toast-title">{{ toast.title }}</div>
             <div class="toast-message">{{ toast.message }}</div>
           </div>
-          <button class="toast-close" (click)="toastService.remove(toast.id)">✕</button>
+          <button class="toast-close" (click)="toastService.remove(toast.id)"></button>
         </div>
       }
     </div>

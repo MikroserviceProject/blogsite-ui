@@ -2,13 +2,15 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { HistoryComponent } from '../history/history.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, HistoryComponent],
   template: `
     <div class="home-container container">
+      <div class="home-main-card">
       @if (authService.isLoggedIn()) {
         <!-- Giriş Yapmış Kullanıcı Dashboard -->
         <div class="welcome-banner card">
@@ -26,13 +28,13 @@ import { AuthService } from '../../core/services/auth.service';
             </div>
             <div class="welcome-text">
               <div class="welcome-greeting">
-                <h1>Hoş Geldiniz, {{ authService.currentUser()?.username }}! 👋</h1>
+                <h1>Hoş Geldiniz, {{ authService.currentUser()?.username }}!</h1>
                 <span class="badge" [ngClass]="'badge-' + (authService.userRole()?.toLowerCase() || 'user')">
                   {{ authService.userRole() }}
                 </span>
               </div>
               <p class="welcome-desc">
-                Lumina Kimlik ve Erişim Yönetimi sistemine başarıyla giriş yaptınız. Hesabınızı güvenle yönetebilirsiniz.
+                Lumina sistemine başarıyla giriş yaptınız. Hesabınızı güvenle yönetebilirsiniz.
               </p>
             </div>
           </div>
@@ -40,26 +42,23 @@ import { AuthService } from '../../core/services/auth.service';
 
         @if (!authService.currentUser()?.isEmailConfirmed) {
           <div class="alert-banner warning-banner">
-            <div class="alert-icon">⚠️</div>
             <div class="alert-body">
               <strong>E-Posta Adresiniz Doğrulanmadı!</strong>
               <p>Hesap güvenliğiniz için lütfen e-posta adresinize gönderilen kodu onaylayınız.</p>
             </div>
-            <a routerLink="/confirm-email" class="btn btn-warning btn-sm">✉️ Hemen Doğrula</a>
+            <a routerLink="/confirm-email" class="btn btn-warning btn-sm">Hemen Doğrula</a>
           </div>
         }
 
         <!-- Hızlı Erişim Kartları -->
         <div class="dashboard-grid">
           <div class="dashboard-card card">
-            <div class="card-icon-box primary-box">👤</div>
             <h3>Profil & Hesap Yönetimi</h3>
             <p>Kullanıcı adı ve e-posta bilgilerinizi güncelleyin, hesap detaylarınızı görüntüleyin.</p>
             <a routerLink="/profile" class="btn btn-primary btn-sm">Hesabıma Git →</a>
           </div>
 
           <div class="dashboard-card card">
-            <div class="card-icon-box success-box">🛡️</div>
             <h3>Güvenlik & Oturum</h3>
             <p>Hesabınız tekil oturum koruması altındadır. Farklı bir cihazdan giriş yapıldığında önceki oturum güvenle sonlandırılır.</p>
             <div class="status-indicator">
@@ -68,7 +67,6 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
 
           <div class="dashboard-card card">
-            <div class="card-icon-box info-box">✉️</div>
             <h3>E-Posta Durumu</h3>
             <p>
               Mevcut E-Posta: <strong>{{ authService.currentUser()?.email }}</strong>
@@ -83,7 +81,7 @@ import { AuthService } from '../../core/services/auth.service';
       } @else {
         <!-- Giriş Yapmamış Kullanıcı Karşılama Ekranı -->
         <div class="hero-section">
-          <div class="hero-badge">🔐 Lumina Kimlik Portalı</div>
+          <div class="hero-badge">Lumina Platformu</div>
           <h1 class="hero-title">Güvenli Kimlik & Erişim Yönetimi</h1>
           <p class="hero-subtitle">
             Merkezi kimlik doğrulama, tekil oturum güvenliği ve e-posta onaylı hesap altyapısıyla güvenle bağlanın.
@@ -91,13 +89,13 @@ import { AuthService } from '../../core/services/auth.service';
 
           <div class="hero-cta-group">
             <a routerLink="/login" class="btn btn-primary btn-lg">
-              <span>🔐</span> Giriş Yap
+              Giriş Yap
             </a>
             <a routerLink="/register" class="btn btn-secondary btn-lg">
-              <span>✨</span> Hesap Oluştur
+              Hesap Oluştur
             </a>
             <a routerLink="/confirm-email" class="btn btn-subtle btn-lg">
-              <span>✉️</span> E-Posta Doğrula
+              E-Posta Doğrula
             </a>
           </div>
 
@@ -109,19 +107,22 @@ import { AuthService } from '../../core/services/auth.service';
             </div>
 
             <div class="feature-card card">
-              <div class="feat-icon">🔒</div>
+              <div class="feat-icon"></div>
               <h4>Güçlü Şifreleme</h4>
               <p>PBKDF2 HMAC-SHA512 ve 100.000 iterasyon ile endüstri standardı şifre güvenliği.</p>
             </div>
 
             <div class="feature-card card">
-              <div class="feat-icon">✉️</div>
+              <div class="feat-icon"></div>
               <h4>E-Posta Doğrulama</h4>
               <p>Tek tıkla güvenli aktivasyon bağlantısı ile doğrulanmış kullanıcı hesabı yönetimi.</p>
             </div>
-          </div>
         </div>
       }
+      </div>
+      
+      <!-- Tarihçe Bölümü (Ana Sayfanın Altında) -->
+      <app-history></app-history>
     </div>
   `,
   styles: [`
@@ -130,15 +131,32 @@ import { AuthService } from '../../core/services/auth.service';
       padding-bottom: 50px;
     }
 
+    .home-main-card {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    :host-context(.light-theme) .home-main-card {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+
     /* Welcome Banner */
     .welcome-banner {
       padding: 30px;
       margin-bottom: 24px;
-      background: #ffffff;
+      color: var(--text-primary);
+    }
+    
+    :host-context(.light-theme) .welcome-banner {
+      background: #f8fafc;
       color: #0f172a;
-      border: 1px solid #e2e8f0;
-      border-radius: var(--radius-lg);
-      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+      border-color: #e2e8f0;
     }
 
     .welcome-content {
@@ -186,14 +204,22 @@ import { AuthService } from '../../core/services/auth.service';
     .welcome-greeting h1 {
       font-size: 22px;
       font-weight: 800;
-      color: #0f172a;
+      color: #ffffff;
       margin: 0;
+    }
+    
+    :host-context(.light-theme) .welcome-greeting h1 {
+      color: #0f172a;
     }
 
     .welcome-desc {
       font-size: 14px;
-      color: #64748b;
+      color: #cbd5e1;
       margin: 0;
+    }
+    
+    :host-context(.light-theme) .welcome-desc {
+      color: #64748b;
     }
 
     /* Alert Banner */
@@ -248,15 +274,17 @@ import { AuthService } from '../../core/services/auth.service';
 
     .dashboard-card {
       padding: 26px;
-      background: #ffffff;
-      color: #0f172a;
-      border: 1px solid #e2e8f0;
-      border-radius: var(--radius-lg);
-      box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.35);
+      color: var(--text-primary);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       gap: 12px;
+    }
+    
+    :host-context(.light-theme) .dashboard-card {
+      background: #f8fafc;
+      color: #0f172a;
+      border-color: #e2e8f0;
     }
 
     .card-icon-box {
@@ -276,16 +304,24 @@ import { AuthService } from '../../core/services/auth.service';
     .dashboard-card h3 {
       font-size: 16px;
       font-weight: 700;
-      color: #0f172a;
+      color: #ffffff;
       margin: 0;
+    }
+    
+    :host-context(.light-theme) .dashboard-card h3 {
+      color: #0f172a;
     }
 
     .dashboard-card p {
       font-size: 13px;
-      color: #64748b;
+      color: #cbd5e1;
       line-height: 1.5;
       margin: 0;
       flex: 1;
+    }
+    
+    :host-context(.light-theme) .dashboard-card p {
+      color: #64748b;
     }
 
     .status-indicator {
@@ -388,11 +424,14 @@ import { AuthService } from '../../core/services/auth.service';
 
     .feature-card {
       padding: 26px;
-      background: #ffffff;
+      color: var(--text-primary);
+    }
+    
+    :host-context(.light-theme) .feature-card {
+      background: #f8fafc;
       color: #0f172a;
-      border: 1px solid #e2e8f0;
-      border-radius: var(--radius-lg);
-      box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.35);
+      border-color: #e2e8f0;
+      box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.05);
     }
 
     .feat-icon {
@@ -403,15 +442,23 @@ import { AuthService } from '../../core/services/auth.service';
     .feature-card h4 {
       font-size: 16px;
       font-weight: 700;
-      color: #0f172a;
+      color: #ffffff;
       margin-bottom: 8px;
+    }
+    
+    :host-context(.light-theme) .feature-card h4 {
+      color: #0f172a;
     }
 
     .feature-card p {
       font-size: 13px;
-      color: #64748b;
+      color: #cbd5e1;
       line-height: 1.5;
       margin: 0;
+    }
+    
+    :host-context(.light-theme) .feature-card p {
+      color: #64748b;
     }
   `]
 })

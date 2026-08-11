@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -21,11 +21,11 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
         @if (authService.sessionWarning()) {
           <div class="session-alert">
-            <span class="alert-icon">⚠️</span>
+            <span class="alert-icon"></span>
             <div class="alert-msg">
               <strong>Oturum Uyarısı:</strong> {{ authService.sessionWarning() }}
             </div>
-            <button type="button" class="alert-dismiss" (click)="authService.clearSessionWarning()">✕</button>
+            <button type="button" class="alert-dismiss" (click)="authService.clearSessionWarning()"></button>
           </div>
         }
 
@@ -69,19 +69,24 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                 (click)="togglePassword()"
                 tabindex="-1"
               >
-                {{ showPassword() ? '🙈' : '👁️' }}
+                {{ showPassword() ? '🙈' : '🐵' }}
               </button>
             </div>
           </div>
 
           @if (errorMessage()) {
             <div class="error-alert" [class.error-email-confirm]="isEmailConfirmError()">
-              <span class="error-icon">{{ isEmailConfirmError() ? '📧' : '⚠️' }}</span>
+              <span class="error-icon">{{ isEmailConfirmError() ? '' : '' }}</span>
               <div class="error-content">
                 <span>{{ errorMessage() }}</span>
+                @if (bannedCountdown()) {
+                  <div class="ban-countdown mt-2" style="font-weight: 700; color: #b91c1c;">
+                    Kalan Süre: {{ bannedCountdown() }}
+                  </div>
+                }
                 @if (isEmailConfirmError()) {
                   <button type="button" class="confirm-redirect-btn" (click)="goToConfirmEmail()">
-                    📬 E-Posta Doğrulama Sayfasına Git →
+                     E-Posta Doğrulama Sayfasına Git →
                   </button>
                 }
               </div>
@@ -120,7 +125,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
             @if (isResendOpen()) {
               <div class="resend-panel card">
-                <div class="rp-title">✉️ Doğrulama Bağlantısını Yeniden Alın</div>
+                <div class="rp-title"> Doğrulama Bağlantısını Yeniden Alın</div>
                 <p class="rp-desc">Kayıtlı e-posta adresinizi girerek yeni bir aktivasyon bağlantısı isteyebilirsiniz:</p>
                 <div class="rp-form">
                   <input
@@ -167,9 +172,9 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       width: 100%;
       max-width: 460px;
       padding: 38px 34px;
-      background: #ffffff;
-      color: #0f172a;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
       animation: fadeIn 0.2s ease-out;
@@ -196,14 +201,14 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     .auth-title {
       font-size: 24px;
       font-weight: 800;
-      color: #0f172a;
+      color: var(--text-main);
       margin: 0 0 6px 0;
       letter-spacing: -0.5px;
     }
 
     .auth-subtitle {
       font-size: 13px;
-      color: #64748b;
+      color: var(--text-secondary);
       margin: 0;
     }
 
@@ -239,7 +244,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       display: block;
       font-size: 13px;
       font-weight: 700;
-      color: #334155;
+      color: var(--text-main);
       margin-bottom: 6px;
     }
 
@@ -260,30 +265,30 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     .forgot-link:hover {
       text-decoration: underline;
-      color: #1d4ed8;
+      color: var(--primary);
     }
 
     .form-control {
       width: 100%;
       height: 44px;
-      background: #f8fafc;
-      border: 1.5px solid #cbd5e1;
+      background: var(--bg-main);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius-md);
       padding: 0 14px;
-      color: #0f172a;
+      color: var(--text-main);
       font-size: 14px;
       transition: var(--transition);
       outline: none;
     }
 
     .form-control:focus {
-      background: #ffffff;
-      border-color: #1e3a8a;
+      background: var(--bg-card);
+      border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
     }
 
     .form-control::placeholder {
-      color: #94a3b8;
+      color: var(--text-muted);
     }
 
     .password-input-wrapper {
@@ -300,7 +305,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       cursor: pointer;
       font-size: 16px;
       padding: 4px;
-      color: #64748b;
+      color: var(--text-secondary);
     }
 
     .error-alert {
@@ -356,7 +361,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     .auth-footer {
       margin-top: 24px;
       padding-top: 18px;
-      border-top: 1px solid #f1f5f9;
+      border-top: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -368,7 +373,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       justify-content: center;
       gap: 6px;
       font-size: 13px;
-      color: #64748b;
+      color: var(--text-secondary);
     }
 
     .link-gold {
@@ -388,9 +393,9 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .btn-toggle-resend {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      color: #475569;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
@@ -403,15 +408,15 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .btn-toggle-resend:hover {
-      color: #0f172a;
-      background: #f1f5f9;
-      border-color: #cbd5e1;
+      color: var(--text-main);
+      background: var(--bg-main);
+      border-color: var(--primary);
     }
 
     .resend-panel {
       margin-top: 10px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
       padding: 16px;
       border-radius: var(--radius-md);
       text-align: left;
@@ -421,13 +426,13 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     .rp-title {
       font-size: 13px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-main);
       margin-bottom: 4px;
     }
 
     .rp-desc {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-secondary);
       margin-bottom: 10px;
       line-height: 1.4;
     }
@@ -473,10 +478,17 @@ export class LoginComponent implements OnInit {
   resendMessage = signal<string | null>(null);
   resendIsError = signal(false);
 
+  bannedCountdown = signal<string | null>(null);
+  bannedInterval: any;
+
   ngOnInit() {
     this.emailOrUsername = '';
     this.password = '';
     this.authService.clearSessionWarning();
+  }
+
+  ngOnDestroy() {
+    if (this.bannedInterval) clearInterval(this.bannedInterval);
   }
 
   togglePassword() {
@@ -505,18 +517,18 @@ export class LoginComponent implements OnInit {
       next: (res: any) => {
         this.isResending.set(false);
         if (res.success) {
-          this.resendMessage.set('✅ Yeni doğrulama bağlantısı e-posta adresinize gönderildi.');
-          this.toastService.success('Başarılı 📬', 'Doğrulama e-postası gönderildi!');
+          this.resendMessage.set(' Yeni doğrulama bağlantısı e-posta adresinize gönderildi.');
+          this.toastService.success('Başarılı ', 'Doğrulama e-postası gönderildi!');
         } else {
           this.resendIsError.set(true);
-          this.resendMessage.set(`⚠️ ${res.message || 'İşlem başarısız.'}`);
+          this.resendMessage.set(` ${res.message || 'İşlem başarısız.'}`);
         }
       },
       error: (err: any) => {
         this.isResending.set(false);
         this.resendIsError.set(true);
         const parsed = parseAuthError(err, 'Doğrulama e-postası gönderilemedi.');
-        this.resendMessage.set(`⚠️ ${parsed.generalMessage}`);
+        this.resendMessage.set(` ${parsed.generalMessage}`);
       }
     });
   }
@@ -539,8 +551,8 @@ export class LoginComponent implements OnInit {
       next: (res: any) => {
         this.isLoading.set(false);
         if (res.success) {
-          this.toastService.success('Giriş Başarılı 🎉', `Hoş geldiniz, ${res.data?.user.username}!`);
-          this.router.navigate(['/profile']);
+          this.toastService.success('Giriş Başarılı ', `Hoş geldiniz, ${res.data?.user.username}!`);
+          this.router.navigate(['/']);
         } else {
           this.errorMessage.set(res.message);
           this.isEmailConfirmError.set(
@@ -553,7 +565,43 @@ export class LoginComponent implements OnInit {
       error: (err: any) => {
         this.isLoading.set(false);
         const parsed = parseAuthError(err);
-        const msg = parsed.generalMessage;
+        let msg = parsed.generalMessage;
+        this.bannedCountdown.set(null);
+        if (this.bannedInterval) clearInterval(this.bannedInterval);
+
+        if (msg.startsWith('BANNED_UNTIL|')) {
+          const parts = msg.split('|');
+          const isoDate = parts[1];
+          msg = parts[2];
+
+          if (isoDate === 'PERMANENT') {
+            msg = 'Hesabınız süresiz olarak yasaklanmıştır.';
+          } else {
+            const endDate = new Date(isoDate).getTime();
+            this.bannedInterval = setInterval(() => {
+              const now = new Date().getTime();
+              const distance = endDate - now;
+              if (distance < 0) {
+                clearInterval(this.bannedInterval);
+                this.bannedCountdown.set('Yasak süreniz doldu, lütfen sayfayı yenileyin veya tekrar giriş yapın.');
+              } else {
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                let countdownStr = '';
+                if (days > 0) countdownStr += `${days} Gün `;
+                if (hours > 0) countdownStr += `${hours} Saat `;
+                if (minutes > 0) countdownStr += `${minutes} Dakika `;
+                countdownStr += `${seconds} Saniye`;
+                
+                this.bannedCountdown.set(countdownStr);
+              }
+            }, 1000);
+          }
+        }
+
         this.errorMessage.set(msg);
         this.isEmailConfirmError.set(
           msg.toLowerCase().includes('doğrulanmamış') ||

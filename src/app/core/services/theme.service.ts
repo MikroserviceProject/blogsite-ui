@@ -13,17 +13,21 @@ export class ThemeService {
 
   private getInitialTheme(): 'light' | 'dark' {
     const saved = localStorage.getItem(this.storageKey);
-    return saved === 'light' ? 'light' : 'dark';
+    if (saved === 'light') return 'light';
+    return 'dark'; // default
   }
 
   toggle() {
-    const next = this.theme() === 'dark' ? 'light' : 'dark';
+    const current = this.theme();
+    const next = current === 'light' ? 'dark' : 'light';
+    
     this.theme.set(next);
     localStorage.setItem(this.storageKey, next);
     this.applyTheme(next);
   }
 
   private applyTheme(theme: 'light' | 'dark') {
-    document.documentElement.classList.toggle('light-theme', theme === 'light');
+    document.documentElement.classList.remove('light-theme', 'dark-theme');
+    document.documentElement.classList.add(`${theme}-theme`);
   }
 }

@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed, effect, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 
@@ -12,8 +12,7 @@ import { ThemeService } from '../../core/services/theme.service';
     <header class="navbar-header">
       <div class="container navbar-container">
         <!-- Logo -->
-        <a [routerLink]="authService.isLoggedIn() ? '/profile' : '/login'" class="navbar-logo">
-          <div class="logo-icon">✨</div>
+        <a routerLink="/" class="navbar-logo">
           <div class="logo-text">
             <span class="brand-name">Lumina</span>
           </div>
@@ -21,19 +20,6 @@ import { ThemeService } from '../../core/services/theme.service';
 
         <!-- Desktop Navigation Links -->
         <nav class="navbar-nav">
-          @if (authService.isLoggedIn()) {
-            <a routerLink="/profile" routerLinkActive="nav-active" class="nav-link">
-              👤 Hesabım
-            </a>
-            @if (authService.isAdmin()) {
-              <a routerLink="/admin/users" routerLinkActive="nav-active" class="nav-link nav-admin">
-                👥 Kullanıcı & İçerik Yönetimi
-              </a>
-              <a routerLink="/admin/author-approvals" routerLinkActive="nav-active" class="nav-link nav-admin">
-                👑 Yazar Başvuruları
-              </a>
-            }
-          }
           @if (!authService.isBanned()) {
             <a routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Ana Sayfa</a>
             <a routerLink="/bloglar" routerLinkActive="nav-active" class="nav-link">Bloglar</a>
@@ -47,29 +33,99 @@ import { ThemeService } from '../../core/services/theme.service';
             <button
               class="theme-toggle"
               (click)="themeService.toggle()"
-              [attr.aria-label]="themeService.theme() === 'light' ? 'Koyu temaya geç' : 'Aydınlık temaya geç'"
+              [attr.aria-label]="themeService.theme() === 'light' ? 'Karanlık temaya geç' : 'Aydınlık temaya geç'"
             >
-              {{ themeService.theme() === 'light' ? '☀️' : '🌙' }}
+              {{ themeService.theme() === 'light' ? '🌙' : '☀️' }}
             </button>
             <a routerLink="/login" class="btn btn-navy-outline btn-sm">
               🔐 Giriş Yap
             </a>
             <a routerLink="/register" class="btn btn-navy-outline btn-sm">
-              ✨ Kayıt Ol
+               Kayıt Ol
             </a>
           } @else {
             @if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin())) {
-              <a routerLink="/create-post" class="btn-create-post">
-                <span>✍️</span> Gönderi Oluştur
-              </a>
+              @if (!authService.currentUser()?.isEmailConfirmed) {
+                <button class="btn-create-post" disabled title="Lütfen e-posta adresinizi onaylayın" style="opacity:0.6; cursor:not-allowed;">
+                  <span></span> Gönderi Oluştur
+                </button>
+              } @else {
+                <a routerLink="/create-post" class="btn-create-post">
+                  <span></span> Gönderi Oluştur
+                </a>
+              }
             }
             <button
               class="theme-toggle"
               (click)="themeService.toggle()"
-              [attr.aria-label]="themeService.theme() === 'light' ? 'Koyu temaya geç' : 'Aydınlık temaya geç'"
+              [attr.aria-label]="themeService.theme() === 'light' ? 'Karanlık temaya geç' : 'Aydınlık temaya geç'"
             >
-              {{ themeService.theme() === 'light' ? '☀️' : '🌙' }}
+              {{ themeService.theme() === 'light' ? '🌙' : '☀️' }}
             </button>
+            
+            <!-- Bildirim İkonu -->
+            <div class="notif-menu-wrapper">
+              <button class="notif-btn" title="Bildirimler" (click)="toggleNotif()">
+                <i class="fa-solid fa-bell" style="font-size: 16px;"></i>
+                @if (authService.unreadNotificationCount() > 0) {
+                  <span class="notif-badge-red">{{ authService.unreadNotificationCount() }}</span>
+                }
+              </button>
+
+              @if (isNotifOpen()) {
+                <div class="notif-dropdown">
+                  <div class="nd-header">
+                    <span class="nd-title">Bildirimler</span>
+                  </div>
+                  <div class="nd-body">
+                    @if (isLoadingNotifs()) {
+                      <div class="nd-loading">Yükleniyor...</div>
+                    } @else if (allNotifs().length === 0) {
+                      <div class="nd-empty">Bildiriminiz bulunmuyor.</div>
+                    } @else {
+                      @for (n of paginatedNotifs(); track n.id) {
+                        <button type="button" class="nd-item" [class.nd-unread]="!n.isRead" (click)="openNotifModal(n)">
+                          <div class="nd-item-title">{{ n.title }}</div>
+                          <div class="nd-item-msg">{{ n.message }}</div>
+                          <div class="nd-item-time">{{ n.createdAt | date:'dd MMM HH:mm' }}</div>
+                        </button>
+                      }
+                    }
+                  </div>
+                  
+                  @if (allNotifs().length > 3) {
+                    <div class="nd-pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() === 1" (click)="prevNotifPage($event)">Önceki</button>
+                      <span style="font-size: 12px;">Sayfa {{ currentNotifPage() }} / {{ Math.ceil(allNotifs().length / 3) }}</span>
+                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() >= Math.ceil(allNotifs().length / 3)" (click)="nextNotifPage($event)">Sonraki</button>
+                    </div>
+                  }
+                  
+                  <a routerLink="/profile" [queryParams]="{tab: 'NOTIFICATIONS'}" class="nd-footer" (click)="closeNotif()">
+                    Tüm Bildirimleri Gör
+                  </a>
+                </div>
+              }
+            </div>
+
+            <!-- Bildirim Okuma Modalı -->
+            @if (activeModalNotif()) {
+              <div class="modal-backdrop notif-modal-backdrop">
+                <div class="modal-card" style="max-width: 600px; padding: 24px;">
+                  <div class="modal-header">
+                    <h3 class="modal-title" style="font-size: 1.3rem;">{{ activeModalNotif()?.title }}</h3>
+                    <button type="button" class="btn-close" (click)="closeNotifModal()"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p style="font-size: 16px; line-height: 1.7;">{{ activeModalNotif()?.message }}</p>
+                  </div>
+                  <div class="modal-footer text-muted" style="font-size: 13px; display: flex; justify-content: space-between;">
+                    <span>{{ activeModalNotif()?.createdAt | date:'d MMMM yyyy, HH:mm' }}</span>
+                    <button type="button" class="btn btn-secondary" (click)="closeNotifModal()">Kapat</button>
+                  </div>
+                </div>
+              </div>
+            }
             <!-- User Menu Dropdown -->
             <div class="user-menu-wrapper">
               <button class="user-menu-btn" (click)="toggleDropdown()">
@@ -102,19 +158,25 @@ import { ThemeService } from '../../core/services/theme.service';
                   </div>
                   <div class="dropdown-divider"></div>
                   <a routerLink="/profile" class="dropdown-item" (click)="closeDropdown()">
-                    <span>👤</span> Profilim & Hesap Ayarları
+                    <span></span> Profilim & Hesap Ayarları
                   </a>
                   @if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin())) {
-                    <a routerLink="/create-post" class="dropdown-item dropdown-item-cta" (click)="closeDropdown()">
-                      <span>✍️</span> Yeni Gönderi Oluştur
-                    </a>
+                    @if (!authService.currentUser()?.isEmailConfirmed) {
+                      <button class="dropdown-item dropdown-item-cta" disabled title="Lütfen e-posta adresinizi onaylayın" style="opacity:0.6; cursor:not-allowed;">
+                        <span></span> Yeni Gönderi Oluştur
+                      </button>
+                    } @else {
+                      <a routerLink="/create-post" class="dropdown-item dropdown-item-cta" (click)="closeDropdown()">
+                        <span></span> Yeni Gönderi Oluştur
+                      </a>
+                    }
                   }
                   @if (authService.isAdmin()) {
-                    <a routerLink="/admin/users" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
-                      <span>👥</span> Kullanıcı & İçerik Yönetimi
+                    <a routerLink="/profile" [queryParams]="{tab: 'ADMIN_USERS'}" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
+                      <span></span> Kullanıcı & İçerik Yönetimi
                     </a>
-                    <a routerLink="/admin/author-approvals" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
-                      <span>👑</span> Yazar Başvuru Yönetimi
+                    <a routerLink="/profile" [queryParams]="{tab: 'ADMIN_AUTHORS'}" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
+                      <span></span> Yazar Başvuru Yönetimi
                     </a>
                   }
                   <div class="dropdown-divider"></div>
@@ -176,6 +238,144 @@ import { ThemeService } from '../../core/services/theme.service';
       background: var(--bg-muted);
       border-color: var(--primary);
     }
+
+    .notif-menu-wrapper {
+      position: relative;
+    }
+    
+    .notif-btn {
+      position: relative;
+      height: 38px;
+      padding: 0 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .notif-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); }
+    :host-context(.light-theme) .notif-btn { background: #ffffff; border-color: rgba(15, 23, 42, 0.1); color: #0f172a; }
+    :host-context(.light-theme) .notif-btn:hover { background: #f1f5f9; }
+    
+    .notif-badge-red {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 2px solid var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+    }
+    :host-context(.light-theme) .notif-badge-red { border-color: #ffffff; }
+
+    .notif-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 50%;
+      transform: translateX(50%);
+      width: 400px;
+      margin-top: 10px;
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      animation: fadeIn 0.15s ease-out;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    :host-context(.light-theme) .notif-dropdown {
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+    }
+    .nd-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+    }
+    :host-context(.light-theme) .nd-header {
+      border-bottom-color: rgba(15,23,42,0.1);
+      color: #0f172a;
+    }
+    .nd-body {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .nd-loading, .nd-empty {
+      padding: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .nd-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      text-decoration: none;
+      display: block;
+      transition: background 0.2s;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+    }
+    .nd-item:last-child { border-bottom: none; }
+    .nd-item:hover { background: rgba(255, 255, 255, 0.03); }
+    :host-context(.light-theme) .nd-item { border-bottom-color: rgba(15, 23, 42, 0.05); }
+    :host-context(.light-theme) .nd-item:hover { background: #f8fafc; }
+    
+    .nd-unread { border-left: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.05); }
+    :host-context(.light-theme) .nd-unread { background: rgba(59, 130, 246, 0.05); }
+
+    .nd-item-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+    :host-context(.light-theme) .nd-item-title { color: #0f172a; }
+    .nd-item-msg {
+      font-size: 12px;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    :host-context(.light-theme) .nd-item-msg { color: #475569; }
+    .nd-item-time {
+      font-size: 11px;
+      color: #64748b;
+    }
+    .nd-footer {
+      padding: 10px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+      font-weight: 600;
+      color: #3b82f6;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .nd-footer:hover { background: rgba(255, 255, 255, 0.1); }
+    :host-context(.light-theme) .nd-footer { background: #f8fafc; }
+    :host-context(.light-theme) .nd-footer:hover { background: #f1f5f9; }
 
     .navbar-container {
       display: flex;
@@ -308,20 +508,36 @@ import { ThemeService } from '../../core/services/theme.service';
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background-color: var(--bg-surface);
-      border: 1.5px solid var(--border);
-      color: var(--text-primary);
+      background-color: #2563eb;
+      border: 1.5px solid #3b82f6;
+      color: #ffffff;
       font-weight: 700;
       font-size: 14px;
       padding: 8px 16px;
       border-radius: var(--radius-md);
       text-decoration: none;
       transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
     }
 
     .btn-create-post:hover {
-      background-color: var(--bg-subtle);
-      border-color: var(--primary);
+      background-color: #1d4ed8;
+      border-color: #2563eb;
+      color: #ffffff;
+    }
+
+    /* Light Theme Button Override */
+    :host-context(.light-theme) .btn-create-post {
+      background-color: #eff6ff; /* Çok açık mavi/beyazımsı */
+      border-color: #bfdbfe;
+      color: #1e40af; /* Yazı rengi koyu mavi */
+      box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+    }
+
+    :host-context(.light-theme) .btn-create-post:hover {
+      background-color: #dbeafe; /* Hover'da biraz daha koyulaşır */
+      border-color: #93c5fd;
+      color: #1e3a8a;
     }
 
     .btn-ghost {
@@ -479,14 +695,7 @@ import { ThemeService } from '../../core/services/theme.service';
     }
 
     .dropdown-item.dropdown-item-cta {
-      background: rgba(30, 58, 138, 0.35);
-      color: #ffffff;
       font-weight: 700;
-    }
-
-    .dropdown-item.dropdown-item-cta:hover {
-      background: rgba(30, 58, 138, 0.55);
-      color: #ffffff;
     }
 
     .dropdown-item:hover {
@@ -503,15 +712,7 @@ import { ThemeService } from '../../core/services/theme.service';
       color: #0f172a;
     }
 
-    :host-context(.light-theme) .dropdown-item.dropdown-item-cta {
-      background: rgba(79, 70, 229, 0.1);
-      color: #4f46e5;
-    }
 
-    :host-context(.light-theme) .dropdown-item.dropdown-item-cta:hover {
-      background: rgba(79, 70, 229, 0.18);
-      color: #4338ca;
-    }
 
     .dropdown-logout {
       color: #f87171;
@@ -526,10 +727,135 @@ import { ThemeService } from '../../core/services/theme.service';
 export class NavbarComponent {
   authService = inject(AuthService);
   themeService = inject(ThemeService);
+  router = inject(Router);
+  elRef = inject(ElementRef);
   isDropdownOpen = signal<boolean>(false);
+  isNotifOpen = signal<boolean>(false);
+  recentNotifs = signal<any[]>([]); // Geriye dönük uyumluluk için bırakılabilir veya kaldırılabilir
+  allNotifs = signal<any[]>([]);
+  currentNotifPage = signal<number>(1);
+  paginatedNotifs = computed(() => {
+    const start = (this.currentNotifPage() - 1) * 3;
+    return this.allNotifs().slice(start, start + 3);
+  });
+  isLoadingNotifs = signal<boolean>(false);
+  activeModalNotif = signal<any>(null);
+  
+  Math = Math; // Template'de kullanmak için
+  
+  private lastNotifCheckTime = 0;
+
+  constructor() {
+    effect(() => {
+      const count = this.authService.unreadNotificationCount();
+      if (this.authService.isLoggedIn()) {
+        this.fetchNotifs();
+      }
+    }, { allowSignalWrites: true });
+  }
+
+  fetchNotifs(silent: boolean = false) {
+    if (!silent) {
+      this.isLoadingNotifs.set(true);
+    }
+    this.authService.getUserNotifications().subscribe({
+      next: (res: any) => {
+        if (!silent) {
+          this.isLoadingNotifs.set(false);
+        }
+        if (res.success && res.data) {
+          const unreadOnly = res.data.filter((n: any) => !n.isRead);
+          const sorted = [...unreadOnly].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          this.allNotifs.set(sorted);
+          this.authService.unreadNotificationCount.set(unreadOnly.length);
+          this.currentNotifPage.set(1);
+        }
+      },
+      error: () => {
+        this.isLoadingNotifs.set(false);
+      }
+    });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    // If a modal is open, we don't close the dropdowns here
+    // The modal backdrop click handles modal closing if we wanted it to, but user asked for it NOT to close when clicking outside.
+    if (!this.elRef.nativeElement.contains(event.target) && !(event.target as HTMLElement).closest('.notif-modal-backdrop')) {
+      this.isNotifOpen.set(false);
+      this.isDropdownOpen.set(false);
+    }
+
+    // Ekranın herhangi bir yerine tıklandığında bildirimleri sessizce güncelle
+    // (Spam yapmamak için en az 15 saniyede bir çalışmasına izin veriyoruz)
+    if (this.authService.isLoggedIn()) {
+      const now = Date.now();
+      if (now - this.lastNotifCheckTime > 15000) {
+        this.lastNotifCheckTime = now;
+        // Eğer dropdown zaten açıksa ve bir yere tıkladıysa, UI'da 'Yükleniyor' çıkmaması için sessiz(fetchNotifs(true)) yaparız
+        this.fetchNotifs(true);
+      }
+    }
+  }
+
+  openNotifModal(notif: any) {
+    this.activeModalNotif.set(notif);
+
+    // Backend'e okundu olarak işaretleme isteği atılabilir (eğer gerekiyorsa, Profil'deki gibi)
+    if (!notif.isRead) {
+      this.authService.markNotificationAsRead(notif.id).subscribe({
+        next: () => {
+          this.fetchNotifs(); // update counts
+        }
+      });
+    }
+  }
+
+  closeNotifModal() {
+    this.activeModalNotif.set(null);
+  }
+  
+  prevNotifPage(e: Event) {
+    e.stopPropagation(); // Dropdown kapanmasını engelle
+    if (this.currentNotifPage() > 1) {
+      this.currentNotifPage.update(p => p - 1);
+    }
+  }
+
+  nextNotifPage(e: Event) {
+    e.stopPropagation(); // Dropdown kapanmasını engelle
+    const maxPage = Math.ceil(this.allNotifs().length / 3);
+    if (this.currentNotifPage() < maxPage) {
+      this.currentNotifPage.update(p => p + 1);
+    }
+  }
+
+  switchTabToNotifications() {
+    this.isNotifOpen.set(false);
+    this.router.navigate(['/profile'], { queryParams: { tab: 'NOTIFICATIONS' } });
+  }
+
+  toggleNotif() {
+    if (this.authService.unreadNotificationCount() === 0) {
+      this.isNotifOpen.set(false);
+      this.switchTabToNotifications();
+      return;
+    }
+
+    this.isNotifOpen.update(v => !v);
+    this.isDropdownOpen.set(false); // user menüsünü kapat
+    if (this.isNotifOpen() && this.authService.isLoggedIn()) {
+      this.fetchNotifs();
+    }
+  }
+
+  closeNotif() {
+    this.isNotifOpen.set(false);
+  }
 
   toggleDropdown() {
     this.isDropdownOpen.update(v => !v);
+    this.isNotifOpen.set(false); // notif menüsünü kapat
   }
 
   closeDropdown() {
