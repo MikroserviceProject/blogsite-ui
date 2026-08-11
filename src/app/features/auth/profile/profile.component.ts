@@ -638,20 +638,6 @@ interface PasswordRules {
                   </button>
                   <button
                     class="filter-pill"
-                    [class.active]="postTypeFilter() === 'Blog'"
-                    (click)="postTypeFilter.set('Blog')"
-                  >
-                     Bloglar
-                  </button>
-                  <button
-                    class="filter-pill"
-                    [class.active]="postTypeFilter() === 'Koseyazisi'"
-                    (click)="postTypeFilter.set('Koseyazisi')"
-                  >
-                     Köşe Yazıları
-                  </button>
-                  <button
-                    class="filter-pill"
                     [class.active]="postTypeFilter() === 'Draft'"
                     (click)="postTypeFilter.set('Draft')"
                   >
@@ -711,14 +697,14 @@ interface PasswordRules {
                         <p class="my-post-snippet">{{ getSnippet(post.content) }}</p>
 
                         <div class="my-post-actions">
-                          <a [routerLink]="['/post', post.id]" class="btn btn-secondary btn-xs">
-                             Oku
+                          <a [routerLink]="['/post', post.id]" class="btn btn-icon btn-secondary" title="Yazıyı Oku">
+                             <i class="fa-solid fa-eye"></i>
                           </a>
-                          <button class="btn btn-primary btn-xs" (click)="openEditPostModal(post)">
-                             Düzenle
+                          <button class="btn btn-icon btn-primary" (click)="openEditPostModal(post)" title="Yazıyı Düzenle">
+                             <i class="fa-solid fa-pen"></i>
                           </button>
-                          <button class="btn btn-danger btn-xs" (click)="deletePost(post)">
-                             Sil
+                          <button class="btn btn-icon btn-danger" (click)="deletePost(post)" title="Yazıyı Sil">
+                             <i class="fa-solid fa-trash"></i>
                           </button>
                         </div>
                       </div>
@@ -1794,6 +1780,8 @@ interface PasswordRules {
     .my-post-content {
       flex: 1;
       min-width: 0;
+      display: flex;
+      flex-direction: column;
     }
 
     .my-post-badges {
@@ -1829,7 +1817,19 @@ interface PasswordRules {
 
     .my-post-actions {
       display: flex;
-      gap: 8px;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: auto;
+      padding-top: 12px;
+    }
+
+    .btn-icon {
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .btn-xs {
