@@ -1822,6 +1822,7 @@ interface PasswordRules {
       display: flex;
       gap: 16px;
       align-items: center;
+      margin-right: 32px; /* Sola kaydırmak için eklendi */
     }
 
     .btn-action-icon {
