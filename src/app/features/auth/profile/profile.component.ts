@@ -696,17 +696,18 @@ interface PasswordRules {
                         <h3 class="my-post-title">{{ post.title }}</h3>
                         <p class="my-post-snippet">{{ getSnippet(post.content) }}</p>
 
-                        <div class="my-post-actions">
-                          <a [routerLink]="['/post', post.id]" class="btn btn-icon btn-secondary" title="Yazıyı Oku">
-                             <i class="fa-solid fa-eye"></i>
-                          </a>
-                          <button class="btn btn-icon btn-primary" (click)="openEditPostModal(post)" title="Yazıyı Düzenle">
-                             <i class="fa-solid fa-pen"></i>
-                          </button>
-                          <button class="btn btn-icon btn-danger" (click)="deletePost(post)" title="Yazıyı Sil">
-                             <i class="fa-solid fa-trash"></i>
-                          </button>
-                        </div>
+                      </div>
+
+                      <div class="my-post-actions">
+                        <a [routerLink]="['/post', post.id]" class="btn-action-icon" title="Yazıyı Oku">
+                           <i class="fa-solid fa-eye" style="color: #2563eb;"></i>
+                        </a>
+                        <button class="btn-action-icon" (click)="openEditPostModal(post)" title="Yazıyı Düzenle">
+                           <i class="fa-solid fa-pen" style="color: #f59e0b;"></i>
+                        </button>
+                        <button class="btn-action-icon" (click)="deletePost(post)" title="Yazıyı Sil">
+                           <i class="fa-solid fa-trash" style="color: #ef4444;"></i>
+                        </button>
                       </div>
                     </div>
                   }
@@ -1744,6 +1745,7 @@ interface PasswordRules {
 
     .my-post-card {
       display: flex;
+      align-items: center;
       gap: 16px;
       padding: 16px;
       background: rgba(15, 23, 42, 0.6);
@@ -1782,6 +1784,7 @@ interface PasswordRules {
       min-width: 0;
       display: flex;
       flex-direction: column;
+      justify-content: center;
     }
 
     .my-post-badges {
@@ -1817,20 +1820,37 @@ interface PasswordRules {
 
     .my-post-actions {
       display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      gap: 16px;
+      align-items: center;
     }
 
-    .btn-icon {
-      padding: 8px 12px;
-      font-size: 14px;
-      border-radius: 6px;
+    .btn-action-icon {
+      background: #ffffff;
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .btn-action-icon:hover {
+      background: #f1f5f9;
+      transform: translateY(-2px);
+    }
+
+    :host-context(.dark-theme) .btn-action-icon {
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    :host-context(.dark-theme) .btn-action-icon:hover {
+      background: #f1f5f9;
     }
 
     .btn-xs {
