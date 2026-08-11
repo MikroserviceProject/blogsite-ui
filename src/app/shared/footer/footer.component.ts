@@ -8,9 +8,10 @@ import { CommonModule } from '@angular/common';
   template: `
     <footer class="footer">
       <div class="container footer-container">
-        <div class="footer-logo">
-          <span class="logo-icon">✨</span>
+        <div class="footer-content">
           <span class="brand-name">Lumina</span>
+          <span class="contact-email">İletişim: sahilcicek44&#64;gmail.com</span>
+          <span class="copyright">© 2026 Lumina</span>
         </div>
       </div>
     </footer>
@@ -19,29 +20,54 @@ import { CommonModule } from '@angular/common';
     .footer {
       background: rgba(7, 13, 30, 0.88);
       backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 40px 0 24px 0;
+      padding: 12px 0;
       margin-top: auto;
       position: relative;
       z-index: 10;
     }
 
-    .footer-logo {
+    .footer-content {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
-    }
-
-    .logo-icon {
-      font-size: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
     }
 
     .brand-name {
       font-family: var(--font-heading);
-      font-size: 18px;
-      font-weight: 800;
+      font-size: 16px;
+      font-weight: 700;
       color: #ffffff;
+    }
+
+    .contact-email, .copyright {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    :host-context(.light-theme) .footer {
+      background: #ffffff;
+      border-top: 1px solid rgba(15, 23, 42, 0.1);
+    }
+
+    :host-context(.light-theme) .brand-name {
+      color: #0f172a;
+    }
+
+    :host-context(.light-theme) .contact-email,
+    :host-context(.light-theme) .copyright {
+      color: #475569;
+    }
+
+    @media (max-width: 600px) {
+      .footer-content {
+        flex-direction: column;
+        justify-content: center;
+        gap: 6px;
+        text-align: center;
+      }
     }
   `]
 })

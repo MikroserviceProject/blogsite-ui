@@ -17,7 +17,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
         <!-- DURUM 1: Silme İşlemi Başarıyla Tamamlandı -->
         @if (isDeleted()) {
           <div class="status-view success-view">
-            <div class="status-icon-badge success-badge">✅</div>
+            <div class="status-icon-badge success-badge"></div>
             <h1 class="status-title">Hesabınız Silindi</h1>
             <p class="status-subtitle">
               Hesabınız, profil bilgileriniz ve platformdaki tüm verileriniz kalıcı olarak silinmiştir.
@@ -36,7 +36,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
         <!-- DURUM 2: Silme Hatası veya Süresi Dolmuş Link -->
         @else if (hasError()) {
           <div class="status-view error-view">
-            <div class="status-icon-badge error-badge">⚠️</div>
+            <div class="status-icon-badge error-badge"></div>
             <h1 class="status-title">Hesap Silinemedi</h1>
             <p class="status-subtitle">
               {{ errorMessage() || 'Hesap silme bağlantısı geçersiz veya süresi dolmuş (1 saatlik süre aşılmış).' }}
@@ -44,7 +44,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
             <div class="action-btn-group mt-4">
               <a routerLink="/profile" class="btn btn-secondary btn-block">
-                👤 Profilime Git
+                 Profilime Git
               </a>
               <a routerLink="/login" class="btn btn-link-action btn-block mt-2">
                 ← Giriş Sayfasına Dön
@@ -56,7 +56,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
         <!-- DURUM 3: Linkten Gelen Token ile Onay Bekleme Ekranı -->
         @else {
           <div class="status-view danger-view">
-            <div class="status-icon-badge danger-badge">🗑️</div>
+            <div class="status-icon-badge danger-badge"></div>
             <h1 class="status-title text-danger">Hesap Silme Onayı</h1>
             
             <p class="status-subtitle">
@@ -68,7 +68,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
             </p>
 
             <div class="alert-box-danger my-4">
-              <div class="alert-title">⚠️ DİKKAT: Bu işlem geri alınamaz!</div>
+              <div class="alert-title"> DİKKAT: Bu işlem geri alınamaz!</div>
               <p class="alert-text">
                 Hesabınız silindiğinde tüm blog yazılarınız, profil bilgileriniz, oturumunuz ve platformdaki tüm etkileşimleriniz veritabanından kalıcı olarak kaldırılacaktır.
               </p>
@@ -84,7 +84,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                 @if (isDeleting()) {
                   <span>Siliniyor...</span>
                 } @else {
-                  <span>🗑️ Hesabımı Kalıcı Olarak Sil</span>
+                  <span> Hesabımı Kalıcı Olarak Sil</span>
                 }
               </button>
 

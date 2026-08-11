@@ -11,6 +11,16 @@ export interface PublicUserProfile {
   profilePictureUrl: string | null;
 }
 
+export interface PaginatedResult<T> {
+  items: T[];
+  totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -27,6 +37,7 @@ export interface User {
   banReason?: string | null;
   createdAt: string;
   lastLoginAt?: string;
+  unreadNotificationCount?: number;
 }
 
 export interface AdminUserDto {
@@ -41,6 +52,7 @@ export interface AdminUserDto {
   authorApplicationDate?: string;
   isEmailConfirmed: boolean;
   isBanned: boolean;
+  isDeactivated?: boolean;
   bannedUntil?: string | null;
   banReason?: string | null;
   createdAt: string;
@@ -71,6 +83,7 @@ export interface UserNotification {
   type: string;
   isRead: boolean;
   createdAt: string;
+  isExpanded?: boolean;
 }
 
 export interface RegisterRequest {

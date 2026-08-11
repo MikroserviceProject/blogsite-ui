@@ -9,6 +9,7 @@ export interface BlogPost {
   authorName?: string;
   createdAt: string;
   updatedAt: string | null;
+  tags: string[];
 }
 
 export interface AdminDeletePostRequest {
@@ -23,4 +24,5 @@ export interface UpdatePostRequest {
   status: 'Draft' | 'Published';
   photo?: File | null;
   removePhoto?: boolean;
+  tags?: string[];
 }

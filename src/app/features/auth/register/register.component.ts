@@ -14,7 +14,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     <div class="auth-page-container container">
       <div class="auth-card card register-card">
         <div class="auth-header">
-          <div class="auth-icon-badge">✨</div>
+          <div class="auth-icon-badge"></div>
           <h1 class="auth-title">Hesap Oluştur</h1>
           <p class="auth-subtitle">Lumina kimlik ve yayın platformuna katılın</p>
         </div>
@@ -27,7 +27,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
               <label class="role-option" [class.role-selected]="role === 'User'">
                 <input type="radio" name="role" value="User" [(ngModel)]="role" />
                 <div class="role-content">
-                  <span class="role-emoji">👤</span>
+                  <span class="role-emoji"></span>
                   <div class="role-info">
                     <span class="role-title">Okur</span>
                     <span class="role-desc">Standart üye profili</span>
@@ -38,7 +38,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
               <label class="role-option" [class.role-selected]="role === 'Author'">
                 <input type="radio" name="role" value="Author" [(ngModel)]="role" />
                 <div class="role-content">
-                  <span class="role-emoji">✍️</span>
+                  <span class="role-emoji"></span>
                   <div class="role-info">
                     <span class="role-title">Yazar</span>
                     <span class="role-desc">İçerik üretici (Onaylı)</span>
@@ -73,9 +73,17 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
               name="email"
               placeholder="adiniz@ornek.com"
               required
+              pattern="^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$"
               autocomplete="email"
+              #emailCtrl="ngModel"
             />
-            <div class="form-hint">Aktivasyon ve bildirimler bu adrese gönderilir.</div>
+            @if (emailCtrl.invalid && (emailCtrl.dirty || emailCtrl.touched)) {
+              <div class="form-error" style="color: #ef4444; font-size: 13px; margin-top: 5px;">
+                Lütfen geçerli bir e-posta adresi giriniz.
+              </div>
+            } @else {
+              <div class="form-hint">Aktivasyon ve bildirimler bu adrese gönderilir.</div>
+            }
           </div>
 
           <div class="form-group">
@@ -98,9 +106,10 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
                 (click)="togglePassword()"
                 tabindex="-1"
               >
-                {{ showPassword() ? '🙈' : '👁️' }}
+                {{ showPassword() ? '🙈' : '🐵' }}
               </button>
             </div>
+
 
             @if (password) {
               <div class="password-strength">
@@ -136,11 +145,41 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
             }
           </div>
 
+          <div class="form-group" style="margin-top: 15px;">
+            <label class="form-label" for="reg-confirm-password">Şifre Tekrarı</label>
+            <div class="password-input-wrapper">
+              <input
+                id="reg-confirm-password"
+                [type]="showConfirmPassword() ? 'text' : 'password'"
+                class="form-control"
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                placeholder="Şifrenizi doğrulayın"
+                required
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="toggle-password-btn"
+                (click)="toggleConfirmPassword()"
+                tabindex="-1"
+              >
+                {{ showConfirmPassword() ? '🙈' : '🐵' }}
+              </button>
+            </div>
+            @if (password && confirmPassword && password !== confirmPassword) {
+              <div class="form-error" style="color: #ef4444; font-size: 13px; margin-top: 5px;">
+                Şifreler uyuşmuyor.
+              </div>
+            }
+          </div>
+
+
           <!-- YAZAR BAŞVURUSU EK ALANLARI -->
           @if (role === 'Author') {
             <div class="author-extra-fields">
               <div class="author-fields-badge">
-                <span>🎓 Yazar Başvuru Bilgileri</span>
+                <span> Yazar Başvuru Bilgileri</span>
               </div>
 
               <div class="form-group">
@@ -170,12 +209,12 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
                   <label for="cv-file-input" class="file-dropzone-label">
                     @if (selectedCvFile) {
                       <div class="file-info-badge">
-                        <span class="file-icon">📄</span>
+                        <span class="file-icon"></span>
                         <div class="file-text">
                           <span class="file-name">{{ selectedCvFile.name }}</span>
                           <span class="file-size">({{ getFormattedFileSize(selectedCvFile.size) }})</span>
                         </div>
-                        <button type="button" class="btn-remove-file" (click)="removeCvFile($event)">✕</button>
+                        <button type="button" class="btn-remove-file" (click)="removeCvFile($event)"></button>
                       </div>
                     } @else {
                       <span class="upload-icon">📤</span>
@@ -197,7 +236,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
           @if (parsedError()) {
             <div class="custom-error-alert" [class.error-alert-pass]="parsedError()?.isPasswordError">
               <div class="cea-head">
-                <span class="cea-icon">{{ parsedError()?.isPasswordError ? '🔒' : '⚠️' }}</span>
+                <span class="cea-icon">{{ parsedError()?.isPasswordError ? '' : '' }}</span>
                 <strong>{{ parsedError()?.title }}</strong>
               </div>
               <div class="cea-msg">{{ parsedError()?.generalMessage }}</div>
@@ -212,21 +251,21 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
               @if (parsedError()?.emailErrors?.length) {
                 <ul class="cea-list">
                   @for (e of parsedError()?.emailErrors; track e) {
-                    <li>📧 {{ e }}</li>
+                    <li> {{ e }}</li>
                   }
                 </ul>
               }
               @if (parsedError()?.usernameErrors?.length) {
                 <ul class="cea-list">
                   @for (u of parsedError()?.usernameErrors; track u) {
-                    <li>👤 {{ u }}</li>
+                    <li> {{ u }}</li>
                   }
                 </ul>
               }
               @if (parsedError()?.otherErrors?.length) {
                 <ul class="cea-list">
                   @for (o of parsedError()?.otherErrors; track o) {
-                    <li>⚠️ {{ o }}</li>
+                    <li> {{ o }}</li>
                   }
                 </ul>
               }
@@ -239,9 +278,9 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
             [disabled]="isLoading()"
           >
             @if (isLoading()) {
-              <span>{{ role === 'Author' ? 'Başvuru İletiliyor...' : 'Hesap Oluşturuluyor...' }}</span>
+              <span><i class="fa fa-spinner fa-spin" style="margin-right: 8px;"></i> Mailiniz doğrulanıyor lütfen bekleyiniz...</span>
             } @else {
-              <span>{{ role === 'Author' ? '✍️ Yazar Başvurusunu Gönder' : '✨ Hesabımı Oluştur' }}</span>
+              <span>{{ role === 'Author' ? ' Yazar Başvurusunu Gönder' : ' Hesabımı Oluştur' }}</span>
             }
           </button>
         </form>
@@ -266,7 +305,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
 
             @if (isResendOpen()) {
               <div class="resend-panel card">
-                <div class="rp-title">✉️ Doğrulama Bağlantısını Yeniden Alın</div>
+                <div class="rp-title"> Doğrulama Bağlantısını Yeniden Alın</div>
                 <p class="rp-desc">Kayıt olduğunuz e-posta adresini girerek yeni bir aktivasyon bağlantısı isteyebilirsiniz:</p>
                 <div class="rp-form">
                   <input
@@ -313,9 +352,9 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       width: 100%;
       max-width: 540px;
       padding: 38px 34px;
-      background: #ffffff;
-      color: #0f172a;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
       animation: fadeIn 0.2s ease-out;
@@ -342,14 +381,14 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     .auth-title {
       font-size: 24px;
       font-weight: 800;
-      color: #0f172a;
+      color: var(--text-main);
       margin: 0 0 6px 0;
       letter-spacing: -0.5px;
     }
 
     .auth-subtitle {
       font-size: 13px;
-      color: #64748b;
+      color: var(--text-secondary);
       margin: 0;
     }
 
@@ -361,7 +400,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       display: block;
       font-size: 13px;
       font-weight: 700;
-      color: #334155;
+      color: var(--text-main);
       margin-bottom: 6px;
     }
 
@@ -372,29 +411,29 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     .form-control {
       width: 100%;
       height: 44px;
-      background: #f8fafc;
-      border: 1.5px solid #cbd5e1;
+      background: var(--bg-main);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius-md);
       padding: 0 14px;
-      color: #0f172a;
+      color: var(--text-main);
       font-size: 14px;
       transition: var(--transition);
       outline: none;
     }
 
     .form-control:focus {
-      background: #ffffff;
-      border-color: #1e3a8a;
+      background: var(--bg-card);
+      border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
     }
 
     .form-control::placeholder {
-      color: #94a3b8;
+      color: var(--text-muted);
     }
 
     .form-hint {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-secondary);
       margin-top: 4px;
     }
 
@@ -412,7 +451,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       cursor: pointer;
       font-size: 16px;
       padding: 4px;
-      color: #64748b;
+      color: var(--text-secondary);
     }
 
     .password-strength {
@@ -453,7 +492,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
 
     .password-rules li {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -477,7 +516,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     }
 
     .role-option {
-      border: 1.5px solid #cbd5e1;
+      border: 1.5px solid var(--border);
       border-radius: var(--radius-md);
       padding: 12px;
       cursor: pointer;
@@ -485,7 +524,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       align-items: center;
       gap: 10px;
       transition: var(--transition);
-      background: #f8fafc;
+      background: var(--bg-main);
     }
 
     .role-option input[type="radio"] {
@@ -493,13 +532,13 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     }
 
     .role-option:hover {
-      border-color: #93c5fd;
-      background: #ffffff;
+      border-color: var(--primary);
+      background: var(--bg-card);
     }
 
     .role-selected {
-      border-color: #1e3a8a !important;
-      background: #eff6ff !important;
+      border-color: var(--primary) !important;
+      background: rgba(30, 58, 138, 0.1) !important;
       box-shadow: 0 0 0 2px rgba(30, 58, 138, 0.15);
     }
 
@@ -521,18 +560,18 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     .role-title {
       font-size: 13px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-main);
     }
 
     .role-desc {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-secondary);
     }
 
     /* Yazar Özel Alanları */
     .author-extra-fields {
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
+      background: rgba(21, 128, 61, 0.05);
+      border: 1px solid rgba(21, 128, 61, 0.2);
       border-radius: var(--radius-md);
       padding: 18px;
       margin-bottom: 20px;
@@ -549,11 +588,11 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     }
 
     .file-dropzone {
-      border: 2px dashed #cbd5e1;
+      border: 2px dashed var(--border);
       border-radius: var(--radius-md);
       padding: 18px;
       text-align: center;
-      background: #ffffff;
+      background: var(--bg-main);
       cursor: pointer;
       transition: var(--transition);
     }
@@ -709,7 +748,7 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
       justify-content: center;
       gap: 6px;
       font-size: 13px;
-      color: #64748b;
+      color: var(--text-secondary);
     }
 
     .link-gold {
@@ -729,9 +768,9 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     }
 
     .btn-toggle-resend {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      color: #475569;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
@@ -744,15 +783,15 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     }
 
     .btn-toggle-resend:hover {
-      color: #0f172a;
-      background: #f1f5f9;
-      border-color: #cbd5e1;
+      color: var(--text-main);
+      background: var(--bg-main);
+      border-color: var(--primary);
     }
 
     .resend-panel {
       margin-top: 10px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
       padding: 16px;
       border-radius: var(--radius-md);
       text-align: left;
@@ -762,13 +801,13 @@ import { parseAuthError, ParsedAuthError } from '../../../core/utils/auth-error-
     .rp-title {
       font-size: 13px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-main);
       margin-bottom: 4px;
     }
 
     .rp-desc {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-secondary);
       margin-bottom: 10px;
       line-height: 1.4;
     }
@@ -800,14 +839,17 @@ export class RegisterComponent {
   toastService = inject(ToastService);
   router = inject(Router);
 
-  username = '';
-  email = '';
-  password = '';
-  role = 'User'; // 'User' veya 'Author'
-  university = '';
+  username: string = '';
+  email: string = '';
+  password: string = '';
+  confirmPassword: string = '';
+  role: string = 'User'; // 'User' veya 'Author'
+  university: string = '';
   selectedCvFile: File | null = null;
 
-  showPassword = signal(false);
+  showPassword = signal<boolean>(false);
+  showConfirmPassword = signal<boolean>(false);
+  isSubmitting = signal<boolean>(false);
   isLoading = signal(false);
   parsedError = signal<ParsedAuthError | null>(null);
 
@@ -841,11 +883,11 @@ export class RegisterComponent {
 
   passwordStrengthLabel = computed(() => {
     const pct = this.passwordStrengthPercent();
-    if (pct <= 20) return 'Çok Zayıf';
-    if (pct <= 40) return 'Zayıf';
-    if (pct <= 60) return 'Orta';
-    if (pct <= 80) return 'İyi';
-    return 'Güçlü ✓';
+    if (pct <= 20) return 'Çok Zayıf 🙈';
+    if (pct <= 40) return 'Zayıf 🙉';
+    if (pct <= 60) return 'Orta 🙊';
+    if (pct <= 80) return 'İyi 🙂';
+    return 'Güçlü ✓ ';
   });
 
   isPasswordValid = computed(() => {
@@ -854,8 +896,14 @@ export class RegisterComponent {
   });
 
   togglePassword() {
-    this.showPassword.set(!this.showPassword());
+    this.showPassword.update(v => !v);
   }
+
+  toggleConfirmPassword() {
+    this.showConfirmPassword.update(v => !v);
+  }
+
+
 
   onPasswordChange(value: string) {
     this.rules.set({
@@ -905,26 +953,26 @@ export class RegisterComponent {
       next: (res: any) => {
         this.isResending.set(false);
         if (res.success) {
-          this.resendMessage.set('✅ Yeni doğrulama bağlantısı e-posta adresinize gönderildi.');
-          this.toastService.success('Başarılı 📬', 'Doğrulama e-postası gönderildi!');
+          this.resendMessage.set(' Yeni doğrulama bağlantısı e-posta adresinize gönderildi.');
+          this.toastService.success('Başarılı ', 'Doğrulama e-postası gönderildi!');
         } else {
           this.resendIsError.set(true);
-          this.resendMessage.set(`⚠️ ${res.message || 'İşlem başarısız.'}`);
+          this.resendMessage.set(` ${res.message || 'İşlem başarısız.'}`);
         }
       },
       error: (err: any) => {
         this.isResending.set(false);
         this.resendIsError.set(true);
         const parsed = parseAuthError(err, 'Doğrulama e-postası gönderilemedi.');
-        this.resendMessage.set(`⚠️ ${parsed.generalMessage}`);
+        this.resendMessage.set(` ${parsed.generalMessage}`);
       }
     });
   }
 
   onSubmit() {
-    if (!this.username || !this.email || !this.password) {
+    if (!this.username || !this.email || !this.password || !this.confirmPassword) {
       this.parsedError.set({
-        title: '⚠️ Eksik Alanlar',
+        title: ' Eksik Alanlar',
         generalMessage: 'Lütfen kullanıcı adı, e-posta ve şifre alanlarını eksiksiz doldurunuz.',
         passwordErrors: !this.password ? ['Şifre alanı boş bırakılamaz.'] : [],
         emailErrors: !this.email ? ['E-posta alanı boş bırakılamaz.'] : [],
@@ -932,6 +980,18 @@ export class RegisterComponent {
         otherErrors: [],
         isPasswordError: !this.password
       });
+      return;
+    }
+
+    // Basit bir de frontend'de mail kontrolü (HTML form erroru görmeden submit ederse)
+    const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(this.email)) {
+      this.toastService.warning('Geçersiz E-Posta', 'Lütfen geçerli formatta bir e-posta adresi giriniz.');
+      return;
+    }
+
+    if (this.password !== this.confirmPassword) {
+      this.toastService.warning('Şifre Uyuşmazlığı', 'Girdiğiniz şifreler birbiriyle eşleşmiyor. Lütfen kontrol edip tekrar deneyin.');
       return;
     }
 
@@ -956,7 +1016,7 @@ export class RegisterComponent {
       if (!r.hasSpecial) missingRules.push('En az 1 özel karakter (!@#$%^&*) içermelidir.');
 
       this.parsedError.set({
-        title: '🔒 Şifre Güvenlik Hatası',
+        title: ' Şifre Güvenlik Hatası',
         generalMessage: 'Girdiğiniz şifre güvenlik kurallarına uymuyor. Lütfen aşağıdaki kuralları sağlayınız:',
         passwordErrors: missingRules,
         emailErrors: [],
@@ -988,7 +1048,7 @@ export class RegisterComponent {
           this.isLoading.set(false);
           if (res.success) {
             this.toastService.success(
-              'Yazar Başvurunuz Alındı! 🎉',
+              'Yazar Başvurunuz Alındı! ',
               'Başvurunuz ve CV dosyanız sistem yöneticisine iletildi. Onaylandığında aktivasyon bağlantısı e-postanıza gelecektir.'
             );
             this.router.navigate(['/login']);
@@ -1016,7 +1076,7 @@ export class RegisterComponent {
           this.isLoading.set(false);
           if (res.success) {
             this.toastService.success(
-              'Kayıt Başarılı! 🎉',
+              'Kayıt Başarılı! ',
               'E-posta adresinize tek tıkla doğrulama bağlantısı gönderildi. Lütfen gelen kutunuzu kontrol ediniz.'
             );
             this.router.navigate(['/login']);

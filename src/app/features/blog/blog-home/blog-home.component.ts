@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { BlogPost } from '../../../core/models/blog.model';
 import { BlogService } from '../../../core/services/blog.service';
 
@@ -55,6 +55,14 @@ import { BlogService } from '../../../core/services/blog.service';
         </div>
       </div>
 
+      @if (currentTag()) {
+        <div class="tag-filter-banner">
+          <span class="tag-filter-icon">🏷️</span>
+          <span class="tag-filter-text">Şu an <strong>{{ currentTag() }}</strong> ile ilgili içerikleri görüntülüyorsunuz.</span>
+          <button class="btn-clear-filter" (click)="clearTagFilter()">Tümünü Göster </button>
+        </div>
+      }
+
       <!-- Loading state -->
       @if (loading()) {
         <p class="text-muted">Yazılar yükleniyor...</p>
@@ -63,7 +71,7 @@ import { BlogService } from '../../../core/services/blog.service';
       <!-- Error state -->
       @if (loadError()) {
         <div class="empty-state card">
-          <div class="empty-icon">⚠️</div>
+          <div class="empty-icon"></div>
           <h3>Yazılar yüklenemedi</h3>
           <p>{{ loadError() }}</p>
         </div>
@@ -78,7 +86,7 @@ import { BlogService } from '../../../core/services/blog.service';
                 <div class="post-cover-wrapper">
                   <img [src]="photoSrc(post.photoUrl)" [alt]="post.title" class="post-cover" />
                   <span class="post-type-badge" [class.badge-column]="post.type === 'Koseyazisi'">
-                    {{ post.type === 'Koseyazisi' ? '✍️ Köşe Yazısı' : '📄 Blog' }}
+                    {{ post.type === 'Koseyazisi' ? ' Köşe Yazısı' : ' Blog' }}
                   </span>
                 </div>
               }
@@ -88,11 +96,8 @@ import { BlogService } from '../../../core/services/blog.service';
                   <div class="post-meta-left">
                     @if (!post.photoUrl) {
                       <span class="post-type-badge-inline" [class.badge-column]="post.type === 'Koseyazisi'">
-                        {{ post.type === 'Koseyazisi' ? '✍️ Köşe Yazısı' : '📄 Blog' }}
+                        {{ post.type === 'Koseyazisi' ? ' Köşe Yazısı' : ' Blog' }}
                       </span>
-                    }
-                    @if (post.status === 'Draft') {
-                      <span class="post-category">Taslak</span>
                     }
                   </div>
                   <span class="post-read-time">
@@ -102,6 +107,14 @@ import { BlogService } from '../../../core/services/blog.service';
                     {{ post.createdAt | date:'dd.MM.yyyy' }}
                   </span>
                 </div>
+
+                @if (post.tags && post.tags.length > 0) {
+                  <div class="post-tags">
+                    @for (t of post.tags; track t) {
+                      <button type="button" class="tag-link" (click)="goToTag($event, t)">{{ t }}</button>
+                    }
+                  </div>
+                }
 
                 <h3 class="post-title">{{ post.title }}</h3>
 
@@ -152,6 +165,25 @@ import { BlogService } from '../../../core/services/blog.service';
           </nav>
         }
       }
+    </section>
+
+    <!-- Newsletter CTA -->
+    <section class="container newsletter-section">
+      <div class="newsletter-card card">
+        <div class="newsletter-content">
+          <span class="newsletter-badge">Haftalık Bülten</span>
+          <h2 class="newsletter-title">Yeni Yazıları ve Gelişmeleri Kaçırmayın</h2>
+          <p class="newsletter-desc">En güncel teknoloji ve köşe yazılarını her pazartesi sabahı e-posta kutunuza ulaştıralım.</p>
+        </div>
+        <div class="newsletter-form">
+          @if (newsletterSubscribed()) {
+            <span class="newsletter-thanks">Teşekkürler! Abone oldunuz.</span>
+          } @else {
+            <input type="email" placeholder="E-posta adresiniz..." class="form-control" [(ngModel)]="newsletterEmail" name="newsletterEmail" />
+            <button class="btn btn-primary" (click)="subscribeNewsletter()">Abone Ol</button>
+          }
+        </div>
+      </div>
     </section>
   `,
   styles: [`
@@ -311,6 +343,33 @@ import { BlogService } from '../../../core/services/blog.service';
       padding-bottom: 40px;
     }
 
+    .tag-filter-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      margin-bottom: 24px;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .tag-filter-icon { font-size: 20px; }
+    .tag-filter-text { font-size: 14px; color: #1e3a8a; flex: 1; }
+    
+    .btn-clear-filter {
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-clear-filter:hover { background: #dbeafe; }
+
     .section-header {
       display: flex;
       justify-content: space-between;
@@ -460,6 +519,30 @@ import { BlogService } from '../../../core/services/blog.service';
       letter-spacing: 0.5px;
     }
 
+    .post-tags {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tag-link {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border: none;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .tag-link:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
     .post-read-time {
       color: var(--text-muted);
     }
@@ -563,14 +646,66 @@ import { BlogService } from '../../../core/services/blog.service';
       font-weight: 600;
     }
 
+    .newsletter-section {
+      padding: 20px 0 48px 0;
+    }
+
+    .newsletter-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 28px 32px;
+    }
+
+    .newsletter-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      margin-bottom: 10px;
+    }
+
+    .newsletter-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 0 0 6px 0;
+    }
+
+    .newsletter-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      max-width: 480px;
+      margin: 0;
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .newsletter-thanks {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--success, #10b981);
+    }
+
   `]
 })
 export class BlogHomeComponent implements OnInit {
   private blogService = inject(BlogService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   searchQuery = signal<string>('');
   fixedType = signal<'Blog' | 'Koseyazisi'>('Blog');
+  currentTag = signal<string | null>(null);
   loading = signal<boolean>(false);
   loadError = signal<string | null>(null);
 
@@ -597,7 +732,17 @@ export class BlogHomeComponent implements OnInit {
   ngOnInit() {
     const routeType = this.route.snapshot.data['fixedType'];
     this.fixedType.set(routeType === 'Koseyazisi' ? 'Koseyazisi' : 'Blog');
-    this.loadPosts();
+    
+    this.route.queryParams.subscribe(params => {
+      const tag = params['tag'];
+      if (tag) {
+        this.currentTag.set(tag);
+      } else {
+        this.currentTag.set(null);
+      }
+      this.page.set(1);
+      this.loadPosts();
+    });
   }
 
   loadPosts() {
@@ -609,7 +754,8 @@ export class BlogHomeComponent implements OnInit {
       this.fixedType(),
       this.searchQuery().trim() || undefined,
       this.page(),
-      this.pageSize
+      this.pageSize,
+      this.currentTag() || undefined
     ).subscribe({
       next: ({ posts, totalCount }) => {
         this.posts.set(posts);
@@ -638,6 +784,32 @@ export class BlogHomeComponent implements OnInit {
     this.searchQuery.set('');
     this.page.set(1);
     this.loadPosts();
+  }
+
+  clearTagFilter() {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tag: null },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  goToTag(event: Event, tag: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tag },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  newsletterEmail = '';
+  newsletterSubscribed = signal<boolean>(false);
+
+  subscribeNewsletter() {
+    if (!this.newsletterEmail.trim()) return;
+    this.newsletterSubscribed.set(true);
   }
 
   contentPreview(content: string): string {

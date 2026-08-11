@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ToastService } from '../../../core/services/toast.service';
 import { BlogService } from '../../../core/services/blog.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-post-create',
@@ -14,7 +15,7 @@ import { BlogService } from '../../../core/services/blog.service';
       <div class="header-row">
         <div>
           <a routerLink="/" class="back-link">← Ana Sayfaya Dön</a>
-          <h1 class="page-title">{{ editingId() ? '✏️ Yazıyı Düzenle' : '✍️ Yeni İçerik / Köşe Yazısı Oluştur' }}</h1>
+          <h1 class="page-title">{{ editingId() ? 'Yazıyı Düzenle' : 'Yeni İçerik / Köşe Yazısı Oluştur' }}</h1>
           <p class="page-desc">Lumina okurları için yeni bir blog yazısı veya köşe yazısı hazırlayın.</p>
         </div>
       </div>
@@ -22,7 +23,7 @@ import { BlogService } from '../../../core/services/blog.service';
       <div class="create-grid">
         <!-- Editor Form -->
         <div class="card editor-card">
-          <form (ngSubmit)="onSubmit('Published')">
+          <form (ngSubmit)="onSubmit()">
             <div class="form-group">
               <label class="form-label">Başlık</label>
               <input
@@ -62,6 +63,29 @@ import { BlogService } from '../../../core/services/blog.service';
               </div>
             </div>
 
+            <!-- Etiket (Tags) Yükleme Alanı -->
+            <div class="form-group">
+              <label class="form-label">🏷️ Etiketler</label>
+              <div class="tags-input-container form-control" (click)="tagsInputField.focus()">
+                @for (tag of tagsArray(); track tag) {
+                  <span class="tag-badge">
+                    {{ tag }}
+                    <button type="button" class="tag-remove" (click)="removeTag(tag)">&times;</button>
+                  </span>
+                }
+                <input
+                  #tagsInputField
+                  type="text"
+                  class="tags-input-field"
+                  [(ngModel)]="tagsInputText"
+                  name="tagsInputText"
+                  (keydown)="onTagKeydown($event)"
+                  placeholder="Etiket yazıp Boşluk, Virgül veya Enter'a basın"
+                />
+              </div>
+              <p class="field-hint">Tarihçe ve filtreleme için dillerin veya konuların adlarını virgülle ayırarak yazabilirsiniz.</p>
+            </div>
+
             <div class="form-group">
               <label class="form-label">İçerik Metni</label>
               <textarea
@@ -79,9 +103,6 @@ import { BlogService } from '../../../core/services/blog.service';
             }
 
             <div class="form-actions">
-              <button type="button" class="btn btn-secondary" [disabled]="submitting()" (click)="onSubmit('Draft')">
-                {{ submitting() ? 'Kaydediliyor...' : 'Taslak Olarak Kaydet' }}
-              </button>
               <button type="submit" class="btn btn-primary btn-lg" [disabled]="submitting()">
                 {{ submitting() ? 'Kaydediliyor...' : 'Yayınla' }}
               </button>
@@ -92,7 +113,7 @@ import { BlogService } from '../../../core/services/blog.service';
         <!-- Live Preview Sidebar -->
         <div class="card preview-card">
           <div class="preview-card-header">
-            <h3 class="preview-title">Önizleme ✨</h3>
+            <h3 class="preview-title">Önizleme </h3>
             <span class="preview-type-tag">{{ (selectedFile() || existingPhotoUrl()) ? 'Blog' : 'Köşe Yazısı' }}</span>
           </div>
           <div class="preview-box">
@@ -139,6 +160,55 @@ import { BlogService } from '../../../core/services/blog.service';
       color: var(--text-muted);
     }
 
+    .tags-input-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      min-height: 44px;
+      height: auto;
+      padding: 6px 14px;
+      cursor: text;
+    }
+    
+    .tag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-surface);
+      color: var(--primary);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .tag-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    
+    .tag-remove:hover {
+      color: var(--text-main);
+    }
+    
+    .tags-input-field {
+      border: none;
+      background: transparent;
+      outline: none;
+      flex: 1;
+      min-width: 120px;
+      color: var(--text-main);
+      font-size: 14px;
+      padding: 4px 0;
+    }
+
     .field-hint {
       font-size: 12px;
       color: var(--text-muted);
@@ -167,10 +237,27 @@ import { BlogService } from '../../../core/services/blog.service';
       padding-top: 18px;
     }
 
+    .editor-card {
+      padding: 32px;
+    }
+    
+    :host-context(.light-theme) .editor-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
     .preview-card {
       height: fit-content;
       position: sticky;
       top: 90px;
+      padding: 24px;
+    }
+    
+    :host-context(.light-theme) .preview-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
     .preview-card-header {
@@ -274,11 +361,32 @@ import { BlogService } from '../../../core/services/blog.service';
 export class PostCreateComponent implements OnInit, OnDestroy {
   toastService = inject(ToastService);
   blogService = inject(BlogService);
+  authService = inject(AuthService);
   router = inject(Router);
   private route = inject(ActivatedRoute);
 
   title = '';
   content = '';
+  tagsInputText = '';
+  tagsArray = signal<string[]>([]);
+
+  onTagKeydown(event: KeyboardEvent) {
+    if (event.key === ',' || event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      const val = this.tagsInputText.trim();
+      if (val) {
+        const cleanVal = val.replace(/,+$/, '').trim();
+        if (cleanVal && !this.tagsArray().includes(cleanVal)) {
+          this.tagsArray.update(tags => [...tags, cleanVal]);
+        }
+      }
+      this.tagsInputText = '';
+    }
+  }
+
+  removeTag(tagToRemove: string) {
+    this.tagsArray.update(tags => tags.filter(t => t !== tagToRemove));
+  }
 
   editingId = signal<number | null>(null);
   existingPhotoUrl = signal<string | null>(null);
@@ -303,6 +411,7 @@ export class PostCreateComponent implements OnInit, OnDestroy {
       next: (post) => {
         this.title = post.title;
         this.content = post.content;
+        this.tagsArray.set(post.tags || []);
         this.existingPhotoUrl.set(post.photoUrl);
       },
       error: () => {
@@ -329,7 +438,8 @@ export class PostCreateComponent implements OnInit, OnDestroy {
     }
   }
 
-  onSubmit(status: 'Draft' | 'Published') {
+  onSubmit() {
+    const status = 'Published';
     if (!this.title || !this.content) {
       this.toastService.warning('Eksik Alan', 'Lütfen başlık ve içerik alanlarını doldurunuz.');
       return;
@@ -340,21 +450,20 @@ export class PostCreateComponent implements OnInit, OnDestroy {
 
     const editingId = this.editingId();
 
+    const parsedTags = this.tagsArray();
+
     if (editingId) {
       this.blogService.update(editingId, {
         title: this.title,
         content: this.content,
         status: status,
-        photo: this.selectedFile()
+        photo: this.selectedFile(),
+        tags: parsedTags
       }).subscribe({
         next: () => {
           this.saved = true;
           this.submitting.set(false);
-          if (status === 'Published') {
-            this.toastService.success('Yazı Yayında! 🎉', 'Yazınız güncellendi ve yayınlandı.');
-          } else {
-            this.toastService.info('Taslak Güncellendi', 'Değişiklikleriniz taslak olarak kaydedildi.');
-          }
+          this.toastService.success('Yazı Yayında! ', 'Yazınız güncellendi ve yayınlandı.');
           this.router.navigate(['/']);
         },
         error: () => {
@@ -372,16 +481,14 @@ export class PostCreateComponent implements OnInit, OnDestroy {
       content: this.content,
       type: type,
       status: status,
-      photo: this.selectedFile()
+      photo: this.selectedFile(),
+      tags: parsedTags,
+      authorId: this.authService.currentUser()?.id || ''
     }).subscribe({
       next: () => {
         this.saved = true;
         this.submitting.set(false);
-        if (status === 'Published') {
-          this.toastService.success('Yazı Yayında! 🎉', 'Yazınız başarıyla yayınlandı ve listelendi.');
-        } else {
-          this.toastService.info('Taslak Kaydedildi', 'Yazınız taslak olarak kaydedildi.');
-        }
+        this.toastService.success('Yazı Yayında! ', 'Yazınız başarıyla yayınlandı ve listelendi.');
         this.router.navigate(['/']);
       },
       error: () => {
@@ -392,24 +499,7 @@ export class PostCreateComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.editingId()) {
-      return;
-    }
-
-    const hasContent = this.title.trim().length > 0 || this.content.trim().length > 0;
-    if (this.saved || !hasContent) {
-      return;
-    }
-
-    const type: 'Blog' | 'Koseyazisi' = this.selectedFile() ? 'Blog' : 'Koseyazisi';
-
-    this.blogService.create({
-      title: this.title || 'Başlıksız Taslak',
-      content: this.content,
-      type: type,
-      status: 'Draft',
-      photo: this.selectedFile()
-    }).subscribe();
+    // Auto-save disabled as drafts feature is removed.
   }
 
   photoSrc(photoUrl: string): string {

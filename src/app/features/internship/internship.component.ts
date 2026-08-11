@@ -1,10 +1,12 @@
 import { Component, inject, signal, OnInit, AfterViewInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { BlogPost } from '../../core/models/blog.model';
 import { PublicUserProfile } from '../../core/models/auth.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BlogService } from '../../core/services/blog.service';
+import { Subscription } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-internship',
@@ -12,10 +14,18 @@ import { BlogService } from '../../core/services/blog.service';
   imports: [CommonModule, RouterLink],
   template: `
     <div class="container internship-page">
-      <div class="internship-grid">
+      @if (currentTag()) {
+        <div class="tag-filter-banner">
+          <span class="tag-filter-icon">🏷️</span>
+          <span class="tag-filter-text">Şu an <strong>{{ currentTag() }}</strong> ile ilgili içerikleri görüntülüyorsunuz.</span>
+          <button class="btn-clear-filter" (click)="clearFilter()">Tümünü Göster </button>
+        </div>
+      }
+
+      <div class="internship-grid" [class.filtered-grid]="currentTag()">
         <!-- Left: Blog posts auto-scroll -->
         <aside class="side-column">
-          <h4 class="side-title">📄 Bloglar</h4>
+          <h4 class="side-title"> Bloglar</h4>
           @if (blogPosts().length > 0) {
             <div class="scroll-viewport" #blogViewport (mouseenter)="setPaused('blog', true)" (mouseleave)="setPaused('blog', false)">
               <div class="scroll-track">
@@ -24,7 +34,7 @@ import { BlogService } from '../../core/services/blog.service';
                     @if (post.photoUrl) {
                       <img [src]="photoSrc(post.photoUrl)" [alt]="post.title" class="mini-cover" />
                     } @else {
-                      <div class="mini-cover mini-cover-placeholder">📄</div>
+                      <div class="mini-cover mini-cover-placeholder"></div>
                     }
                     <span class="mini-author-avatar">
                       <span class="mini-author-avatar-circle">
@@ -42,6 +52,13 @@ import { BlogService } from '../../core/services/blog.service';
                       <span class="mini-new-badge">✨ Yeni</span>
                     }
                     <div class="mini-overlay">
+                      @if (post.tags && post.tags.length > 0) {
+                        <div class="mini-tags">
+                          @for (t of post.tags.slice(0, 2); track t) {
+                            <span class="mini-tag-pill">{{ t }}</span>
+                          }
+                        </div>
+                      }
                       <span class="mini-title">{{ post.title }}</span>
                       <span class="mini-excerpt">{{ excerptPreview(post.content) }}</span>
                     </div>
@@ -58,7 +75,7 @@ import { BlogService } from '../../core/services/blog.service';
         <!-- Center: static internship story -->
         <main class="center-column">
           <article class="internship-article card">
-            <h1>🚀 Bir Stajyer Günlüğü: PostgreSQL, .NET ve Angular ile Full-Stack Blog Projesi</h1>
+            <h1> Bir Stajyer Günlüğü: PostgreSQL, .NET ve Angular ile Full-Stack Blog Projesi</h1>
 
             <p>
               Yazılım dünyasında teorik bilgi tek başına yeterli olmuyor; işin içine girip kendi projenizi ekipçe uçtan uca inşa ettiğinizde taşlar yerine oturuyor. Bizim için de tam olarak böyle, birlikte harika tecrübeler edindiğimiz bir staj süreci geride kaldı!
@@ -78,7 +95,7 @@ import { BlogService } from '../../core/services/blog.service';
               <li>SQL sorgularıyla veri tabanı yönetiminin inceliklerini doğrudan tecrübe ettik.</li>
             </ul>
 
-            <h2>⚙️ 2. Motoru Çalıştırmak: .NET ile Güçlü Backend</h2>
+            <h2> 2. Motoru Çalıştırmak: .NET ile Güçlü Backend</h2>
             <p>
               Verileri topladık ama bunları frontend'e güvenle ve hızlıca sunmak gerekiyordu. Burada imdadımıza .NET (C#) yetişti:
             </p>
@@ -103,14 +120,14 @@ import { BlogService } from '../../core/services/blog.service';
               Bu staj projesi bizim için sadece "kod yazmak" anlamına gelmedi. Bir projenin fikir aşamasından, veri tabanı katmanına (PostgreSQL / pgAdmin 4), sunucu tarafındaki mantığından (.NET) ve kullanıcının ekranda gördüğü reaktif dünyaya (Angular) kadar iki kişilik bir ekip olarak nasıl uyumla geliştirileceğini bizzat yaşayarak öğrendik.
             </p>
             <p>
-              Full-stack geliştirme yolculuğumuzda harika bir temel olan bu projeyi başarıyla tamamlamış olmanın heyecanını yaşıyoruz! ✨
+              Full-stack geliştirme yolculuğumuzda harika bir temel olan bu projeyi başarıyla tamamlamış olmanın heyecanını yaşıyoruz! 
             </p>
           </article>
         </main>
 
         <!-- Right: Köşe yazıları auto-scroll -->
         <aside class="side-column">
-          <h4 class="side-title">✍️ Köşe Yazıları</h4>
+          <h4 class="side-title"> Köşe Yazıları</h4>
           @if (columnPosts().length > 0) {
             <div class="scroll-viewport" #columnViewport (mouseenter)="setPaused('column', true)" (mouseleave)="setPaused('column', false)">
               <div class="scroll-track">
@@ -152,6 +169,33 @@ import { BlogService } from '../../core/services/blog.service';
       padding-bottom: 60px;
     }
 
+    .tag-filter-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      margin-bottom: 24px;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .tag-filter-icon { font-size: 20px; }
+    .tag-filter-text { font-size: 14px; color: #1e3a8a; flex: 1; }
+    
+    .btn-clear-filter {
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-clear-filter:hover { background: #dbeafe; }
 
     .internship-grid {
       display: grid;
@@ -284,6 +328,22 @@ import { BlogService } from '../../core/services/blog.service';
     .mini-overlay .mini-excerpt {
       color: #ffffff;
       text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    .mini-tags {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .mini-tag-pill {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(4px);
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .mini-read-circle {
@@ -480,6 +540,8 @@ import { BlogService } from '../../core/services/blog.service';
 export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
   private blogService = inject(BlogService);
   authService = inject(AuthService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   @ViewChild('blogViewport') blogViewportRef?: ElementRef<HTMLDivElement>;
   @ViewChild('columnViewport') columnViewportRef?: ElementRef<HTMLDivElement>;
@@ -487,6 +549,7 @@ export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
   blogPosts = signal<BlogPost[]>([]);
   columnPosts = signal<BlogPost[]>([]);
   private authorProfiles = signal<Record<string, PublicUserProfile>>({});
+  currentTag = signal<string | null>(null);
 
   private blogPaused = false;
   private columnPaused = false;
@@ -505,7 +568,21 @@ export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly sideColumnPostCount = 10;
 
   ngOnInit() {
-    this.blogService.getAllPaged('Published', 'Blog', undefined, 1, this.sideColumnPostCount).subscribe({
+    this.route.queryParams.subscribe(params => {
+      const tag = params['tag'];
+      if (tag) {
+        this.currentTag.set(tag);
+      } else {
+        this.currentTag.set(null);
+      }
+      this.loadPosts();
+    });
+  }
+
+  loadPosts() {
+    const tag = this.currentTag() || undefined;
+
+    this.blogService.getAllPaged('Published', 'Blog', undefined, 1, this.sideColumnPostCount, tag).subscribe({
       next: ({ posts }) => {
         this.blogPosts.set(posts);
         this.loadAuthorProfiles(posts);
@@ -513,7 +590,7 @@ export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
       error: () => this.blogPosts.set([])
     });
 
-    this.blogService.getAllPaged('Published', 'Koseyazisi', undefined, 1, this.sideColumnPostCount).subscribe({
+    this.blogService.getAllPaged('Published', 'Koseyazisi', undefined, 1, this.sideColumnPostCount, tag).subscribe({
       next: ({ posts }) => {
         this.columnPosts.set(posts);
         this.loadAuthorProfiles(posts);
@@ -544,6 +621,14 @@ export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.authorProfiles()[authorId];
   }
 
+  clearFilter() {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tag: null },
+      queryParamsHandling: 'merge'
+    });
+  }
+
   ngAfterViewInit() {
     this.blogRafId = requestAnimationFrame((ts) => this.autoScrollStep('blog', ts));
     this.columnRafId = requestAnimationFrame((ts) => this.autoScrollStep('column', ts));
@@ -555,7 +640,9 @@ export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   photoSrc(photoUrl: string): string {
-    return `https://localhost:7296${photoUrl}`;
+    if (!photoUrl) return '';
+    if (photoUrl.startsWith('http')) return photoUrl;
+    return `${environment.blogApiUrl}${photoUrl}`;
   }
 
   excerptPreview(content: string): string {

@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BlogService } from '../../../core/services/blog.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { AdminUserDto, UserNotification } from '../../../core/models/auth.model';
+import { AdminUserDto, UserNotification, PaginatedResult } from '../../../core/models/auth.model';
 import { BlogPost } from '../../../core/models/blog.model';
 import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
@@ -14,147 +14,71 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="container users-management-page">
-      <!-- Top Navigation & Header -->
-      <div class="page-header">
-        <div class="header-left">
-          <div class="breadcrumbs">
-            <a routerLink="/profile" class="crumb-link">👤 Hesabım</a>
-            <span class="crumb-sep">/</span>
-            <span class="crumb-current">Kullanıcı & Moderasyon Yönetimi</span>
-          </div>
-          <h1 class="page-title">👥 Kullanıcı Hesapları & Moderasyon</h1>
-          <p class="page-subtitle">Sistemdeki tüm kayıtlı kullanıcıları, rollerini, yayınlarını ve ban durumlarını buradan yönetebilirsiniz.</p>
-        </div>
+    <div class="admin-tab-seamless-container">
+      <div class="admin-main-card">
+        <!-- Header Actions -->
+      <div class="page-header" style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
         <div class="header-actions">
-          <a routerLink="/admin/author-approvals" class="btn btn-secondary btn-sm">
-            👑 Yazar Başvuruları
+          <a routerLink="/admin/author-approvals" class="btn btn-secondary btn-sm" style="display: none;">
+            Yazar Başvuruları
           </a>
           <button class="btn btn-primary btn-sm" (click)="loadUsers()" [disabled]="isLoading()">
-            🔄 Yenile
+             Yenile
           </button>
         </div>
       </div>
 
-      <!-- Quick Metrics Ribbon -->
-      <div class="stats-ribbon">
-        <div class="stat-card">
-          <span class="stat-icon">👥</span>
-          <div class="stat-meta">
-            <span class="stat-val">{{ users().length }}</span>
-            <span class="stat-lbl">Toplam Kullanıcı</span>
+      <!-- Main Content Card -->
+      <div class="table-card">
+        <!-- Filter Toolbar -->
+        <div class="posts-filter-bar" style="margin-bottom: 20px;">
+          <div class="pills-row">
+            <button class="filter-pill" [class.active]="selectedRoleFilter() === 'ALL' && selectedStatusFilter() === 'ALL'" (click)="selectedRoleFilter.set('ALL'); selectedStatusFilter.set('ALL')">
+              Tümü ({{ users().length }})
+            </button>
+            <button class="filter-pill" [class.active]="selectedRoleFilter() === 'Admin'" (click)="selectedRoleFilter.set('Admin'); selectedStatusFilter.set('ALL')">
+              Yöneticiler ({{ adminCount() }})
+            </button>
+            <button class="filter-pill" [class.active]="selectedRoleFilter() === 'Author'" (click)="selectedRoleFilter.set('Author'); selectedStatusFilter.set('ALL')">
+               Yazarlar ({{ authorCount() }})
+            </button>
+            <button class="filter-pill" [class.active]="selectedRoleFilter() === 'User'" (click)="selectedRoleFilter.set('User'); selectedStatusFilter.set('ALL')">
+              📖 Okurlar ({{ readerCount() }})
+            </button>
+            <button class="filter-pill" [class.active]="selectedStatusFilter() === 'BANNED'" (click)="selectedStatusFilter.set('BANNED'); selectedRoleFilter.set('ALL')">
+               Yasaklı ({{ bannedCount() }})
+            </button>
+          </div>
+
+          <div class="post-search-box" style="display:flex; gap:8px;">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="onSearch()"
+              placeholder="Kullanıcı adı veya e-posta ara..."
+              style="min-width: 240px;"
+            />
+            <button class="btn btn-primary btn-sm" (click)="onSearch()">Ara</button>
+            @if (searchQuery()) {
+              <button class="btn btn-secondary btn-sm" (click)="clearSearch()">✖</button>
+            }
           </div>
         </div>
-        <div class="stat-card">
-          <span class="stat-icon">✍️</span>
-          <div class="stat-meta">
-            <span class="stat-val">{{ authorCount() }}</span>
-            <span class="stat-lbl">Yazarlar</span>
+
+        <!-- Main Users Table / List -->
+        @if (isLoading()) {
+          <div class="loading-container">
+            <div class="spinner-pulse"></div>
+            <p>Kullanıcı verileri yükleniyor...</p>
           </div>
-        </div>
-        <div class="stat-card">
-          <span class="stat-icon">📖</span>
-          <div class="stat-meta">
-            <span class="stat-val">{{ readerCount() }}</span>
-            <span class="stat-lbl">Okurlar</span>
+        } @else if (filteredUsers().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3>Kriterlere Uygun Kullanıcı Bulunamadı</h3>
+            <p>Arama filtrenizi temizleyerek tekrar deneyebilirsiniz.</p>
           </div>
-        </div>
-        <div class="stat-card stat-banned">
-          <span class="stat-icon">⛔</span>
-          <div class="stat-meta">
-            <span class="stat-val">{{ bannedCount() }}</span>
-            <span class="stat-lbl">Yasaklı Hesap</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Search & Filters Toolbar -->
-      <div class="toolbar-card card">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input
-            type="text"
-            class="search-input"
-            [(ngModel)]="searchQuery"
-            placeholder="Kullanıcı adı, e-posta veya üniversite ara..."
-          />
-          @if (searchQuery()) {
-            <button class="clear-btn" (click)="searchQuery.set('')">✕</button>
-          }
-        </div>
-
-        <div class="filter-pills">
-          <span class="filter-label">Rol:</span>
-          <button
-            class="pill-btn"
-            [class.active]="selectedRoleFilter() === 'ALL'"
-            (click)="selectedRoleFilter.set('ALL')"
-          >
-            Tümü
-          </button>
-          <button
-            class="pill-btn"
-            [class.active]="selectedRoleFilter() === 'Admin'"
-            (click)="selectedRoleFilter.set('Admin')"
-          >
-            Yönetici
-          </button>
-          <button
-            class="pill-btn"
-            [class.active]="selectedRoleFilter() === 'Author'"
-            (click)="selectedRoleFilter.set('Author')"
-          >
-            Yazar
-          </button>
-          <button
-            class="pill-btn"
-            [class.active]="selectedRoleFilter() === 'User'"
-            (click)="selectedRoleFilter.set('User')"
-          >
-            Okur
-          </button>
-        </div>
-
-        <div class="filter-pills">
-          <span class="filter-label">Durum:</span>
-          <button
-            class="pill-btn"
-            [class.active]="selectedStatusFilter() === 'ALL'"
-            (click)="selectedStatusFilter.set('ALL')"
-          >
-            Tümü
-          </button>
-          <button
-            class="pill-btn"
-            [class.active]="selectedStatusFilter() === 'ACTIVE'"
-            (click)="selectedStatusFilter.set('ACTIVE')"
-          >
-            Aktif
-          </button>
-          <button
-            class="pill-btn pill-danger"
-            [class.active]="selectedStatusFilter() === 'BANNED'"
-            (click)="selectedStatusFilter.set('BANNED')"
-          >
-            Yasaklı (Ban)
-          </button>
-        </div>
-      </div>
-
-      <!-- Main Users Table / List -->
-      @if (isLoading()) {
-        <div class="loading-container card">
-          <div class="spinner-pulse"></div>
-          <p>Kullanıcı verileri yükleniyor...</p>
-        </div>
-      } @else if (filteredUsers().length === 0) {
-        <div class="empty-state card">
-          <div class="empty-icon">🔍</div>
-          <h3>Kriterlere Uygun Kullanıcı Bulunamadı</h3>
-          <p>Arama filtrenizi temizleyerek tekrar deneyebilirsiniz.</p>
-        </div>
-      } @else {
-        <div class="table-card card">
+        } @else {
           <div class="table-responsive">
             <table class="users-table">
               <thead>
@@ -164,12 +88,14 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                   <th>E-Posta Onayı</th>
                   <th>Hesap Durumu</th>
                   <th>Kayıt Tarihi</th>
-                  <th class="text-right">İşlemler</th>
+                  <th class="text-center" style="white-space: nowrap;">İçerikler</th>
+                  <th class="text-center" style="white-space: nowrap;">Mesaj</th>
+                  <th class="text-center" style="white-space: nowrap;">Yasaklama</th>
                 </tr>
               </thead>
               <tbody>
                 @for (u of filteredUsers(); track u.id) {
-                  <tr [class.row-banned]="u.isBanned">
+                  <tr [class.ban-row]="u.isBanned" [class.deactivated-row]="u.isDeactivated">
                     <td>
                       <div class="user-cell">
                         <div class="user-mini-avatar">
@@ -183,76 +109,85 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                           <span class="u-name">{{ u.username }}</span>
                           <span class="u-email">{{ u.email }}</span>
                           @if (u.university) {
-                            <span class="u-univ">🎓 {{ u.university }}</span>
+                            <span class="u-univ"> {{ u.university }}</span>
                           }
                         </div>
                       </div>
                     </td>
                     <td>
                       <span class="badge" [ngClass]="'badge-' + u.role.toLowerCase()">
-                        {{ u.role === 'Admin' ? '👑 Yönetici' : (u.role === 'Author' ? '✍️ Yazar' : '📖 Okur') }}
+                        {{ u.role === 'Admin' ? 'Yönetici' : (u.role === 'Author' ? 'Yazar' : 'Okur') }}
                       </span>
                     </td>
                     <td>
                       @if (u.isEmailConfirmed) {
-                        <span class="badge badge-success">✓ Onaylı</span>
+                        <i class="fa-solid fa-envelope text-success" title="E-Posta Onaylı" style="font-size: 1.2rem;"></i>
                       } @else {
-                        <span class="badge badge-warning">⏳ Bekliyor</span>
+                        <i class="fa-regular fa-envelope text-warning" title="E-Posta Onayı Bekliyor" style="font-size: 1.2rem;"></i>
                       }
                     </td>
                     <td>
                       @if (u.isBanned) {
                         <div class="ban-info-pill" [title]="u.banReason || 'Sebep belirtilmedi'">
-                          <span class="badge badge-danger">⛔ Yasaklı</span>
+                          <i class="fa-solid fa-ban text-danger" title="Hesap Yasaklı" style="font-size: 1.2rem;"></i>
                           <span class="ban-duration-text">
-                            {{ u.bannedUntil ? (u.bannedUntil | date:'dd.MM.yyyy HH:mm') + ' kadar' : 'Süresiz' }}
+                            {{ u.bannedUntil ? (u.bannedUntil | date:'dd.MM.yy HH:mm') : 'Süresiz' }}
                           </span>
                         </div>
+                      } @else if (u.isDeactivated) {
+                        <i class="fa-regular fa-snowflake text-warning" title="Hesap Dondurulmuş" style="font-size: 1.2rem;"></i>
                       } @else {
-                        <span class="badge badge-success-soft">● Aktif</span>
+                        <i class="fa-solid fa-circle-check text-success" title="Hesap Aktif" style="font-size: 1.2rem;"></i>
                       }
                     </td>
                     <td>
                       <span class="text-muted text-sm">{{ u.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
                     </td>
-                    <td class="text-right actions-cell">
-                      <!-- Yazılarını Gör Butonu (Tüm kullanıcılar ve yazarlar için) -->
+                    <td class="text-center">
                       <button
-                        class="btn btn-outline-info btn-xs"
+                        class="btn btn-neutral btn-xs"
                         (click)="viewUserPosts(u)"
-                        title="Bu kullanıcının yayınladığı ve taslak yazılarını incele"
+                        title="Yazıları İncele"
+                        style="padding: 4px 8px;"
                       >
-                        📄 Yazıları
+                        <i class="fa-solid fa-file-lines" style="font-size: 1.1rem;"></i>
                       </button>
+                    </td>
 
-                      <!-- Mesaj / Bildirim Gönder -->
+                    <td class="text-center">
                       <button
-                        class="btn btn-outline-warning btn-xs"
+                        class="btn btn-neutral btn-xs"
                         (click)="openMessageModal(u)"
-                        title="Kullanıcıya özel uyarı veya bildirim mesajı gönder"
+                        title="Özel Bildirim Gönder"
+                        style="padding: 4px 8px;"
                       >
-                        ✉️ Bildirim
+                        <i class="fa-regular fa-bell" style="font-size: 1.1rem;"></i>
                       </button>
+                    </td>
 
-                      <!-- Ban / Unban Butonu (Admin kendini banlayamaz) -->
+                    <td class="text-center">
                       @if (u.role !== 'Admin') {
                         @if (u.isBanned) {
                           <button
-                            class="btn btn-success btn-xs"
+                            class="btn btn-neutral btn-xs"
                             (click)="unbanUser(u)"
                             title="Yasağı Kaldır"
+                            style="padding: 4px 8px;"
                           >
-                            ✅ Yasağı Aç
+                            <i class="fa-solid fa-unlock" style="font-size: 1.1rem;"></i>
                           </button>
                         } @else {
                           <button
-                            class="btn btn-danger btn-xs"
+                            class="btn btn-neutral btn-xs"
                             (click)="openBanModal(u)"
-                            title="Kullanıcıyı Yasakla / Banla"
+                            title="Kullanıcıyı Yasakla"
+                            style="padding: 4px 8px;"
                           >
-                            ⛔ Banla
+                            <i class="fa-solid fa-ban" style="font-size: 1.1rem;"></i>
                           </button>
                         }
+                      } @else {
+                        <span class="text-muted" style="font-size: 0.85rem;" title="Yöneticiler banlanamaz">-</span>
                       }
                     </td>
                   </tr>
@@ -260,8 +195,22 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
               </tbody>
             </table>
           </div>
-        </div>
-      }
+          
+          <!-- Pagination Controls -->
+          @if (paginatedData(); as data) {
+            <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
+              <div>
+                Toplam <strong>{{ data.totalCount }}</strong> kayıt (Sayfa {{ data.currentPage }} / {{ data.totalPages }})
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" [disabled]="!data.hasPreviousPage" (click)="changePage(data.currentPage - 1)">Önceki</button>
+                <button class="btn btn-secondary btn-sm" [disabled]="!data.hasNextPage" (click)="changePage(data.currentPage + 1)">Sonraki</button>
+              </div>
+            </div>
+          }
+        }
+      </div> <!-- End table-card -->
+    </div> <!-- Kapanış tag'i admin-main-card -->
 
       <!-- ============================================== -->
       <!-- MODAL 1: KULLANICININ YAZILARI & SİLME MODALI -->
@@ -271,13 +220,13 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
           <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <div class="modal-title-wrap">
-                <span class="modal-icon">📄</span>
+                <span class="modal-icon"></span>
                 <div>
                   <h3 class="modal-title">{{ selectedUserForPosts()?.username }} Kullanıcısının Yazıları</h3>
                   <p class="modal-subtitle">{{ selectedUserForPosts()?.email }} • Toplam {{ userPosts().length }} içerik</p>
                 </div>
               </div>
-              <button class="modal-close-btn" (click)="closePostsModal()">✕</button>
+              <button class="modal-close-btn" (click)="closePostsModal()"></button>
             </div>
 
             <div class="modal-body">
@@ -288,7 +237,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                 </div>
               } @else if (userPosts().length === 0) {
                 <div class="empty-state-modal">
-                  <div class="empty-icon">📭</div>
+                  <div class="empty-icon"></div>
                   <h4>Henüz Yayınlanmış veya Taslak Yazısı Yok</h4>
                   <p>Bu kullanıcı henüz herhangi bir blog veya köşe yazısı oluşturmamış.</p>
                 </div>
@@ -300,16 +249,16 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                         @if (post.photoUrl) {
                           <img [src]="blogService.getPhotoUrl(post.photoUrl)" [alt]="post.title" />
                         } @else {
-                          <div class="thumb-placeholder">{{ post.type === 'Koseyazisi' ? '✍️' : '📄' }}</div>
+                          <div class="thumb-placeholder">{{ post.type === 'Koseyazisi' ? '' : '' }}</div>
                         }
                       </div>
                       <div class="post-details">
                         <div class="post-tags-row">
                           <span class="badge" [class.badge-primary]="post.type === 'Blog'" [class.badge-author]="post.type === 'Koseyazisi'">
-                            {{ post.type === 'Koseyazisi' ? '✍️ Köşe Yazısı' : '📄 Blog' }}
+                            {{ post.type === 'Koseyazisi' ? ' Köşe Yazısı' : ' Blog' }}
                           </span>
-                          <span class="badge" [class.badge-success]="post.status === 'Published'" [class.badge-warning]="post.status === 'Draft'">
-                            {{ post.status === 'Published' ? 'Yayında' : 'Taslak' }}
+                          <span class="badge badge-success">
+                            Yayında
                           </span>
                           <span class="post-date-tag">{{ post.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
                         </div>
@@ -318,14 +267,14 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                       </div>
                       <div class="post-admin-actions">
                         <a [routerLink]="['/post', post.id]" target="_blank" class="btn btn-secondary btn-xs" title="Yeni sekmede aç">
-                          👁️ İncele
+                           İncele
                         </a>
                         <button
                           class="btn btn-danger btn-xs"
                           (click)="openDeletePostModal(post)"
                           title="Yazıyı sebep belirterek yayından kaldır ve sil"
                         >
-                          🗑️ Kaldır & Sil
+                           Kaldır & Sil
                         </button>
                       </div>
                     </div>
@@ -349,19 +298,19 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
           <div class="modal-card" (click)="$event.stopPropagation()">
             <div class="modal-header modal-header-danger">
               <div class="modal-title-wrap">
-                <span class="modal-icon">🗑️</span>
+                <span class="modal-icon"></span>
                 <div>
                   <h3 class="modal-title">Yazıyı Kaldır & Sil</h3>
                   <p class="modal-subtitle">"{{ selectedPostForDeletion()?.title }}"</p>
                 </div>
               </div>
-              <button class="modal-close-btn" (click)="closeDeletePostModal()">✕</button>
+              <button class="modal-close-btn" (click)="closeDeletePostModal()"></button>
             </div>
 
             <form (ngSubmit)="confirmDeletePost()">
               <div class="modal-body">
                 <div class="alert-box-warning">
-                  ⚠️ Bu yazıyı sildiğinizde sistemden kalıcı olarak silinecek, yazara hem <strong>sistem içi bildirim</strong> hem de <strong>e-posta uyarısı</strong> otomatik gönderilecektir.
+                   Bu yazıyı sildiğinizde sistemden kalıcı olarak silinecek, yazara hem <strong>sistem içi bildirim</strong> hem de <strong>e-posta uyarısı</strong> otomatik gönderilecektir.
                 </div>
 
                 <div class="form-group">
@@ -393,7 +342,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                   @if (isDeletingPost()) {
                     <span>Siliniyor...</span>
                   } @else {
-                    <span>🗑️ Yazıyı Kaldır ve Bildir</span>
+                    <span> Yazıyı Kaldır ve Bildir</span>
                   }
                 </button>
               </div>
@@ -410,19 +359,19 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
           <div class="modal-card" (click)="$event.stopPropagation()">
             <div class="modal-header modal-header-danger">
               <div class="modal-title-wrap">
-                <span class="modal-icon">⛔</span>
+                <span class="modal-icon"></span>
                 <div>
                   <h3 class="modal-title">Kullanıcıyı Yasakla (Banla)</h3>
                   <p class="modal-subtitle">{{ selectedUserForBan()?.username }} ({{ selectedUserForBan()?.email }})</p>
                 </div>
               </div>
-              <button class="modal-close-btn" (click)="closeBanModal()">✕</button>
+              <button class="modal-close-btn" (click)="closeBanModal()"></button>
             </div>
 
             <form (ngSubmit)="confirmBanUser()">
               <div class="modal-body">
                 <div class="alert-box-danger">
-                  ⛔ Yasaklanan kullanıcı hesabına giriş yaptığında ana sayfa veya diğer sayfaları göremez; yalnızca hesabının yasaklandığına dair gerekçeyi görür ve sadece hesabını silme hakkına sahip olur.
+                   Yasaklanan kullanıcı hesabına giriş yaptığında ana sayfa veya diğer sayfaları göremez; yalnızca hesabının yasaklandığına dair gerekçeyi görür ve sadece hesabını silme hakkına sahip olur.
                 </div>
 
                 <div class="form-group">
@@ -474,7 +423,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                       [class.active]="banDurationType() === 'CUSTOM'"
                       (click)="banDurationType.set('CUSTOM')"
                     >
-                      ⚙️ Özel (Dakika)
+                       Özel (Dakika)
                     </button>
                   </div>
 
@@ -494,7 +443,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label" for="ban-reason-input">Yasaklama Sebebi (Kullanıcıya mail ve bildirim olarak iletilir) *</label>
+                  <label class="form-label" for="ban-reason-input">Yasaklama Sebebi (Kullanıcıya sadece mail olarak iletilir) *</label>
                   <textarea
                     id="ban-reason-input"
                     class="form-control"
@@ -504,6 +453,9 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                     placeholder="Örn: Platform kurallarına uygun olmayan davranışlar ve spam paylaşımlar nedeniyle..."
                     required
                   ></textarea>
+                  @if (banReasonError()) {
+                    <div class="mt-1" style="font-size: 13px; color: #ef4444 !important; font-weight: 600;">⚠️ Bu alan boş bırakılamaz. Lütfen bir sebep girin.</div>
+                  }
                 </div>
               </div>
 
@@ -511,11 +463,11 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                 <button type="button" class="btn btn-secondary" (click)="closeBanModal()" [disabled]="isSubmittingBan()">
                   İptal
                 </button>
-                <button type="submit" class="btn btn-danger" [disabled]="isSubmittingBan() || !banReason.trim()">
+                <button type="submit" class="btn btn-danger" [disabled]="isSubmittingBan()">
                   @if (isSubmittingBan()) {
                     <span>Yasaklanıyor...</span>
                   } @else {
-                    <span>⛔ Kullanıcıyı Yasakla & E-Posta Gönder</span>
+                    <span> Kullanıcıyı Yasakla & E-Posta Gönder</span>
                   }
                 </button>
               </div>
@@ -532,13 +484,13 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
           <div class="modal-card" (click)="$event.stopPropagation()">
             <div class="modal-header">
               <div class="modal-title-wrap">
-                <span class="modal-icon">✉️</span>
+                <span class="modal-icon"></span>
                 <div>
                   <h3 class="modal-title">Kullanıcıya Özel Bildirim Gönder</h3>
                   <p class="modal-subtitle">{{ selectedUserForMessage()?.username }} ({{ selectedUserForMessage()?.email }})</p>
                 </div>
               </div>
-              <button class="modal-close-btn" (click)="closeMessageModal()">✕</button>
+              <button class="modal-close-btn" (click)="closeMessageModal()"></button>
             </div>
 
             <form (ngSubmit)="confirmSendMessage()">
@@ -546,9 +498,8 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                 <div class="form-group">
                   <label class="form-label">Bildirim Türü</label>
                   <select class="form-control" [(ngModel)]="messageType" name="messageType">
-                    <option value="Warning">⚠️ Uyarı</option>
-                    <option value="Info">ℹ️ Bilgilendirme</option>
-                    <option value="PostDeleted">🗑️ Yazı Kaldırma Bildirimi</option>
+                    <option value="Warning">Uyarı Bildirimi</option>
+                    <option value="Info">Bilgilendirme</option>
                   </select>
                 </div>
 
@@ -587,7 +538,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                   @if (isSendingMessage()) {
                     <span>Gönderiliyor...</span>
                   } @else {
-                    <span>✉️ Bildirimi Gönder</span>
+                    <span> Bildirimi Gönder</span>
                   }
                 </button>
               </div>
@@ -670,25 +621,33 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     /* Stats Ribbon */
     .stats-ribbon {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
+    }
+    
+    @media (max-width: 992px) {
+      .stats-ribbon {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .stats-ribbon {
+        grid-template-columns: 1fr;
+      }
     }
 
     .stat-card {
-      background: #0d1b3e;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-xl);
       border-radius: var(--radius-md);
-      padding: 16px 20px;
+      padding: 20px;
       display: flex;
       align-items: center;
       gap: 16px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    }
-
-    :host-context(.light-theme) .stat-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
     .stat-icon {
@@ -723,20 +682,31 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       color: #f87171;
     }
 
+    /* Empty & Loading */
+    .loading-container, .empty-state {
+      padding: 40px;
+      text-align: center;
+      background: rgba(255,255,255,0.02);
+      border-radius: var(--radius-md);
+      border: 1px dashed rgba(255,255,255,0.1);
+    }
+
     /* Toolbar Card */
     .toolbar-card {
-      padding: 16px 20px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      margin-top: 24px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 20px;
-      background: #0d1b3e;
-      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     :host-context(.light-theme) .toolbar-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: transparent;
+      border: none;
     }
 
     .search-box {
@@ -751,7 +721,14 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       position: absolute;
       left: 12px;
       color: #94a3b8;
-      font-size: 14px;
+      font-family: var(--font-body);
+    }
+    
+    .admin-main-card {
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
     .search-input {
@@ -843,16 +820,13 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     /* Table Styles */
     .table-card {
-      background: #0d1b3e;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 0;
-      overflow: hidden;
-    }
-
-    :host-context(.light-theme) .table-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      box-shadow: var(--shadow-xl);
+      padding: 24px;
     }
 
     .table-responsive {
@@ -873,7 +847,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      padding: 14px 20px;
+      padding: 12px 10px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
@@ -884,7 +858,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .users-table td {
-      padding: 16px 20px;
+      padding: 12px 10px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       vertical-align: middle;
       font-size: 14px;
@@ -895,11 +869,31 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .users-table tr:last-child td {
-      border-bottom: none;
+      color: #94a3b8;
     }
 
-    .row-banned {
-      background: rgba(239, 68, 68, 0.08);
+    .deactivated-row {
+      background-color: rgba(234, 179, 8, 0.08) !important;
+    }
+
+    .deactivated-row td {
+      border-color: rgba(234, 179, 8, 0.2);
+    }
+    
+    .ban-row {
+      background-color: rgba(239, 68, 68, 0.08) !important;
+    }
+
+    .row-banned td {
+      border-bottom-color: rgba(239, 68, 68, 0.1) !important;
+    }
+
+    .row-frozen {
+      background-color: rgba(245, 158, 11, 0.05) !important;
+    }
+
+    .row-frozen td {
+      border-bottom-color: rgba(245, 158, 11, 0.15) !important;
     }
 
     .user-cell {
@@ -957,14 +951,20 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
     .ban-info-pill {
       display: inline-flex;
-      flex-direction: column;
-      gap: 2px;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      background: rgba(220, 38, 38, 0.1);
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(220, 38, 38, 0.2);
     }
 
     .ban-duration-text {
       font-size: 11px;
       color: #fca5a5;
       font-weight: 600;
+      white-space: nowrap;
     }
 
     .badge-success-soft {
@@ -995,16 +995,28 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       border-radius: 6px;
     }
 
-    .btn-outline-info {
-      background: rgba(14, 165, 233, 0.12);
-      border: 1px solid rgba(14, 165, 233, 0.4);
-      color: #38bdf8;
+    .btn-neutral {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #cbd5e1;
       cursor: pointer;
+      transition: var(--transition);
     }
 
-    .btn-outline-info:hover {
-      background: rgba(14, 165, 233, 0.25);
+    .btn-neutral:hover {
+      background: rgba(255, 255, 255, 0.15);
       color: #ffffff;
+    }
+
+    :host-context(.light-theme) .btn-neutral {
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      color: #475569;
+    }
+
+    :host-context(.light-theme) .btn-neutral:hover {
+      background: rgba(0, 0, 0, 0.08);
+      color: #0f172a;
     }
 
     .btn-outline-warning {
@@ -1224,6 +1236,62 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       color: #991b1b;
     }
 
+    /* Filter Bar Styles (borrowed from profile.component.ts) */
+    .posts-filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .pills-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .filter-pill:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+    }
+
+    .filter-pill.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
+
+    :host-context(.light-theme) .filter-pill {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #475569;
+    }
+
+    :host-context(.light-theme) .filter-pill:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    :host-context(.light-theme) .filter-pill.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
+
     .duration-options {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -1390,30 +1458,25 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   toastService = inject(ToastService);
 
   users = signal<AdminUserDto[]>([]);
+  paginatedData = signal<PaginatedResult<AdminUserDto> | null>(null);
   isLoading = signal<boolean>(false);
 
   // Filters & Search
   searchQuery = signal<string>('');
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(10);
   selectedRoleFilter = signal<string>('ALL');
   selectedStatusFilter = signal<string>('ALL');
 
   // Stats computed
+  adminCount = computed(() => this.users().filter(u => u.role === 'Admin').length);
   authorCount = computed(() => this.users().filter(u => u.role === 'Author').length);
   readerCount = computed(() => this.users().filter(u => u.role === 'User').length);
   bannedCount = computed(() => this.users().filter(u => u.isBanned).length);
 
-  // Filtered list
+  // Filtered list (client side fallback for role/status if needed, but search is server side)
   filteredUsers = computed(() => {
     let list = this.users();
-    const q = this.searchQuery().trim().toLowerCase();
-
-    if (q) {
-      list = list.filter(u =>
-        u.username.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        (u.university && u.university.toLowerCase().includes(q))
-      );
-    }
 
     if (this.selectedRoleFilter() !== 'ALL') {
       list = list.filter(u => u.role === this.selectedRoleFilter());
@@ -1444,6 +1507,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   banDurationType = signal<string>('PERMANENT'); // 'PERMANENT', '1H', '1D', '7D', '30D', 'CUSTOM'
   customBanMinutes: number = 60;
   banReason: string = '';
+  banReasonError = signal<boolean>(false);
   isSubmittingBan = signal<boolean>(false);
 
   // Modal 4: Direct Message / Notification State
@@ -1467,13 +1531,30 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     document.body.style.overflow = anyModalOpen ? 'hidden' : '';
   }
 
+  onSearch() {
+    this.currentPage.set(1);
+    this.loadUsers();
+  }
+
+  clearSearch() {
+    this.searchQuery.set('');
+    this.currentPage.set(1);
+    this.loadUsers();
+  }
+
+  changePage(page: number) {
+    this.currentPage.set(page);
+    this.loadUsers();
+  }
+
   loadUsers() {
     this.isLoading.set(true);
-    this.authService.getAllUsers().subscribe({
+    this.authService.getAllUsers(this.currentPage(), this.pageSize(), this.searchQuery()).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         if (res.success && res.data) {
-          this.users.set(res.data);
+          this.paginatedData.set(res.data);
+          this.users.set(res.data.items);
         } else {
           this.toastService.error('Hata', res.message || 'Kullanıcılar getirilemedi.');
         }
@@ -1538,7 +1619,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: (res) => {
         this.isDeletingPost.set(false);
-        this.toastService.success('Yazı Kaldırıldı 🗑️', 'Yazı başarıyla silindi ve yazara bildirim/mail iletildi.');
+        this.toastService.success('Yazı Kaldırıldı ', 'Yazı başarıyla silindi ve yazara bildirim/mail iletildi.');
         this.userPosts.update(list => list.filter(p => p.id !== post.id));
         this.closeDeletePostModal();
       },
@@ -1553,23 +1634,28 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
   openBanModal(user: AdminUserDto) {
     this.selectedUserForBan.set(user);
     this.banDurationType.set('PERMANENT');
+    this.customBanMinutes = 0;
     this.banReason = '';
-    this.customBanMinutes = 60;
+    this.banReasonError.set(false);
     this.updateBodyScrollLock();
   }
 
   closeBanModal() {
     this.selectedUserForBan.set(null);
     this.banReason = '';
+    this.banReasonError.set(false);
     this.updateBodyScrollLock();
   }
 
   confirmBanUser() {
     const user = this.selectedUserForBan();
-    if (!user || !this.banReason.trim()) {
-      this.toastService.warning('Uyarı', 'Lütfen yasaklama gerekçesini yazınız.');
+    if (!user) return;
+
+    if (!this.banReason || !this.banReason.trim()) {
+      this.banReasonError.set(true);
       return;
     }
+    this.banReasonError.set(false);
 
     let durationMinutes: number | null = null;
     switch (this.banDurationType()) {
@@ -1595,7 +1681,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.isSubmittingBan.set(false);
         if (res.success) {
-          this.toastService.success('Kullanıcı Yasaklandı ⛔', `${user.username} adlı kullanıcı başarıyla banlandı ve e-posta bildirimi iletildi.`);
+          this.toastService.success('Kullanıcı Yasaklandı ', `${user.username} adlı kullanıcı başarıyla banlandı ve e-posta bildirimi iletildi.`);
           this.closeBanModal();
           this.loadUsers();
         } else {
@@ -1618,7 +1704,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
     this.authService.unbanUser(user.id).subscribe({
       next: (res) => {
         if (res.success) {
-          this.toastService.success('Yasak Kaldırıldı ✅', `${user.username} kullanıcısının hesabı yeniden aktif edildi.`);
+          this.toastService.success('Yasak Kaldırıldı ', `${user.username} kullanıcısının hesabı yeniden aktif edildi.`);
           this.loadUsers();
         } else {
           this.toastService.error('Hata', res.message);
@@ -1664,7 +1750,7 @@ export class UsersManagementComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.isSendingMessage.set(false);
         if (res.success) {
-          this.toastService.success('Bildirim Gönderildi ✉️', `${user.username} kullanıcısına bildirim ve e-posta iletildi.`);
+          this.toastService.success('Bildirim Gönderildi ', `${user.username} kullanıcısına bildirim ve e-posta iletildi.`);
           this.closeMessageModal();
         } else {
           this.toastService.error('Hata', res.message);

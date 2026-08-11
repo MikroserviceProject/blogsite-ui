@@ -9,7 +9,7 @@ export interface ParsedAuthError {
 }
 
 export function parseAuthError(err: any, fallbackMessage?: string): ParsedAuthError {
-  let title = '⚠️ İşlem Sırasında Hata Oluştu';
+  let title = ' İşlem Sırasında Hata Oluştu';
   let generalMessage = fallbackMessage || 'Lütfen girdiğiniz bilgileri kontrol edip tekrar deneyiniz.';
   const passwordErrors: string[] = [];
   const emailErrors: string[] = [];
@@ -75,16 +75,16 @@ export function parseAuthError(err: any, fallbackMessage?: string): ParsedAuthEr
   const isPasswordError = passwordErrors.length > 0;
 
   if (isPasswordError) {
-    title = '🔒 Şifre Güvenlik Hatası';
+    title = ' Şifre Güvenlik Hatası';
     generalMessage = 'Girdiğiniz şifre güvenlik kurallarına uymuyor. Lütfen aşağıdaki kurallara dikkat ediniz:';
   } else if (emailErrors.length > 0) {
-    title = '📧 E-Posta Hatası';
+    title = ' E-Posta Hatası';
     generalMessage = emailErrors[0];
   } else if (usernameErrors.length > 0) {
-    title = '👤 Kullanıcı Adı Hatası';
+    title = ' Kullanıcı Adı Hatası';
     generalMessage = usernameErrors[0];
   } else if (otherErrors.length > 0) {
-    title = '⚠️ Doğrulama Hatası';
+    title = ' Doğrulama Hatası';
     generalMessage = otherErrors[0];
   }
 
@@ -107,6 +107,13 @@ function classifyErrorString(
   others: string[]
 ) {
   const m = msg.toLowerCase();
+  
+  // Eğer giriş hatası ise doğrudan 'others' içine at ve şifre hatası olarak değerlendirme
+  if (m.includes('kullanıcı adı veya şifre hatalı')) {
+    others.push(msg);
+    return;
+  }
+
   if (m.includes('şifre') || m.includes('sifre') || m.includes('password') || (m.includes('karakter') && (m.includes('büyük') || m.includes('küçük') || m.includes('rakam') || m.includes('özel')))) {
     passwords.push(msg);
   } else if (m.includes('e-posta') || m.includes('eposta') || m.includes('email') || m.includes('mail')) {

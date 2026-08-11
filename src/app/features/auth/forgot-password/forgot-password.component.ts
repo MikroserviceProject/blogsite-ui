@@ -21,7 +21,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
         @if (isSuccess()) {
           <div class="success-box card">
-            <div class="success-icon">📬</div>
+            <div class="success-icon"></div>
             <h3 class="success-title">Sıfırlama Bağlantısı Gönderildi!</h3>
             <p class="success-desc">
               <strong>{{ email }}</strong> adresine şifre sıfırlama bağlantısı iletilmiştir. Lütfen gelen kutunuzu (ve gerekirse spam klasörünü) kontrol ediniz.
@@ -51,7 +51,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
             @if (errorMessage()) {
               <div class="alert alert-danger">
-                <span>⚠️</span>
+                <span></span>
                 <span>{{ errorMessage() }}</span>
               </div>
             }
@@ -62,7 +62,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
               [disabled]="isLoading() || !email"
             >
               @if (isLoading()) {
-                <span class="spinner-small">⏳</span>
+                <span class="spinner-small"></span>
                 <span>Gönderiliyor...</span>
               } @else {
                 <span>📨 Sıfırlama Bağlantısı Gönder</span>
@@ -244,7 +244,7 @@ export class ForgotPasswordComponent {
         this.isLoading.set(false);
         if (res.success) {
           this.isSuccess.set(true);
-          this.toast.success('Başarılı 📬', res.message || 'Sıfırlama bağlantısı e-postanıza iletildi.');
+          this.toast.success('Başarılı ', res.message || 'Sıfırlama bağlantısı e-postanıza iletildi.');
         } else {
           this.errorMessage.set(res.message || 'İşlem gerçekleştirilemedi.');
         }

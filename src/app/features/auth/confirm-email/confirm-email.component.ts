@@ -28,14 +28,14 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
         <!-- DURUM 2: Doğrulama Başarılı Oldu -->
         @else if (isVerified()) {
           <div class="status-view success-view">
-            <div class="status-icon-badge success-badge">✅</div>
+            <div class="status-icon-badge success-badge"></div>
             <h1 class="status-title">Doğrulama Başarılı!</h1>
             <p class="status-subtitle">
               E-posta adresiniz başarıyla onaylandı. Hesabınız artık tamamen aktif.
             </p>
             <div class="action-btn-group">
               <a routerLink="/login" class="btn btn-primary btn-block btn-lg">
-                🚀 Hemen Giriş Yap
+                 Hemen Giriş Yap
               </a>
             </div>
             <p class="redirect-hint">Birkaç saniye içinde otomatik olarak giriş sayfasına yönlendirileceksiniz...</p>
@@ -45,7 +45,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
         <!-- DURUM 3: Doğrulama Başarısız Oldu veya Linkin Süresi Doldu -->
         @else if (verificationFailed()) {
           <div class="status-view error-view">
-            <div class="status-icon-badge error-badge">⚠️</div>
+            <div class="status-icon-badge error-badge"></div>
             <h1 class="status-title">Doğrulama Yapılamadı</h1>
             <p class="status-subtitle">
               {{ errorMessage() || 'Doğrulama bağlantısı geçersiz veya süresi dolmuş.' }}
@@ -72,7 +72,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                   @if (isResending()) {
                     <span>Gönderiliyor...</span>
                   } @else {
-                    <span>🔄 Yeni Link Gönder</span>
+                    <span> Yeni Link Gönder</span>
                   }
                 </button>
               </div>
@@ -89,14 +89,14 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
         <!-- DURUM 4: Kayıt Sonrası Bekleme Ekranı (Link Gönderildi Ekranı) -->
         @else {
           <div class="status-view info-view">
-            <div class="status-icon-badge mail-badge">📬</div>
+            <div class="status-icon-badge mail-badge"></div>
             <h1 class="status-title">E-Postanızı Kontrol Edin</h1>
             <p class="status-subtitle">
               Hesabınızı aktifleştirmek için tek yapmanız gereken gelen kutunuzdaki bağlantıya tıklamak.
             </p>
 
             <div class="info-alert">
-              <span class="info-icon">💡</span>
+              <span class="info-icon"></span>
               <div class="info-text">
                 @if (email) {
                   <strong>{{ email }}</strong> adresinize tek tıkla doğrulama bağlantısı gönderildi.
@@ -127,7 +127,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
                   @if (isResending()) {
                     <span>Gönderiliyor...</span>
                   } @else {
-                    <span>🔄 Tekrar Gönder</span>
+                    <span> Tekrar Gönder</span>
                   }
                 </button>
               </div>
@@ -371,7 +371,7 @@ export class ConfirmEmailComponent implements OnInit {
 
       if (qVerified === 'true') {
         this.isVerified.set(true);
-        this.toastService.success('Doğrulama Başarılı! 🎉', 'E-posta adresiniz başarıyla onaylandı.');
+        this.toastService.success('Doğrulama Başarılı! ', 'E-posta adresiniz başarıyla onaylandı.');
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 2500);
@@ -404,7 +404,7 @@ export class ConfirmEmailComponent implements OnInit {
         this.isAutoVerifying.set(false);
         if (res.success) {
           this.isVerified.set(true);
-          this.toastService.success('Doğrulama Başarılı! 🎉', 'E-posta adresiniz başarıyla onaylandı.');
+          this.toastService.success('Doğrulama Başarılı! ', 'E-posta adresiniz başarıyla onaylandı.');
           
           // 2.5 saniye sonra otomatik login sayfasına yönlendir
           setTimeout(() => {
@@ -439,7 +439,7 @@ export class ConfirmEmailComponent implements OnInit {
       next: (res) => {
         this.isResending.set(false);
         if (res.success) {
-          this.toastService.success('Link Gönderildi! 📬', 'Yeni doğrulama bağlantısı e-posta adresinize iletildi.');
+          this.toastService.success('Link Gönderildi! ', 'Yeni doğrulama bağlantısı e-posta adresinize iletildi.');
           this.verificationFailed.set(false);
         } else {
           this.toastService.error('Hata', res.message);

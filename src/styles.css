@@ -4,32 +4,32 @@
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Background Colors - Deep Midnight Navy */
-  --bg-main: #070d1e;
-  --bg-card: rgba(13, 23, 50, 0.88);
-  --bg-card-hover: rgba(18, 32, 68, 0.95);
-  --bg-surface: #0f1c3f;
-  --bg-subtle: #16244f;
-  --bg-muted: #1e293b;
-  --bg-input: rgba(6, 12, 28, 0.85);
+  /* Background Colors - Premium Mesh Gradient Dark */
+  --bg-main: #030712; /* Çok koyu gri/siyah (Onyx) */
+  --bg-card: #0d1b3e; /* Şık Koyu Lacivert / Gece Mavisi (Kullanıcının seçimi) */
+  --bg-card-hover: rgba(31, 41, 55, 0.85);
+  --bg-surface: rgba(41, 61, 108, 0.06);
+  --bg-subtle: rgba(31, 41, 55, 0.5);
+  --bg-muted: #2a466c;
+  --bg-input: rgba(3, 7, 18, 0.6);
 
   /* Text Colors - High Contrast & Crisp */
-  --text-primary: #ffffff;
-  --text-secondary: #e2e8f0;
-  --text-muted: #cbd5e1;
-  --text-light: #94a3b8;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+  --text-light: #6b7280;
   --text-gold: #fbbf24;
 
-  /* Primary Brand: Derin Asil Lacivert */
-  --primary: #1e3a8a;
-  --primary-hover: #2563eb;
-  --primary-light: rgba(30, 58, 138, 0.3);
-  --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #0f172a 100%);
+  /* Primary Brand: Deep Indigo / Violet */
+  --primary: #4f46e5;
+  --primary-hover: #6366f1;
+  --primary-light: rgba(79, 70, 229, 0.2);
+  --primary-gradient: linear-gradient(135deg, #4338ca 0%, #4f46e5 50%, #3730a3 100%);
 
-  /* Golden Accents */
-  --accent: #f59e0b;
-  --accent-hover: #fbbf24;
-  --accent-light: rgba(245, 158, 11, 0.15);
+  /* Accents */
+  --accent: #10b981; /* Zümrüt Yeşili detaylar (Modern web vibe) */
+  --accent-hover: #34d399;
+  --accent-light: rgba(16, 185, 129, 0.15);
 
   /* Status Colors */
   --success: #10b981;
@@ -40,41 +40,39 @@
   --danger-light: rgba(239, 68, 68, 0.15);
 
   /* Borders */
-  --border: rgba(255, 255, 255, 0.14);
-  --border-gold: rgba(245, 158, 11, 0.4);
-  --border-focus: #f59e0b;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-focus: #4f46e5;
 
-  /* Shadows */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 45px rgba(0, 0, 0, 0.7);
-  --shadow-gold: 0 0 20px rgba(245, 158, 11, 0.25);
+  /* Shadows - Derin ama yumuşak */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
 
   /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 18px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
   --radius-full: 9999px;
 
   /* Transitions */
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* 🌤️ Aydınlık Tema - klasik beyaz görünüm */
 :root.light-theme {
-  --bg-main: #f8fafc;
-  --bg-card: #ffffff;
-  --bg-card-hover: #ffffff;
-  --bg-surface: #ffffff;
-  --bg-subtle: #f1f5f9;
-  --bg-muted: #e2e8f0;
-  --bg-input: #ffffff;
+  --bg-main: #f3f4f6; /* Daha yumuşak, göz yormayan gri-beyaz */
+  --bg-card: #f9fafb; /* Kırık beyaz */
+  --bg-card-hover: #f3f4f6;
+  --bg-surface: #f9fafb;
+  --bg-subtle: #e5e7eb;
+  --bg-muted: #d1d5db;
+  --bg-input: #f9fafb;
 
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --text-light: #94a3b8;
+  --text-primary: #020617; /* Koyu siyah (daha okunur) */
+  --text-secondary: #1e293b; /* Koyu antrasit */
+  --text-muted: #334155; /* Okunabilir gri */
+  --text-light: #475569; /* Daha koyu açık gri */
 
   --primary: #4f46e5;
   --primary-hover: #4338ca;
@@ -91,7 +89,7 @@
 }
 
 :root.light-theme body {
-  background-color: #f8fafc;
+  background-color: #f3f4f6;
 }
 
 :root.light-theme h1,
@@ -223,13 +221,15 @@
 
 body {
   font-family: var(--font-body);
-  background-color: #070d1e;
+  background-color: var(--bg-main);
+  background-image: none;
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  scrollbar-gutter: stable;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -293,15 +293,15 @@ a:hover {
 
 .btn-primary {
   background: var(--primary-gradient);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(30, 58, 138, 0.4);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #172554 100%);
-  border-color: #f59e0b;
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
   color: #ffffff;
   transform: translateY(-1px);
 }
@@ -418,11 +418,11 @@ a:hover {
 /* Cards */
 .card {
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.65), 0 0 24px rgba(30, 58, 138, 0.25);
+  box-shadow: var(--shadow-xl);
   padding: 32px;
   transition: var(--transition);
   position: relative;
@@ -431,8 +431,8 @@ a:hover {
 }
 
 .card:hover {
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 25px 50px -10px rgba(0, 0, 0, 0.75), 0 0 28px rgba(30, 58, 138, 0.35);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
 }
 
 /* Badges */
@@ -525,10 +525,11 @@ a:hover {
 }
 
 .modal-dialog {
-  background: #0d1733;
+  background: var(--bg-surface);
+  backdrop-filter: blur(24px);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
@@ -592,4 +593,35 @@ a:hover {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* 🌑 Gerçek Karanlık Tema - Yıldızsız, Saf Antrasit */
+:root.true-dark-theme {
+  --bg-main: #050505;
+  --bg-card: #0a0a0a;
+  --bg-card-hover: #111111;
+  --bg-surface: #0a0a0a;
+  --bg-subtle: #141414;
+  --bg-muted: #1f1f1f;
+  --bg-input: #0a0a0a;
+
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --text-light: #52525b;
+
+  --border: rgba(255, 255, 255, 0.08);
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.8);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.9);
+  --shadow-xl: 0 20px 45px rgba(0, 0, 0, 1);
+}
+
+:root.true-dark-theme body {
+  background-color: #050505;
+}
+
+:root.true-dark-theme .modal-backdrop {
+  background: rgba(0, 0, 0, 0.9);
 }
