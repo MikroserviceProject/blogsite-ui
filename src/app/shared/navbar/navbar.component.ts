@@ -12,7 +12,7 @@ import { ThemeService } from '../../core/services/theme.service';
     <header class="navbar-header">
       <div class="container navbar-container">
         <!-- Logo -->
-        <a [routerLink]="authService.isLoggedIn() ? '/profile' : '/login'" class="navbar-logo">
+        <a routerLink="/" class="navbar-logo">
           <div class="logo-icon">✨</div>
           <div class="logo-text">
             <span class="brand-name">Lumina</span>
@@ -23,14 +23,14 @@ import { ThemeService } from '../../core/services/theme.service';
         <nav class="navbar-nav">
           @if (authService.isLoggedIn()) {
             <a routerLink="/profile" routerLinkActive="nav-active" class="nav-link">
-              👤 Hesabım
+              Hesabım
             </a>
             @if (authService.isAdmin()) {
               <a routerLink="/admin/users" routerLinkActive="nav-active" class="nav-link nav-admin">
-                👥 Kullanıcı & İçerik Yönetimi
+                Kullanıcı & İçerik Yönetimi
               </a>
               <a routerLink="/admin/author-approvals" routerLinkActive="nav-active" class="nav-link nav-admin">
-                👑 Yazar Başvuruları
+                Yazar Başvuruları
               </a>
             }
           }
@@ -52,15 +52,15 @@ import { ThemeService } from '../../core/services/theme.service';
               {{ themeService.theme() === 'light' ? '☀️' : '🌙' }}
             </button>
             <a routerLink="/login" class="btn btn-navy-outline btn-sm">
-              🔐 Giriş Yap
+              Giriş Yap
             </a>
             <a routerLink="/register" class="btn btn-navy-outline btn-sm">
-              ✨ Kayıt Ol
+              Kayıt Ol
             </a>
           } @else {
             @if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin())) {
               <a routerLink="/create-post" class="btn-create-post">
-                <span>✍️</span> Gönderi Oluştur
+                Gönderi Oluştur
               </a>
             }
             <button
@@ -102,24 +102,24 @@ import { ThemeService } from '../../core/services/theme.service';
                   </div>
                   <div class="dropdown-divider"></div>
                   <a routerLink="/profile" class="dropdown-item" (click)="closeDropdown()">
-                    <span>👤</span> Profilim & Hesap Ayarları
+                    Profilim & Hesap Ayarları
                   </a>
                   @if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin())) {
                     <a routerLink="/create-post" class="dropdown-item dropdown-item-cta" (click)="closeDropdown()">
-                      <span>✍️</span> Yeni Gönderi Oluştur
+                      Yeni Gönderi Oluştur
                     </a>
                   }
                   @if (authService.isAdmin()) {
                     <a routerLink="/admin/users" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
-                      <span>👥</span> Kullanıcı & İçerik Yönetimi
+                      Kullanıcı & İçerik Yönetimi
                     </a>
                     <a routerLink="/admin/author-approvals" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
-                      <span>👑</span> Yazar Başvuru Yönetimi
+                      Yazar Başvuru Yönetimi
                     </a>
                   }
                   <div class="dropdown-divider"></div>
                   <button class="dropdown-item dropdown-logout" (click)="logout()">
-                    <span>🚪</span> Çıkış Yap
+                    Çıkış Yap
                   </button>
                 </div>
               }

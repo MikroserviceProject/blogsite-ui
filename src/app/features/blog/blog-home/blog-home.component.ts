@@ -26,18 +26,21 @@ import { BlogService } from '../../../core/services/blog.service';
 
         <!-- Search Bar -->
         <div class="hero-search-wrapper">
-          <div class="hero-search-box">
+          <form class="hero-search-box" (ngSubmit)="submitSearch()">
             <span class="search-icon">🔍</span>
             <input
               type="text"
               class="hero-search-input"
-              [(ngModel)]="searchQuery"
+              name="searchQuery"
+              [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event)"
               placeholder="Başlık veya içerikte ara..."
             />
             @if (searchQuery()) {
-              <button class="clear-search" (click)="searchQuery.set('')">✕</button>
+              <button type="button" class="clear-search" (click)="clearSearch()">✕</button>
             }
-          </div>
+            <button type="submit" class="search-submit-btn">Ara</button>
+          </form>
         </div>
       </div>
     </section>
@@ -48,7 +51,7 @@ import { BlogService } from '../../../core/services/blog.service';
       <div class="section-header">
         <div>
           <h2 class="section-title">{{ fixedType() === 'Koseyazisi' ? 'Tüm Köşe Yazıları' : 'Tüm Bloglar' }}</h2>
-          <p class="section-subtitle">Toplam {{ filteredPosts().length }} yayın bulundu</p>
+          <p class="section-subtitle">Toplam {{ totalCount() }} yayın bulundu</p>
         </div>
       </div>
 
@@ -69,8 +72,8 @@ import { BlogService } from '../../../core/services/blog.service';
       <!-- Articles Grid -->
       @if (!loading() && !loadError()) {
         <div class="posts-grid">
-          @for (post of filteredPosts(); track post.id) {
-            <article class="post-card card">
+          @for (post of posts(); track post.id) {
+            <a [routerLink]="['/post', post.id]" class="post-card card">
               @if (post.photoUrl) {
                 <div class="post-cover-wrapper">
                   <img [src]="photoSrc(post.photoUrl)" [alt]="post.title" class="post-cover" />
@@ -100,49 +103,55 @@ import { BlogService } from '../../../core/services/blog.service';
                   </span>
                 </div>
 
-                <h3 class="post-title">
-                  <a [routerLink]="['/post', post.id]">{{ post.title }}</a>
-                </h3>
+                <h3 class="post-title">{{ post.title }}</h3>
 
                 <p class="post-summary">{{ contentPreview(post.content) }}</p>
 
                 <div class="post-footer">
-                  <a [routerLink]="['/post', post.id]" class="read-more-btn">
-                    Oku →
-                  </a>
+                  <span class="read-more-btn">Oku →</span>
                 </div>
               </div>
-            </article>
+            </a>
           }
         </div>
 
         <!-- Empty State -->
-        @if (filteredPosts().length === 0) {
+        @if (posts().length === 0) {
           <div class="empty-state card">
             <div class="empty-icon">🔍</div>
             <h3>Aradığınız kriterde yazı bulunamadı</h3>
             <p>Farklı bir arama kelimesi deneyebilir veya filtreyi sıfırlayabilirsiniz.</p>
-            <button class="btn btn-secondary btn-sm" (click)="searchQuery.set('')">
+            <button class="btn btn-secondary btn-sm" (click)="clearSearch()">
               Aramayı Temizle
             </button>
           </div>
         }
-      }
-    </section>
 
-    <!-- Newsletter CTA -->
-    <section class="container newsletter-section">
-      <div class="newsletter-card card">
-        <div class="newsletter-content">
-          <span class="newsletter-badge">📬 Haftalık Bülten</span>
-          <h2 class="newsletter-title">Yeni Yazıları ve Gelişmeleri Kaçırmayın</h2>
-          <p class="newsletter-desc">En güncel teknoloji ve köşe yazılarını her pazartesi sabahı e-posta kutunuza ulaştıralım.</p>
-        </div>
-        <div class="newsletter-form">
-          <input type="email" placeholder="E-posta adresiniz..." class="form-control" />
-          <button class="btn btn-primary" (click)="subscribeNewsletter()">Abone Ol</button>
-        </div>
-      </div>
+        <!-- Pagination -->
+        @if (totalPages() > 1) {
+          <nav class="pagination">
+            <button
+              class="page-btn page-nav"
+              [disabled]="page() === 1"
+              (click)="goToPage(page() - 1)"
+            >← Önceki</button>
+
+            @for (p of pageNumbers(); track p) {
+              <button
+                class="page-btn"
+                [class.page-active]="p === page()"
+                (click)="goToPage(p)"
+              >{{ p }}</button>
+            }
+
+            <button
+              class="page-btn page-nav"
+              [disabled]="page() === totalPages()"
+              (click)="goToPage(page() + 1)"
+            >Sonraki →</button>
+          </nav>
+        }
+      }
     </section>
   `,
   styles: [`
@@ -209,10 +218,11 @@ import { BlogService } from '../../../core/services/blog.service';
       position: relative;
       display: flex;
       align-items: center;
+      gap: 8px;
       background: var(--bg-surface);
       border: 1.5px solid var(--border);
       border-radius: var(--radius-full);
-      padding: 6px 16px;
+      padding: 6px 6px 6px 16px;
       box-shadow: var(--shadow-sm);
       transition: var(--transition);
     }
@@ -222,9 +232,30 @@ import { BlogService } from '../../../core/services/blog.service';
       box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
     }
 
+    .search-submit-btn {
+      flex-shrink: 0;
+      background: var(--primary-gradient);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-full);
+      padding: 8px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .search-submit-btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .search-submit-btn:active {
+      transform: translateY(0);
+    }
+
     .search-icon {
       font-size: 16px;
-      margin-right: 8px;
     }
 
     .hero-search-input {
@@ -318,6 +349,8 @@ import { BlogService } from '../../../core/services/blog.service';
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      text-decoration: none;
+      cursor: pointer;
       transition: var(--transition);
     }
 
@@ -438,11 +471,11 @@ import { BlogService } from '../../../core/services/blog.service';
       line-height: 1.35;
     }
 
-    .post-title a {
+    .post-title {
       color: var(--text-primary);
     }
 
-    .post-title a:hover {
+    .post-card:hover .post-title {
       color: var(--primary);
     }
 
@@ -487,60 +520,49 @@ import { BlogService } from '../../../core/services/blog.service';
       margin-bottom: 12px;
     }
 
-    .newsletter-section {
-      margin-top: 20px;
-      margin-bottom: 40px;
-    }
-
-    .newsletter-card {
-      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-      border: 1.5px solid var(--border);
-      padding: 40px;
+    .pagination {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 40px;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 36px;
+      flex-wrap: wrap;
     }
 
-    @media (max-width: 768px) {
-      .newsletter-card {
-        flex-direction: column;
-        text-align: center;
-      }
-    }
-
-    .newsletter-badge {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 8px;
-    }
-
-    .newsletter-title {
-      font-size: 24px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .newsletter-desc {
-      font-size: 14px;
+    .page-btn {
+      min-width: 38px;
+      height: 38px;
+      padding: 0 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
       color: var(--text-secondary);
-      max-width: 500px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
     }
 
-    .newsletter-form {
-      display: flex;
-      gap: 10px;
-      width: 100%;
-      max-width: 420px;
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      color: var(--primary);
     }
 
-    @media (max-width: 480px) {
-      .newsletter-form {
-        flex-direction: column;
-      }
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
+
+    .page-active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff !important;
+    }
+
+    .page-nav {
+      font-weight: 600;
+    }
+
   `]
 })
 export class BlogHomeComponent implements OnInit {
@@ -554,18 +576,22 @@ export class BlogHomeComponent implements OnInit {
 
   posts = signal<BlogPost[]>([]);
 
-  filteredPosts = computed(() => {
-    const query = this.searchQuery().toLowerCase().trim();
-    const type = this.fixedType();
+  readonly pageSize = 9;
+  page = signal<number>(1);
+  totalCount = signal<number>(0);
+  totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize)));
 
-    return this.posts().filter(p => {
-      const matchType = p.type === type;
-      const matchQuery = !query ||
-        p.title.toLowerCase().includes(query) ||
-        p.content.toLowerCase().includes(query);
+  pageNumbers = computed(() => {
+    const total = this.totalPages();
+    const current = this.page();
+    const windowSize = 5;
+    let start = Math.max(1, current - Math.floor(windowSize / 2));
+    const end = Math.min(total, start + windowSize - 1);
+    start = Math.max(1, end - windowSize + 1);
 
-      return matchType && matchQuery;
-    });
+    const numbers: number[] = [];
+    for (let p = start; p <= end; p++) numbers.push(p);
+    return numbers;
   });
 
   ngOnInit() {
@@ -578,12 +604,16 @@ export class BlogHomeComponent implements OnInit {
     this.loading.set(true);
     this.loadError.set(null);
 
-    this.blogService.getAll('Published', this.fixedType()).subscribe({
-      next: (posts) => {
-        const sorted = [...posts].sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        this.posts.set(sorted);
+    this.blogService.getAllPaged(
+      'Published',
+      this.fixedType(),
+      this.searchQuery().trim() || undefined,
+      this.page(),
+      this.pageSize
+    ).subscribe({
+      next: ({ posts, totalCount }) => {
+        this.posts.set(posts);
+        this.totalCount.set(totalCount);
         this.loading.set(false);
       },
       error: () => {
@@ -591,6 +621,23 @@ export class BlogHomeComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  goToPage(p: number) {
+    if (p < 1 || p > this.totalPages() || p === this.page()) return;
+    this.page.set(p);
+    this.loadPosts();
+  }
+
+  submitSearch() {
+    this.page.set(1);
+    this.loadPosts();
+  }
+
+  clearSearch() {
+    this.searchQuery.set('');
+    this.page.set(1);
+    this.loadPosts();
   }
 
   contentPreview(content: string): string {
@@ -604,9 +651,5 @@ export class BlogHomeComponent implements OnInit {
 
   photoSrc(photoUrl: string): string {
     return `https://localhost:7296${photoUrl}`;
-  }
-
-  subscribeNewsletter() {
-    alert('Bültene başarıyla abone oldunuz! Teşekkür ederiz.');
   }
 }

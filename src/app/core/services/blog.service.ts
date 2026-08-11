@@ -1,7 +1,27 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { BlogPost, AdminDeletePostRequest, UpdatePostRequest } from '../models/blog.model';
+
+export interface PagedPosts {
+    posts: BlogPost[];
+    totalCount: number;
+}
+
+export interface PagedResultDto<T> {
+    items: T[];
+    totalCount: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+}
+
+export interface ApiResponseDto<T> {
+    success: boolean;
+    message: string | null;
+    data: T;
+}
 
 export interface CreatePostRequest {
     title: string;
@@ -11,7 +31,6 @@ export interface CreatePostRequest {
     photo?: File | null;
 }
 
-
 @Injectable({
     providedIn: 'root'
 })
@@ -19,17 +38,41 @@ export class BlogService {
     private http = inject(HttpClient);
     private apiUrl = 'https://localhost:7296/api/posts';
 
-    getAll(status?: 'Draft' | 'Published', type?: 'Blog' | 'Koseyazisi', authorId?: string): Observable<BlogPost[]> {
+    getAll(status?: 'Draft' | 'Published', type?: 'Blog' | 'Koseyazisi', authorId?: string, search?: string): Observable<BlogPost[]> {
         const params: Record<string, string> = {};
         if (status) params['status'] = status;
         if (type) params['type'] = type;
         if (authorId) params['authorId'] = authorId;
+        if (search) params['search'] = search;
 
         return this.http.get<BlogPost[]>(this.apiUrl, { params });
     }
 
     getByAuthor(authorId: string, status?: 'Draft' | 'Published'): Observable<BlogPost[]> {
         return this.getAll(status, undefined, authorId);
+    }
+
+    getAllPaged(
+        status: 'Draft' | 'Published' | undefined,
+        type: 'Blog' | 'Koseyazisi' | undefined,
+        search: string | undefined,
+        page: number,
+        pageSize: number
+    ): Observable<PagedPosts> {
+        const params: Record<string, string> = {
+            page: String(page),
+            pageSize: String(pageSize)
+        };
+        if (status) params['status'] = status;
+        if (type) params['type'] = type;
+        if (search) params['search'] = search;
+
+        return this.http.get<ApiResponseDto<PagedResultDto<BlogPost>>>(`${this.apiUrl}/paged`, { params }).pipe(
+            map(response => ({
+                posts: response.data.items,
+                totalCount: response.data.totalCount
+            }))
+        );
     }
 
     getById(id: number): Observable<BlogPost> {
@@ -53,12 +96,15 @@ export class BlogService {
         const formData = new FormData();
         formData.append('Title', request.title);
         formData.append('Content', request.content);
-        if ((request as any).type) {
-            formData.append('Type', (request as any).type);
+        if (request.type) {
+            formData.append('Type', request.type);
         }
         formData.append('Status', request.status);
         if (request.photo) {
             formData.append('photo', request.photo);
+        }
+        if (request.removePhoto) {
+            formData.append('RemovePhoto', 'true');
         }
 
         return this.http.put<BlogPost>(`${this.apiUrl}/${id}`, formData);

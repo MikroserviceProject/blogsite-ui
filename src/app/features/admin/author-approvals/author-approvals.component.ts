@@ -353,8 +353,8 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
 
     /* Header Banner */
     .admin-header-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 24px 30px;
       display: flex;
@@ -375,8 +375,8 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       width: 52px;
       height: 52px;
       border-radius: var(--radius-lg);
-      background: #eff6ff;
-      border: 1.5px solid #bfdbfe;
+      background: var(--bg-subtle);
+      border: 1.5px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -387,14 +387,14 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     .admin-title {
       font-size: 22px;
       font-weight: 800;
-      color: #0f172a;
+      color: var(--text-primary);
       margin: 0 0 4px 0;
       letter-spacing: -0.3px;
     }
 
     .admin-subtitle {
       font-size: 13px;
-      color: #64748b;
+      color: var(--text-muted);
       margin: 0;
     }
 
@@ -406,8 +406,8 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .tab-card {
-      background: #ffffff;
-      border: 2px solid #e2e8f0;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 18px 22px;
       display: flex;
@@ -420,15 +420,15 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .tab-card:hover {
-      border-color: #93c5fd;
+      border-color: var(--accent);
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     }
 
     .tab-card.active-tab {
-      border-color: #1e3a8a;
-      background: #f8fafc;
-      box-shadow: 0 8px 25px rgba(30, 58, 138, 0.2);
+      border-color: var(--accent);
+      background: var(--bg-subtle);
+      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2);
     }
 
     .tab-indicator {
@@ -437,7 +437,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       left: 20px;
       right: 20px;
       height: 3px;
-      background: #1e3a8a;
+      background: var(--accent);
       border-radius: 3px 3px 0 0;
     }
 
@@ -452,10 +452,10 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       flex-shrink: 0;
     }
 
-    .icon-pending { background: #fffbeb; }
-    .icon-approved { background: #ecfdf5; }
-    .icon-rejected { background: #fef2f2; }
-    .icon-all { background: #eff6ff; }
+    .icon-pending { background: rgba(245, 158, 11, 0.15); }
+    .icon-approved { background: rgba(16, 185, 129, 0.15); }
+    .icon-rejected { background: rgba(239, 68, 68, 0.15); }
+    .icon-all { background: var(--bg-subtle); }
 
     .stat-details {
       display: flex;
@@ -464,7 +464,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
 
     .stat-label {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-muted);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -476,15 +476,15 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       line-height: 1.2;
     }
 
-    .text-warning { color: #d97706; }
-    .text-success { color: #059669; }
-    .text-danger { color: #dc2626; }
-    .text-navy { color: #1e3a8a; }
+    .text-warning { color: var(--accent); }
+    .text-success { color: var(--success); }
+    .text-danger { color: var(--danger); }
+    .text-navy { color: var(--text-primary); }
 
     /* Applications Card */
     .applications-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 26px;
       box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.35);
@@ -498,7 +498,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       gap: 16px;
       margin-bottom: 20px;
       padding-bottom: 16px;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid var(--border);
     }
 
     .tab-title-group {
@@ -510,34 +510,34 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     .tab-current-heading {
       font-size: 18px;
       font-weight: 800;
-      color: #0f172a;
+      color: var(--text-primary);
       margin: 0;
     }
 
     .count-badge {
-      background: #eff6ff;
-      color: #1e40af;
+      background: var(--bg-subtle);
+      color: var(--accent);
       font-size: 12px;
       font-weight: 700;
       padding: 3px 10px;
       border-radius: var(--radius-full);
-      border: 1px solid #bfdbfe;
+      border: 1px solid var(--border);
     }
 
     .search-input {
       width: 280px;
-      background: #f8fafc;
-      border: 1.5px solid #cbd5e1;
-      color: #0f172a;
+      background: var(--bg-input);
+      border: 1.5px solid var(--border);
+      color: var(--text-primary);
       border-radius: var(--radius-md);
       padding: 8px 14px;
       font-size: 13px;
     }
 
     .search-input:focus {
-      background: #ffffff;
-      border-color: #1e3a8a;
-      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15);
+      background: var(--bg-input);
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
     }
 
     /* Table Styles */
@@ -552,26 +552,26 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .applications-table th {
-      background: #f8fafc;
-      color: #475569;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
       font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       padding: 12px 16px;
-      border-bottom: 2px solid #e2e8f0;
+      border-bottom: 2px solid var(--border);
     }
 
     .applications-table td {
       padding: 16px;
-      border-bottom: 1px solid #f1f5f9;
-      color: #1e293b;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
       font-size: 13px;
       vertical-align: middle;
     }
 
     .table-row:hover td {
-      background: #f8fafc;
+      background: var(--bg-subtle);
     }
 
     /* User Cell */
@@ -585,7 +585,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       width: 36px;
       height: 36px;
       border-radius: var(--radius-full);
-      background: #1e3a8a;
+      background: var(--primary-gradient);
       color: #ffffff;
       display: flex;
       align-items: center;
@@ -602,22 +602,22 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
 
     .uname {
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-primary);
       font-size: 14px;
     }
 
     .role-subtext {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-muted);
     }
 
     .email-text {
-      color: #334155;
+      color: var(--text-secondary);
       font-weight: 500;
     }
 
     .uni-text {
-      color: #475569;
+      color: var(--text-secondary);
       font-weight: 500;
     }
 
@@ -629,9 +629,9 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .btn-preview-cv {
-      background: #eff6ff;
-      color: #1e40af;
-      border: 1px solid #bfdbfe;
+      background: var(--bg-subtle);
+      color: var(--accent);
+      border: 1px solid var(--border);
       font-weight: 700;
       padding: 5px 10px;
       border-radius: var(--radius-sm);
@@ -640,14 +640,14 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .btn-preview-cv:hover {
-      background: #dbeafe;
-      border-color: #93c5fd;
+      background: var(--bg-muted);
+      border-color: var(--accent);
     }
 
     .btn-open-cv {
-      background: #ffffff;
-      color: #475569;
-      border: 1px solid #cbd5e1;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
       font-weight: 700;
       padding: 5px 10px;
       border-radius: var(--radius-sm);
@@ -656,12 +656,12 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .btn-open-cv:hover {
-      background: #f1f5f9;
-      color: #0f172a;
+      background: var(--bg-subtle);
+      color: var(--text-primary);
     }
 
     .no-file-text {
-      color: #94a3b8;
+      color: var(--text-light);
       font-style: italic;
       font-size: 12px;
     }
@@ -717,13 +717,13 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .date-text {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 12px;
       white-space: nowrap;
     }
 
     .text-success-label {
-      color: #15803d;
+      color: var(--success);
       font-weight: 700;
       font-size: 12px;
     }
@@ -769,9 +769,9 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .btn-navy-outline {
-      background: #ffffff;
-      color: #1e3a8a;
-      border: 1.5px solid #1e3a8a;
+      background: transparent;
+      color: var(--accent);
+      border: 1.5px solid var(--accent);
       font-weight: 700;
       padding: 7px 16px;
       border-radius: var(--radius-md);
@@ -780,7 +780,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .btn-navy-outline:hover:not(:disabled) {
-      background: #1e3a8a;
+      background: var(--accent);
       color: #ffffff;
     }
 
@@ -792,7 +792,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     .loading-container, .empty-state {
       padding: 60px 20px;
       text-align: center;
-      color: #64748b;
+      color: var(--text-muted);
     }
 
     .spinner-icon, .empty-icon {
@@ -802,13 +802,13 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .empty-state h3 {
-      color: #0f172a;
+      color: var(--text-primary);
       font-size: 18px;
       margin-bottom: 6px;
     }
 
     .empty-state p {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 13px;
       margin: 0;
     }
@@ -828,14 +828,14 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     }
 
     .modal-card {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
       width: 100%;
       max-width: 520px;
       padding: 24px;
-      color: #0f172a;
+      color: var(--text-primary);
       animation: modalFadeIn 0.2s ease-out;
     }
 
@@ -853,7 +853,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       justify-content: space-between;
       margin-bottom: 16px;
       padding-bottom: 12px;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid var(--border);
     }
 
     .modal-header-title {
@@ -875,18 +875,18 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
     .modal-title {
       font-size: 18px;
       font-weight: 800;
-      color: #0f172a;
+      color: var(--text-primary);
       margin: 0 0 2px 0;
     }
 
     .modal-sub {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-muted);
       margin: 0;
     }
 
     .btn-close {
-      background: #f1f5f9;
+      background: var(--bg-subtle);
       border: none;
       font-size: 16px;
       width: 32px;
@@ -895,21 +895,21 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #64748b;
+      color: var(--text-muted);
       cursor: pointer;
       transition: all 0.2s;
     }
 
     .btn-close:hover {
-      background: #e2e8f0;
-      color: #0f172a;
+      background: var(--bg-muted);
+      color: var(--text-primary);
     }
 
     .modal-body-cv {
       flex: 1;
       min-height: 0;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
       border-radius: var(--radius-md);
       overflow: hidden;
     }
@@ -922,7 +922,7 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
 
     .modal-desc {
       font-size: 14px;
-      color: #334155;
+      color: var(--text-secondary);
       margin-bottom: 16px;
       line-height: 1.5;
     }

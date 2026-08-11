@@ -19,7 +19,8 @@ import {
   BanUserRequest,
   AdminSendNotificationRequest,
   UserNotification,
-  ConfirmAccountDeletionRequest
+  ConfirmAccountDeletionRequest,
+  PublicUserProfile
 } from '../models/auth.model';
 
 @Injectable({
@@ -196,6 +197,10 @@ export class AuthService {
         }
       })
     );
+  }
+
+  getPublicProfile(userId: string): Observable<ApiResponse<PublicUserProfile>> {
+    return this.http.get<ApiResponse<PublicUserProfile>>(`${this.apiUrl}/users/${userId}/public-profile`);
   }
 
   getAvatarUrl(path: string | null | undefined): string | null {

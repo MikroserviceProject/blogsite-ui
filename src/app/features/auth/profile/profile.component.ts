@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -187,7 +187,7 @@ interface PasswordRules {
               [class.active]="activeTab() === 'PROFILE'"
               (click)="activeTab.set('PROFILE')"
             >
-              👤 Profil & Güvenlik
+              Profil & Güvenlik
             </button>
 
             @if (authService.isAuthor() || authService.isAdmin()) {
@@ -196,7 +196,7 @@ interface PasswordRules {
                 [class.active]="activeTab() === 'POSTS'"
                 (click)="switchTab('POSTS')"
               >
-                📄 Yazılarım & Köşe Yazılarım
+                Yazılarım & Köşe Yazılarım
                 @if (myPosts().length > 0) {
                   <span class="tab-badge">{{ myPosts().length }}</span>
                 }
@@ -208,7 +208,7 @@ interface PasswordRules {
               [class.active]="activeTab() === 'NOTIFICATIONS'"
               (click)="switchTab('NOTIFICATIONS')"
             >
-              📬 Bildirimlerim
+              Bildirimlerim
               @if (unreadNotificationCount() > 0) {
                 <span class="tab-badge badge-unread">{{ unreadNotificationCount() }}</span>
               }
@@ -216,10 +216,10 @@ interface PasswordRules {
 
             @if (authService.isAdmin()) {
               <a routerLink="/admin/users" class="tab-btn tab-btn-admin">
-                👥 Kullanıcı Yönetimi
+                Kullanıcı Yönetimi
               </a>
               <a routerLink="/admin/author-approvals" class="tab-btn tab-btn-admin">
-                👑 Yazar Onayları
+                Yazar Onayları
               </a>
             }
 
@@ -228,7 +228,7 @@ interface PasswordRules {
               [class.active]="activeTab() === 'SETTINGS'"
               (click)="activeTab.set('SETTINGS')"
             >
-              ⚙️ Hesap Ayarları & Silme
+              Hesap Ayarları & Silme
             </button>
           </div>
 
@@ -507,9 +507,6 @@ interface PasswordRules {
                   <h2 class="card-section-title">✍️ Yayınlarım & Yazılarım</h2>
                   <p class="card-section-desc">Yayınladığınız blogları ve köşe yazılarını buradan yönetebilir veya düzenleyebilirsiniz.</p>
                 </div>
-                <a routerLink="/create-post" class="btn btn-primary btn-sm">
-                  <span>✍️</span> Yeni Yazı Ekle
-                </a>
               </div>
 
               <!-- Filter Toolbar -->
@@ -566,9 +563,6 @@ interface PasswordRules {
                   <div class="empty-icon">📭</div>
                   <h3>Henüz Bu Kriterde Yazı Bulunmuyor</h3>
                   <p>Yeni bir blog veya köşe yazısı oluşturarak düşüncelerinizi okurlarınızla paylaşmaya başlayabilirsiniz.</p>
-                  <a routerLink="/create-post" class="btn btn-primary btn-sm mt-3">
-                    ✍️ İlk Yazınızı Yazın
-                  </a>
                 </div>
               } @else {
                 <div class="my-posts-grid">
@@ -745,18 +739,27 @@ interface PasswordRules {
                 <div class="form-row-2">
                   <div class="form-group">
                     <label class="form-label">Yazı Türü</label>
-                    <select class="form-control" [(ngModel)]="editPostType" name="editPostType">
-                      <option value="Blog">📄 Blog Yazısı</option>
-                      <option value="Koseyazisi">✍️ Köşe Yazısı</option>
-                    </select>
+                    <div class="type-info-display">
+                      {{ computeEditPostType() === 'Blog' ? '📄 Blog Yazısı' : '✍️ Köşe Yazısı' }}
+                    </div>
+                    <div class="form-hint">Fotoğrafa göre otomatik belirlenir — fotoğraflı yazılar Blog, fotoğrafsız yazılar Köşe Yazısı olur.</div>
                   </div>
 
                   <div class="form-group">
                     <label class="form-label">Yayın Durumu</label>
-                    <select class="form-control" [(ngModel)]="editPostStatus" name="editPostStatus">
-                      <option value="Published">🚀 Yayında (Herkes Görebilir)</option>
-                      <option value="Draft">📝 Taslak (Sadece Ben)</option>
-                    </select>
+                    @if (editingPost()?.status === 'Published') {
+                      <div class="type-info-display">Yayında (Herkes Görebilir)</div>
+                      <div class="form-hint">Yayınlanmış bir yazı tekrar taslağa alınamaz.</div>
+                    } @else {
+                      <div class="type-info-display">
+                        {{ editPostStatus === 'Published' ? 'Yayınlanacak' : '📝 Taslak' }}
+                      </div>
+                      @if (editPostStatus === 'Published') {
+                        <button type="button" class="btn btn-secondary btn-xs mt-2" (click)="editPostStatus = 'Draft'">↩️ Taslağa Geri Al</button>
+                      } @else {
+                        <button type="button" class="btn btn-primary btn-publish mt-2" (click)="editPostStatus = 'Published'">Yayınla</button>
+                      }
+                    }
                   </div>
                 </div>
 
@@ -774,10 +777,17 @@ interface PasswordRules {
 
                 <div class="form-group">
                   <label class="form-label">Kapak Görseli</label>
-                  @if (editingPost()?.photoUrl && !newPostPhotoFile) {
+                  @if (editingPost()?.photoUrl && !newPostPhotoFile && !removeExistingPhoto) {
                     <div class="current-photo-preview mb-2">
                       <img [src]="blogService.getPhotoUrl(editingPost()?.photoUrl)" alt="Mevcut Görsel" />
-                      <span class="photo-hint">Mevcut görsel korunuyor. Değiştirmek için yeni dosya seçebilirsiniz.</span>
+                      <span class="photo-hint">Mevcut görsel korunuyor. Değiştirmek için yeni dosya seçebilir veya kaldırabilirsiniz.</span>
+                      <button type="button" class="btn btn-danger btn-xs" (click)="removeExistingPhoto = true">🗑️ Fotoğrafı Kaldır</button>
+                    </div>
+                  }
+                  @if (removeExistingPhoto) {
+                    <div class="photo-removed-notice mb-2">
+                      <span>Fotoğraf kaydedince kaldırılacak — yazı türü Köşe Yazısı olacak.</span>
+                      <button type="button" class="btn btn-secondary btn-xs" (click)="removeExistingPhoto = false">Geri Al</button>
                     </div>
                   }
                   <input
@@ -1410,11 +1420,11 @@ interface PasswordRules {
     .filter-pill {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #cbd5e1;
-      padding: 6px 12px;
+      color: #e2e8f0;
+      padding: 8px 16px;
       border-radius: var(--radius-full);
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 700;
       cursor: pointer;
       transition: var(--transition);
     }
@@ -1422,6 +1432,19 @@ interface PasswordRules {
     .filter-pill.active {
       background: #2563eb;
       border-color: #3b82f6;
+      color: #ffffff;
+      font-weight: 800;
+    }
+
+    :host-context(.light-theme) .filter-pill {
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+      color: #334155;
+    }
+
+    :host-context(.light-theme) .filter-pill.active {
+      background: #2563eb;
+      border-color: #2563eb;
       color: #ffffff;
     }
 
@@ -1634,9 +1657,11 @@ interface PasswordRules {
       backdrop-filter: blur(8px);
       z-index: 2000;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 20px;
+      padding: 100px 20px 40px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     .modal-card {
@@ -1645,12 +1670,19 @@ interface PasswordRules {
       border-radius: var(--radius-lg);
       width: 100%;
       max-width: 540px;
-      max-height: 90vh;
+      max-height: calc(100vh - 140px);
       display: flex;
       flex-direction: column;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
       animation: modalFadeIn 0.2s ease-out;
       overflow: hidden;
+    }
+
+    .modal-card > form {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
     }
 
     :host-context(.light-theme) .modal-card {
@@ -1663,7 +1695,8 @@ interface PasswordRules {
     }
 
     .modal-header {
-      padding: 20px 24px;
+      flex-shrink: 0;
+      padding: 16px 24px 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
       align-items: center;
@@ -1712,14 +1745,18 @@ interface PasswordRules {
     }
 
     .modal-body {
-      padding: 24px;
+      padding: 14px 24px 24px;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      flex: 1;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
 
     .modal-footer {
+      flex-shrink: 0;
       padding: 16px 24px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
@@ -1751,6 +1788,7 @@ interface PasswordRules {
     .current-photo-preview {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 12px;
     }
 
@@ -1764,6 +1802,43 @@ interface PasswordRules {
     .photo-hint {
       font-size: 12px;
       color: #94a3b8;
+    }
+
+    .photo-removed-notice {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      color: #fca5a5;
+    }
+
+    .type-info-display {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .type-info-display + button {
+      margin-top: 8px;
+    }
+
+    .btn-publish {
+      width: 100%;
+      height: 42px;
+      font-size: 14px;
+      font-weight: 700;
     }
 
     .empty-state-card {
@@ -1805,7 +1880,7 @@ interface PasswordRules {
     }
   `]
 })
-export class ProfileComponent implements OnInit {
+export class ProfileComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   blogService = inject(BlogService);
   toastService = inject(ToastService);
@@ -1874,9 +1949,9 @@ export class ProfileComponent implements OnInit {
   editingPost = signal<BlogPost | null>(null);
   editPostTitle: string = '';
   editPostContent: string = '';
-  editPostType: 'Blog' | 'Koseyazisi' = 'Blog';
   editPostStatus: 'Draft' | 'Published' = 'Published';
   newPostPhotoFile: File | null = null;
+  removeExistingPhoto: boolean = false;
   isSavingPost = signal<boolean>(false);
 
   // --- User Notifications State ---
@@ -1893,6 +1968,10 @@ export class ProfileComponent implements OnInit {
   ngOnInit() {
     this.initFormData();
     this.loadUserData();
+  }
+
+  ngOnDestroy() {
+    document.body.style.overflow = '';
   }
 
   loadUserData() {
@@ -1947,21 +2026,31 @@ export class ProfileComponent implements OnInit {
     this.editingPost.set(post);
     this.editPostTitle = post.title;
     this.editPostContent = post.content;
-    this.editPostType = post.type;
     this.editPostStatus = post.status;
     this.newPostPhotoFile = null;
+    this.removeExistingPhoto = false;
+    document.body.style.overflow = 'hidden';
   }
 
   closeEditPostModal() {
     this.editingPost.set(null);
     this.newPostPhotoFile = null;
+    this.removeExistingPhoto = false;
+    document.body.style.overflow = '';
   }
 
   onPostPhotoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       this.newPostPhotoFile = input.files[0];
+      this.removeExistingPhoto = false;
     }
+  }
+
+  computeEditPostType(): 'Blog' | 'Koseyazisi' {
+    const hasPhoto = this.newPostPhotoFile !== null
+      || (!!this.editingPost()?.photoUrl && !this.removeExistingPhoto);
+    return hasPhoto ? 'Blog' : 'Koseyazisi';
   }
 
   savePostChanges() {
@@ -1975,9 +2064,9 @@ export class ProfileComponent implements OnInit {
     const updateReq: UpdatePostRequest = {
       title: this.editPostTitle.trim(),
       content: this.editPostContent.trim(),
-      type: this.editPostType,
       status: this.editPostStatus,
-      photo: this.newPostPhotoFile
+      photo: this.newPostPhotoFile,
+      removePhoto: this.removeExistingPhoto
     };
 
     this.blogService.update(post.id, updateReq).subscribe({

@@ -5,6 +5,12 @@ export interface ApiResponse<T> {
   errors: string[];
 }
 
+export interface PublicUserProfile {
+  id: string;
+  username: string;
+  profilePictureUrl: string | null;
+}
+
 export interface User {
   id: string;
   username: string;

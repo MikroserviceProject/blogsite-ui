@@ -2,6 +2,8 @@ import { Component, inject, signal, OnInit, AfterViewInit, OnDestroy, ViewChild,
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BlogPost } from '../../core/models/blog.model';
+import { PublicUserProfile } from '../../core/models/auth.model';
+import { AuthService } from '../../core/services/auth.service';
 import { BlogService } from '../../core/services/blog.service';
 
 @Component({
@@ -15,7 +17,7 @@ import { BlogService } from '../../core/services/blog.service';
         <aside class="side-column">
           <h4 class="side-title">📄 Bloglar</h4>
           @if (blogPosts().length > 0) {
-            <div class="scroll-viewport" #blogViewport (wheel)="onBlogWheel()">
+            <div class="scroll-viewport" #blogViewport (mouseenter)="setPaused('blog', true)" (mouseleave)="setPaused('blog', false)">
               <div class="scroll-track">
                 @for (post of blogPosts(); track post.id) {
                   <a [routerLink]="['/post', post.id]" class="mini-card">
@@ -23,6 +25,21 @@ import { BlogService } from '../../core/services/blog.service';
                       <img [src]="photoSrc(post.photoUrl)" [alt]="post.title" class="mini-cover" />
                     } @else {
                       <div class="mini-cover mini-cover-placeholder">📄</div>
+                    }
+                    <span class="mini-author-avatar">
+                      <span class="mini-author-avatar-circle">
+                        @if (authService.getAvatarUrl(getAuthorProfile(post.authorId)?.profilePictureUrl); as avatarUrl) {
+                          <img [src]="avatarUrl" [alt]="getAuthorProfile(post.authorId)?.username || ''" />
+                        } @else {
+                          <span>{{ (getAuthorProfile(post.authorId)?.username || '?').charAt(0).toUpperCase() }}</span>
+                        }
+                      </span>
+                      @if (getAuthorProfile(post.authorId)?.username; as authorName) {
+                        <span class="mini-author-name">{{ authorName }}</span>
+                      }
+                    </span>
+                    @if (isNew(post.createdAt)) {
+                      <span class="mini-new-badge">✨ Yeni</span>
                     }
                     <div class="mini-overlay">
                       <span class="mini-title">{{ post.title }}</span>
@@ -95,10 +112,25 @@ import { BlogService } from '../../core/services/blog.service';
         <aside class="side-column">
           <h4 class="side-title">✍️ Köşe Yazıları</h4>
           @if (columnPosts().length > 0) {
-            <div class="scroll-viewport" #columnViewport (wheel)="onColumnWheel()">
+            <div class="scroll-viewport" #columnViewport (mouseenter)="setPaused('column', true)" (mouseleave)="setPaused('column', false)">
               <div class="scroll-track">
                 @for (post of columnPosts(); track post.id) {
                   <a [routerLink]="['/post', post.id]" class="mini-card mini-card-column">
+                    <span class="mini-author-avatar">
+                      <span class="mini-author-avatar-circle">
+                        @if (authService.getAvatarUrl(getAuthorProfile(post.authorId)?.profilePictureUrl); as avatarUrl) {
+                          <img [src]="avatarUrl" [alt]="getAuthorProfile(post.authorId)?.username || ''" />
+                        } @else {
+                          <span>{{ (getAuthorProfile(post.authorId)?.username || '?').charAt(0).toUpperCase() }}</span>
+                        }
+                      </span>
+                      @if (getAuthorProfile(post.authorId)?.username; as authorName) {
+                        <span class="mini-author-name">{{ authorName }}</span>
+                      }
+                    </span>
+                    @if (isNew(post.createdAt)) {
+                      <span class="mini-new-badge">✨ Yeni</span>
+                    }
                     <span class="mini-quote-icon">❝</span>
                     <span class="mini-title">{{ post.title }}</span>
                     <span class="mini-excerpt">{{ excerptPreviewLong(post.content) }}</span>
@@ -161,9 +193,10 @@ import { BlogService } from '../../core/services/blog.service';
       height: 65vh;
       overflow-y: auto;
       overflow-x: hidden;
+      overscroll-behavior: contain;
       position: relative;
-      -webkit-mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
-      mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
+      -webkit-mask-image: linear-gradient(to bottom, transparent, black 2%, black 98%, transparent);
+      mask-image: linear-gradient(to bottom, transparent, black 2%, black 98%, transparent);
       scrollbar-width: none;
       -ms-overflow-style: none;
       scroll-behavior: smooth;
@@ -183,6 +216,8 @@ import { BlogService } from '../../core/services/blog.service';
       display: flex;
       flex-direction: column;
       gap: 14px;
+      padding-top: 16px;
+      padding-bottom: 16px;
     }
 
     .mini-card {
@@ -230,6 +265,7 @@ import { BlogService } from '../../core/services/blog.service';
       padding: 14px;
       padding-right: 44px;
       padding-top: 40px;
+      padding-bottom: 32px;
       background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.35) 45%, transparent 100%);
     }
 
@@ -271,6 +307,85 @@ import { BlogService } from '../../core/services/blog.service';
       transform: scale(1.08);
     }
 
+    .mini-author-avatar {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      height: 28px;
+      max-width: 28px;
+      overflow: hidden;
+      border-radius: var(--radius-full);
+      background: rgba(100, 116, 139, 0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1.5px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      transition: max-width 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .mini-author-avatar:hover {
+      max-width: 160px;
+      background: #ffffff;
+      border-color: #ffffff;
+    }
+
+    .mini-author-avatar-circle {
+      width: 26px;
+      height: 26px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      transition: color 0.15s ease;
+    }
+
+    .mini-author-avatar:hover .mini-author-avatar-circle {
+      color: #0f172a;
+    }
+
+    .mini-author-avatar-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .mini-author-name {
+      white-space: nowrap;
+      padding-right: 14px;
+      padding-left: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .mini-new-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+      background: rgba(100, 116, 139, 0.45);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+
     .mini-card-column {
       aspect-ratio: auto;
       display: flex;
@@ -278,6 +393,7 @@ import { BlogService } from '../../core/services/blog.service';
       align-items: flex-start;
       gap: 6px;
       padding: 14px;
+      padding-top: 46px;
       padding-right: 44px;
       padding-bottom: 40px;
       text-align: left;
@@ -363,43 +479,79 @@ import { BlogService } from '../../core/services/blog.service';
 })
 export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
   private blogService = inject(BlogService);
+  authService = inject(AuthService);
 
   @ViewChild('blogViewport') blogViewportRef?: ElementRef<HTMLDivElement>;
   @ViewChild('columnViewport') columnViewportRef?: ElementRef<HTMLDivElement>;
 
   blogPosts = signal<BlogPost[]>([]);
   columnPosts = signal<BlogPost[]>([]);
+  private authorProfiles = signal<Record<string, PublicUserProfile>>({});
 
   private blogPaused = false;
   private columnPaused = false;
-  private blogResumeTimeout?: ReturnType<typeof setTimeout>;
-  private columnResumeTimeout?: ReturnType<typeof setTimeout>;
   private blogRafId?: number;
   private columnRafId?: number;
   private columnInitialized = false;
+  private blogLastTimestamp?: number;
+  private columnLastTimestamp?: number;
+
+  // Piksel/saniye cinsinden hız — requestAnimationFrame ekranın Hz'ine göre farklı sıklıkta
+  // tetiklendiği için (60Hz Windows'ta, 120Hz bazı Mac'lerde), sabit piksel/frame yerine
+  // geçen gerçek süreye göre kaydırma yapılıyor. Böylece hız her cihazda aynı kalıyor.
+  // İki sütun da aynı hızda kaysın diye tek bir ortak değer kullanılıyor.
+  private readonly scrollSpeedPerSecond = 36;
+
+  private readonly sideColumnPostCount = 10;
 
   ngOnInit() {
-    this.blogService.getAll('Published', 'Blog').subscribe({
-      next: (posts) => this.blogPosts.set(posts),
+    this.blogService.getAllPaged('Published', 'Blog', undefined, 1, this.sideColumnPostCount).subscribe({
+      next: ({ posts }) => {
+        this.blogPosts.set(posts);
+        this.loadAuthorProfiles(posts);
+      },
       error: () => this.blogPosts.set([])
     });
 
-    this.blogService.getAll('Published', 'Koseyazisi').subscribe({
-      next: (posts) => this.columnPosts.set(posts),
+    this.blogService.getAllPaged('Published', 'Koseyazisi', undefined, 1, this.sideColumnPostCount).subscribe({
+      next: ({ posts }) => {
+        this.columnPosts.set(posts);
+        this.loadAuthorProfiles(posts);
+      },
       error: () => this.columnPosts.set([])
     });
   }
 
+  private loadAuthorProfiles(posts: BlogPost[]) {
+    const known = this.authorProfiles();
+    const missingIds = [...new Set(posts.map(p => p.authorId))].filter(id => id && !known[id]);
+
+    for (const authorId of missingIds) {
+      this.authService.getPublicProfile(authorId).subscribe({
+        next: (res) => {
+          if (res.success && res.data) {
+            this.authorProfiles.update(profiles => ({ ...profiles, [authorId]: res.data! }));
+          }
+        },
+        error: () => {
+          // Yazar bilgisi getirilemezse sessizce göz ardı edilir, baş harf/placeholder gösterilir.
+        }
+      });
+    }
+  }
+
+  getAuthorProfile(authorId: string): PublicUserProfile | undefined {
+    return this.authorProfiles()[authorId];
+  }
+
   ngAfterViewInit() {
-    this.blogRafId = requestAnimationFrame(() => this.autoScrollStep('blog'));
-    this.columnRafId = requestAnimationFrame(() => this.autoScrollStep('column'));
+    this.blogRafId = requestAnimationFrame((ts) => this.autoScrollStep('blog', ts));
+    this.columnRafId = requestAnimationFrame((ts) => this.autoScrollStep('column', ts));
   }
 
   ngOnDestroy() {
     if (this.blogRafId) cancelAnimationFrame(this.blogRafId);
     if (this.columnRafId) cancelAnimationFrame(this.columnRafId);
-    clearTimeout(this.blogResumeTimeout);
-    clearTimeout(this.columnResumeTimeout);
   }
 
   photoSrc(photoUrl: string): string {
@@ -414,26 +566,28 @@ export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
     return content.length > 160 ? content.slice(0, 160) + '...' : content;
   }
 
-  onBlogWheel() {
-    this.blogPaused = true;
-    clearTimeout(this.blogResumeTimeout);
-    this.blogResumeTimeout = setTimeout(() => { this.blogPaused = false; }, 1800);
+  isNew(createdAt: string): boolean {
+    const hoursSince = (Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60);
+    return hoursSince <= 24;
   }
 
-  onColumnWheel() {
-    this.columnPaused = true;
-    clearTimeout(this.columnResumeTimeout);
-    this.columnResumeTimeout = setTimeout(() => { this.columnPaused = false; }, 1800);
+  setPaused(which: 'blog' | 'column', paused: boolean) {
+    if (which === 'blog') this.blogPaused = paused;
+    else this.columnPaused = paused;
   }
 
-  private autoScrollStep(which: 'blog' | 'column') {
+  private autoScrollStep(which: 'blog' | 'column', timestamp: number) {
     const viewportRef = which === 'blog' ? this.blogViewportRef : this.columnViewportRef;
     const paused = which === 'blog' ? this.blogPaused : this.columnPaused;
-    const speed = which === 'blog' ? 0.7 : 0.55;
+    const lastTimestamp = which === 'blog' ? this.blogLastTimestamp : this.columnLastTimestamp;
+
+    const deltaMs = lastTimestamp !== undefined ? timestamp - lastTimestamp : 0;
+    if (which === 'blog') this.blogLastTimestamp = timestamp; else this.columnLastTimestamp = timestamp;
 
     if (viewportRef && !paused) {
       const el = viewportRef.nativeElement;
       const maxScroll = el.scrollHeight - el.clientHeight;
+      const distance = this.scrollSpeedPerSecond * (deltaMs / 1000);
 
       if (maxScroll > 0) {
         if (which === 'column') {
@@ -441,13 +595,13 @@ export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
             el.scrollTop = maxScroll;
             this.columnInitialized = true;
           } else {
-            el.scrollTop -= speed;
+            el.scrollTop -= distance;
             if (el.scrollTop <= 0) {
               el.scrollTop = maxScroll;
             }
           }
         } else {
-          el.scrollTop += speed;
+          el.scrollTop += distance;
           if (el.scrollTop >= maxScroll) {
             el.scrollTop = 0;
           }
@@ -455,7 +609,7 @@ export class InternshipComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    const rafId = requestAnimationFrame(() => this.autoScrollStep(which));
+    const rafId = requestAnimationFrame((ts) => this.autoScrollStep(which, ts));
     if (which === 'blog') this.blogRafId = rafId; else this.columnRafId = rafId;
   }
 }

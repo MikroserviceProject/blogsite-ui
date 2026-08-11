@@ -22,4 +22,5 @@ export interface UpdatePostRequest {
   type?: 'Blog' | 'Koseyazisi';
   status: 'Draft' | 'Published';
   photo?: File | null;
+  removePhoto?: boolean;
 }

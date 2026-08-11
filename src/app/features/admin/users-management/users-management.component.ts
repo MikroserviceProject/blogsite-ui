@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -1030,9 +1030,11 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       backdrop-filter: blur(8px);
       z-index: 2000;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 20px;
+      padding: 100px 20px 40px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     .modal-card {
@@ -1041,7 +1043,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       border-radius: var(--radius-lg);
       width: 100%;
       max-width: 580px;
-      max-height: 90vh;
+      max-height: calc(100vh - 140px);
       display: flex;
       flex-direction: column;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
@@ -1054,11 +1056,19 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
       border: 1px solid #cbd5e1;
     }
 
+    .modal-card > form {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
     .modal-lg {
       max-width: 820px;
     }
 
     .modal-header {
+      flex-shrink: 0;
       padding: 20px 24px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
@@ -1120,6 +1130,9 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     .modal-body {
       padding: 24px;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      flex: 1;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       gap: 18px;
@@ -1170,6 +1183,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
 
     .modal-footer {
+      flex-shrink: 0;
       padding: 16px 24px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
@@ -1370,7 +1384,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
     }
   `]
 })
-export class UsersManagementComponent implements OnInit {
+export class UsersManagementComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   blogService = inject(BlogService);
   toastService = inject(ToastService);
@@ -1443,6 +1457,16 @@ export class UsersManagementComponent implements OnInit {
     this.loadUsers();
   }
 
+  ngOnDestroy() {
+    document.body.style.overflow = '';
+  }
+
+  private updateBodyScrollLock() {
+    const anyModalOpen = !!this.selectedUserForPosts() || !!this.selectedPostForDeletion() ||
+      !!this.selectedUserForBan() || !!this.selectedUserForMessage();
+    document.body.style.overflow = anyModalOpen ? 'hidden' : '';
+  }
+
   loadUsers() {
     this.isLoading.set(true);
     this.authService.getAllUsers().subscribe({
@@ -1467,6 +1491,7 @@ export class UsersManagementComponent implements OnInit {
     this.selectedUserForPosts.set(user);
     this.isLoadingPosts.set(true);
     this.userPosts.set([]);
+    this.updateBodyScrollLock();
 
     this.blogService.getByAuthor(user.id).subscribe({
       next: (posts) => {
@@ -1483,17 +1508,20 @@ export class UsersManagementComponent implements OnInit {
   closePostsModal() {
     this.selectedUserForPosts.set(null);
     this.userPosts.set([]);
+    this.updateBodyScrollLock();
   }
 
   openDeletePostModal(post: BlogPost) {
     this.selectedPostForDeletion.set(post);
     this.deletePostReason = '';
     this.sendDeletePostEmail = true;
+    this.updateBodyScrollLock();
   }
 
   closeDeletePostModal() {
     this.selectedPostForDeletion.set(null);
     this.deletePostReason = '';
+    this.updateBodyScrollLock();
   }
 
   confirmDeletePost() {
@@ -1527,11 +1555,13 @@ export class UsersManagementComponent implements OnInit {
     this.banDurationType.set('PERMANENT');
     this.banReason = '';
     this.customBanMinutes = 60;
+    this.updateBodyScrollLock();
   }
 
   closeBanModal() {
     this.selectedUserForBan.set(null);
     this.banReason = '';
+    this.updateBodyScrollLock();
   }
 
   confirmBanUser() {
@@ -1607,12 +1637,14 @@ export class UsersManagementComponent implements OnInit {
     this.messageTitle = '';
     this.messageBody = '';
     this.messageType = 'Warning';
+    this.updateBodyScrollLock();
   }
 
   closeMessageModal() {
     this.selectedUserForMessage.set(null);
     this.messageTitle = '';
     this.messageBody = '';
+    this.updateBodyScrollLock();
   }
 
   confirmSendMessage() {

@@ -15,7 +15,7 @@ import { BlogService } from '../../../core/services/blog.service';
         <div>
           <a routerLink="/" class="back-link">← Ana Sayfaya Dön</a>
           <h1 class="page-title">{{ editingId() ? '✏️ Yazıyı Düzenle' : '✍️ Yeni İçerik / Köşe Yazısı Oluştur' }}</h1>
-          <p class="page-desc">Lumina okurları için yeni bir makale veya köşe yazısı hazırlayın.</p>
+          <p class="page-desc">Lumina okurları için yeni bir blog yazısı veya köşe yazısı hazırlayın.</p>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ import { BlogService } from '../../../core/services/blog.service';
                 rows="10"
                 [(ngModel)]="content"
                 name="content"
-                placeholder="Makalenizin detaylı içeriğini buraya yazınız..."
+                placeholder="Yazınızın detaylı içeriğini buraya yazınız..."
                 required
               ></textarea>
             </div>
