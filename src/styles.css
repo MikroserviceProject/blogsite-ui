@@ -101,11 +101,11 @@
   color: #0f172a;
 }
 
-:root.light-theme a {
+:root.light-theme a:not(.btn) {
   color: #2563eb;
 }
 
-:root.light-theme a:hover {
+:root.light-theme a:not(.btn):hover {
   color: #1d4ed8;
 }
 
