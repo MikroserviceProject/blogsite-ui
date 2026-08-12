@@ -93,11 +93,11 @@ import { ThemeService } from '../../core/services/theme.service';
                     }
                   </div>
                   
-                  @if (allNotifs().length > 3) {
+                  @if (paginatedNotifsTotalPages > 1) {
                     <div class="nd-pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
                       <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() === 1" (click)="prevNotifPage($event)">Önceki</button>
-                      <span style="font-size: 12px;">Sayfa {{ currentNotifPage() }} / {{ Math.ceil(allNotifs().length / 3) }}</span>
-                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() >= Math.ceil(allNotifs().length / 3)" (click)="nextNotifPage($event)">Sonraki</button>
+                      <span style="font-size: 12px;">Sayfa {{ currentNotifPage() }} / {{ paginatedNotifsTotalPages }}</span>
+                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() >= paginatedNotifsTotalPages" (click)="nextNotifPage($event)">Sonraki</button>
                     </div>
                   }
                   
@@ -722,10 +722,7 @@ export class NavbarComponent {
   recentNotifs = signal<any[]>([]); // Geriye dönük uyumluluk için bırakılabilir veya kaldırılabilir
   allNotifs = signal<any[]>([]);
   currentNotifPage = signal<number>(1);
-  paginatedNotifs = computed(() => {
-    const start = (this.currentNotifPage() - 1) * 3;
-    return this.allNotifs().slice(start, start + 3);
-  });
+  paginatedNotifs = computed(() => this.allNotifs());
   isLoadingNotifs = signal<boolean>(false);
   activeModalNotif = signal<any>(null);
   
@@ -746,17 +743,23 @@ export class NavbarComponent {
     if (!silent) {
       this.isLoadingNotifs.set(true);
     }
-    this.authService.getUserNotifications().subscribe({
+    // Navbar shows 3 notifications per page, and we only fetch unread notifications for the dropdown
+    this.authService.getUserNotifications(this.currentNotifPage(), 3, true).subscribe({
       next: (res: any) => {
         if (!silent) {
           this.isLoadingNotifs.set(false);
         }
         if (res.success && res.data) {
-          const unreadOnly = res.data.filter((n: any) => !n.isRead);
-          const sorted = [...unreadOnly].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          this.allNotifs.set(sorted);
-          this.authService.unreadNotificationCount.set(unreadOnly.length);
-          this.currentNotifPage.set(1);
+          const items = Array.isArray(res.data) ? res.data : (res.data.items || []);
+          this.allNotifs.set(items);
+          if (res.data.extraData && res.data.extraData.UnreadCount !== undefined) {
+            this.authService.unreadNotificationCount.set(res.data.extraData.UnreadCount);
+          } else if (Array.isArray(res.data)) {
+            const unreadOnly = res.data.filter((n: any) => !n.isRead);
+            this.authService.unreadNotificationCount.set(unreadOnly.length);
+          }
+          // The backend already handles TotalPages
+          this.paginatedNotifsTotalPages = res.data.totalPages || 1;
         }
       },
       error: () => {
@@ -764,6 +767,8 @@ export class NavbarComponent {
       }
     });
   }
+
+  paginatedNotifsTotalPages: number = 1;
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
@@ -807,14 +812,15 @@ export class NavbarComponent {
     e.stopPropagation(); // Dropdown kapanmasını engelle
     if (this.currentNotifPage() > 1) {
       this.currentNotifPage.update(p => p - 1);
+      this.fetchNotifs(true);
     }
   }
 
   nextNotifPage(e: Event) {
     e.stopPropagation(); // Dropdown kapanmasını engelle
-    const maxPage = Math.ceil(this.allNotifs().length / 3);
-    if (this.currentNotifPage() < maxPage) {
+    if (this.currentNotifPage() < this.paginatedNotifsTotalPages) {
       this.currentNotifPage.update(p => p + 1);
+      this.fetchNotifs(true);
     }
   }
 

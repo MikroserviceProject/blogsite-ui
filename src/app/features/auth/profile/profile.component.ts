@@ -772,11 +772,11 @@ interface PasswordRules {
                     </div>
                   }
                   
-                  @if (notifications().length > 10) {
+                  @if (totalNotificationPages() > 1) {
                     <div class="nd-pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() === 1" (click)="currentNotifPage.set(currentNotifPage() - 1)">Önceki</button>
-                      <span style="font-size: 14px;">Sayfa {{ currentNotifPage() }} / {{ Math.ceil(notifications().length / 10) }}</span>
-                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() >= Math.ceil(notifications().length / 10)" (click)="currentNotifPage.set(currentNotifPage() + 1)">Sonraki</button>
+                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() === 1" (click)="prevNotifPage()">Önceki</button>
+                      <span style="font-size: 14px;">Sayfa {{ currentNotifPage() }} / {{ totalNotificationPages() }}</span>
+                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() >= totalNotificationPages()" (click)="nextNotifPage()">Sonraki</button>
                     </div>
                   }
                 </div>
@@ -2335,10 +2335,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   unreadNotificationCount = computed(() => this.notifications().filter(n => !n.isRead).length);
   
   currentNotifPage = signal<number>(1);
-  paginatedNotifications = computed(() => {
-    const start = (this.currentNotifPage() - 1) * 10;
-    return this.notifications().slice(start, start + 10);
-  });
+  totalNotificationPages = signal<number>(1);
+  paginatedNotifications = computed(() => this.notifications());
   
   Math = Math;
 
@@ -2519,13 +2517,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   // --- NOTIFICATIONS ---
-  loadNotifications() {
+  loadNotifications(page: number = 1) {
     this.isLoadingNotifications.set(true);
-    this.authService.getUserNotifications().subscribe({
+    this.authService.getUserNotifications(page, 10, false).subscribe({
       next: (res) => {
         this.isLoadingNotifications.set(false);
         if (res.success && res.data) {
-          this.notifications.set(res.data);
+          const items = Array.isArray(res.data) ? res.data : (res.data.items || []);
+          this.notifications.set(items);
+          this.currentNotifPage.set(res.data.currentPage || 1);
+          this.totalNotificationPages.set(res.data.totalPages || 1);
           this.autoExpandNotification();
         }
       },
@@ -2533,6 +2534,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.isLoadingNotifications.set(false);
       }
     });
+  }
+
+  nextNotifPage() {
+    if (this.currentNotifPage() < this.totalNotificationPages()) {
+      this.loadNotifications(this.currentNotifPage() + 1);
+    }
+  }
+
+  prevNotifPage() {
+    if (this.currentNotifPage() > 1) {
+      this.loadNotifications(this.currentNotifPage() - 1);
+    }
   }
 
   autoExpandNotification() {

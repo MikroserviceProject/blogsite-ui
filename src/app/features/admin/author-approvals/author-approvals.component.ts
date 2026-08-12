@@ -89,9 +89,11 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
                   <th>E-Posta</th>
                   <th>Üniversite / Bölüm</th>
                   <th>CV / Özgeçmiş</th>
-                  <th>Durum & Doğrulama</th>
+                  <th>Başvuru Durumu</th>
+                  <th>E-Posta Durumu</th>
                   <th>Tarih</th>
-                  <th class="text-right">İşlemler</th>
+                  <th class="text-center">Onayla</th>
+                  <th class="text-center">Reddet</th>
                 </tr>
               </thead>
               <tbody>
@@ -139,59 +141,53 @@ type TabType = 'pending' | 'approved' | 'rejected' | 'all';
                         <span class="no-file-text">Dosya yok</span>
                       }
                     </td>
-                    <td>
-                      <div class="status-cell" style="display: flex; gap: 8px; justify-content: center; align-items: center;">
-                        <!-- Başvuru Durum Rozeti -->
-                        @if (isStatus(author, 'Pending')) {
-                          <i class="fa-solid fa-hourglass-half text-warning" title="Başvuru Bekliyor" style="font-size: 1.2rem;"></i>
-                        } @else if (isStatus(author, 'Approved')) {
-                          <i class="fa-solid fa-circle-check text-success" title="Başvuru Onaylandı" style="font-size: 1.2rem;"></i>
-                        } @else if (isStatus(author, 'Rejected')) {
-                          <i class="fa-solid fa-circle-xmark text-danger" title="Başvuru Reddedildi" style="font-size: 1.2rem;"></i>
-                        }
-
-                        <!-- E-Posta Onay Durumu -->
-                        @if (author.isEmailConfirmed) {
-                          <i class="fa-solid fa-envelope-circle-check text-success" title="Kullanıcı e-postasını onaylamış ve giriş yapabilir" style="font-size: 1.2rem;"></i>
-                        } @else {
-                          <i class="fa-regular fa-envelope text-warning" title="Kullanıcı henüz aktivasyon e-postasındaki linke tıklamamış (Doğrulama Bekliyor)" style="font-size: 1.2rem;"></i>
-                        }
-                      </div>
+                    <td class="text-center">
+                      <!-- Başvuru Durum Rozeti -->
+                      @if (isStatus(author, 'Pending')) {
+                        <i class="fa-solid fa-hourglass-half" title="Başvuru Bekliyor" style="font-size: 1.2rem; color: #333;"></i>
+                      } @else if (isStatus(author, 'Approved')) {
+                        <i class="fa-solid fa-check" title="Başvuru Onaylandı" style="font-size: 1.2rem; color: #333;"></i>
+                      } @else if (isStatus(author, 'Rejected')) {
+                        <i class="fa-solid fa-xmark" title="Başvuru Reddedildi" style="font-size: 1.2rem; color: #333;"></i>
+                      }
+                    </td>
+                    <td class="text-center">
+                      <!-- E-Posta Onay Durumu -->
+                      @if (author.isEmailConfirmed) {
+                        <i class="fa-solid fa-envelope-circle-check" title="E-Posta Onaylı" style="font-size: 1.2rem; color: #333;"></i>
+                      } @else {
+                        <i class="fa-regular fa-envelope" title="E-Posta Onay Bekliyor" style="font-size: 1.2rem; color: #333;"></i>
+                      }
                     </td>
                     <td>
                       <span class="date-text">{{ (author.authorApplicationDate || author.createdAt) | date:'d MMM y, HH:mm' }}</span>
                     </td>
-                    <td class="text-right">
-                      @if (isStatus(author, 'Pending')) {
-                        <div class="action-buttons-group">
-                          <button 
-                            type="button" 
-                            class="btn btn-success-action btn-sm" 
-                            (click)="onApprove(author)"
-                            [disabled]="isProcessing(author.id)"
-                          >
-                            ✓ Onayla
-                          </button>
-                          <button 
-                            type="button" 
-                            class="btn btn-danger-action btn-sm" 
-                            (click)="openRejectModal(author)"
-                            [disabled]="isProcessing(author.id)"
-                          >
-                             Reddet
-                          </button>
-                        </div>
-                      } @else if (isStatus(author, 'Approved')) {
-                        <!-- Boş bırakıldı (İşlem Tamam yazısı kaldırıldı) -->
-                      } @else if (isStatus(author, 'Rejected')) {
+                    
+                    <td class="text-center">
+                      @if (isStatus(author, 'Pending') || isStatus(author, 'Rejected')) {
                         <button 
                           type="button" 
-                          class="btn btn-secondary btn-xs" 
+                          class="btn btn-sm" 
+                          style="background: transparent; border: 1px solid #ccc; color: #333; padding: 4px 10px;"
                           (click)="onApprove(author)"
                           [disabled]="isProcessing(author.id)"
-                          title="Fikrinizi değiştirdiyseniz yeniden onaylayabilirsiniz"
+                          title="Onayla"
                         >
-                          Tekrar Onayla
+                          <i class="fa-solid fa-check"></i>
+                        </button>
+                      }
+                    </td>
+                    <td class="text-center">
+                      @if (isStatus(author, 'Pending')) {
+                        <button 
+                          type="button" 
+                          class="btn btn-sm" 
+                          style="background: transparent; border: 1px solid #ccc; color: #333; padding: 4px 10px;"
+                          (click)="openRejectModal(author)"
+                          [disabled]="isProcessing(author.id)"
+                          title="Reddet"
+                        >
+                          <i class="fa-solid fa-xmark"></i>
                         </button>
                       }
                     </td>

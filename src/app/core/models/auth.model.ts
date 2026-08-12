@@ -19,6 +19,7 @@ export interface PaginatedResult<T> {
   pageSize: number;
   hasPreviousPage: boolean;
   hasNextPage: boolean;
+  extraData?: { [key: string]: any };
 }
 
 export interface User {

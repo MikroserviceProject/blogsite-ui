@@ -263,8 +263,8 @@ export class AuthService {
   }
 
   // Kullanıcı Bildirimleri
-  getUserNotifications(): Observable<ApiResponse<UserNotification[]>> {
-    return this.http.get<ApiResponse<UserNotification[]>>(`${this.apiUrl}/notifications`);
+  getUserNotifications(page: number = 1, pageSize: number = 10, unreadOnly: boolean = false): Observable<ApiResponse<PaginatedResult<UserNotification>>> {
+    return this.http.get<ApiResponse<PaginatedResult<UserNotification>>>(`${this.apiUrl}/notifications?page=${page}&pageSize=${pageSize}&unreadOnly=${unreadOnly}`);
   }
 
   markNotificationAsRead(id: string): Observable<ApiResponse<boolean>> {
