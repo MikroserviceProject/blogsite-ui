@@ -1,0 +1,88 @@
+
+    <div class="auth-page-container container">
+      <div class="auth-card card">
+
+        <!-- DURUM 1: Silme İşlemi Başarıyla Tamamlandı -->
+        @if (isDeleted()) {
+          <div class="status-view success-view">
+            <div class="status-icon-badge success-badge"></div>
+            <h1 class="status-title">Hesabınız Silindi</h1>
+            <p class="status-subtitle">
+              Hesabınız, profil bilgileriniz ve platformdaki tüm verileriniz kalıcı olarak silinmiştir.
+            </p>
+            <div class="action-btn-group">
+              <a routerLink="/" class="btn btn-primary btn-block btn-lg">
+                🏠 Ana Sayfaya Dön
+              </a>
+              <a routerLink="/login" class="btn btn-secondary btn-block mt-2">
+                🔑 Yeniden Kayıt Ol / Giriş Yap
+              </a>
+            </div>
+          </div>
+        }
+
+        <!-- DURUM 2: Silme Hatası veya Süresi Dolmuş Link -->
+        @else if (hasError()) {
+          <div class="status-view error-view">
+            <div class="status-icon-badge error-badge"></div>
+            <h1 class="status-title">Hesap Silinemedi</h1>
+            <p class="status-subtitle">
+              {{ errorMessage() || 'Hesap silme bağlantısı geçersiz veya süresi dolmuş (1 saatlik süre aşılmış).' }}
+            </p>
+
+            <div class="action-btn-group mt-4">
+              <a routerLink="/profile" class="btn btn-secondary btn-block">
+                 Profilime Git
+              </a>
+              <a routerLink="/login" class="btn btn-link-action btn-block mt-2">
+                ← Giriş Sayfasına Dön
+              </a>
+            </div>
+          </div>
+        }
+
+        <!-- DURUM 3: Linkten Gelen Token ile Onay Bekleme Ekranı -->
+        @else {
+          <div class="status-view danger-view">
+            <div class="status-icon-badge danger-badge"></div>
+            <h1 class="status-title text-danger">Hesap Silme Onayı</h1>
+            
+            <p class="status-subtitle">
+              @if (email) {
+                <strong>{{ email }}</strong> hesabını kalıcı olarak silmek üzeresiniz.
+              } @else {
+                Hesabınızı kalıcı olarak silmek üzeresiniz.
+              }
+            </p>
+
+            <div class="alert-box-danger my-4">
+              <div class="alert-title"> DİKKAT: Bu işlem geri alınamaz!</div>
+              <p class="alert-text">
+                Hesabınız silindiğinde tüm blog yazılarınız, profil bilgileriniz, oturumunuz ve platformdaki tüm etkileşimleriniz veritabanından kalıcı olarak kaldırılacaktır.
+              </p>
+            </div>
+
+            <div class="action-btn-group">
+              <button
+                type="button"
+                class="btn btn-danger btn-block btn-lg"
+                (click)="onConfirmDelete()"
+                [disabled]="isDeleting()"
+              >
+                @if (isDeleting()) {
+                  <span>Siliniyor...</span>
+                } @else {
+                  <span> Hesabımı Kalıcı Olarak Sil</span>
+                }
+              </button>
+
+              <a routerLink="/" class="btn btn-secondary btn-block mt-3" [class.disabled]="isDeleting()">
+                Vazgeç ve Ana Sayfaya Dön
+              </a>
+            </div>
+          </div>
+        }
+
+      </div>
+    </div>
+  

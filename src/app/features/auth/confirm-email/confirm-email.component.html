@@ -1,0 +1,135 @@
+
+    <div class="auth-page-container container">
+      <div class="auth-card card">
+        
+        <!-- DURUM 1: Linke Tıklandı & Otomatik Doğrulanıyor -->
+        @if (isAutoVerifying()) {
+          <div class="status-view">
+            <div class="spinner-badge">
+              <span class="loading-spinner"></span>
+            </div>
+            <h1 class="status-title">E-Posta Doğrulanıyor</h1>
+            <p class="status-subtitle">Bağlantınız kontrol ediliyor, lütfen bir saniye bekleyiniz...</p>
+          </div>
+        }
+
+        <!-- DURUM 2: Doğrulama Başarılı Oldu -->
+        @else if (isVerified()) {
+          <div class="status-view success-view">
+            <div class="status-icon-badge success-badge"></div>
+            <h1 class="status-title">Doğrulama Başarılı!</h1>
+            <p class="status-subtitle">
+              E-posta adresiniz başarıyla onaylandı. Hesabınız artık tamamen aktif.
+            </p>
+            <div class="action-btn-group">
+              <a routerLink="/login" class="btn btn-primary btn-block btn-lg">
+                 Hemen Giriş Yap
+              </a>
+            </div>
+            <p class="redirect-hint">Birkaç saniye içinde otomatik olarak giriş sayfasına yönlendirileceksiniz...</p>
+          </div>
+        }
+
+        <!-- DURUM 3: Doğrulama Başarısız Oldu veya Linkin Süresi Doldu -->
+        @else if (verificationFailed()) {
+          <div class="status-view error-view">
+            <div class="status-icon-badge error-badge"></div>
+            <h1 class="status-title">Doğrulama Yapılamadı</h1>
+            <p class="status-subtitle">
+              {{ errorMessage() || 'Doğrulama bağlantısı geçersiz veya süresi dolmuş.' }}
+            </p>
+
+            <div class="resend-box">
+              <label class="form-label" for="resend-email">Yeni Bir Doğrulama Linki İste</label>
+              <div class="resend-input-group">
+                <input
+                  id="resend-email"
+                  type="email"
+                  class="form-control"
+                  [(ngModel)]="email"
+                  name="email"
+                  placeholder="eposta@ornek.com"
+                  required
+                />
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="onResendLink()"
+                  [disabled]="isResending()"
+                >
+                  @if (isResending()) {
+                    <span>Gönderiliyor...</span>
+                  } @else {
+                    <span> Yeni Link Gönder</span>
+                  }
+                </button>
+              </div>
+            </div>
+
+            <div class="auth-footer">
+              <div class="footer-row">
+                <a routerLink="/login" class="link-text">← Giriş Sayfasına Dön</a>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- DURUM 4: Kayıt Sonrası Bekleme Ekranı (Link Gönderildi Ekranı) -->
+        @else {
+          <div class="status-view info-view">
+            <div class="status-icon-badge mail-badge"></div>
+            <h1 class="status-title">E-Postanızı Kontrol Edin</h1>
+            <p class="status-subtitle">
+              Hesabınızı aktifleştirmek için tek yapmanız gereken gelen kutunuzdaki bağlantıya tıklamak.
+            </p>
+
+            <div class="info-alert">
+              <span class="info-icon"></span>
+              <div class="info-text">
+                @if (email) {
+                  <strong>{{ email }}</strong> adresinize tek tıkla doğrulama bağlantısı gönderildi.
+                } @else {
+                  E-posta adresinize tek tıkla doğrulama bağlantısı gönderildi.
+                }
+                Lütfen gelen kutunuzu (ve <strong>Spam / Gereksiz</strong> klasörünü) kontrol edip <strong>"E-Posta Adresimi Doğrula"</strong> butonuna tıklayınız.
+              </div>
+            </div>
+
+            <div class="resend-section">
+              <p class="resend-prompt">E-posta elinize ulaşmadı mı?</p>
+              <div class="resend-input-group">
+                <input
+                  type="email"
+                  class="form-control"
+                  [(ngModel)]="email"
+                  name="email"
+                  placeholder="eposta@ornek.com"
+                  required
+                />
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="onResendLink()"
+                  [disabled]="isResending()"
+                >
+                  @if (isResending()) {
+                    <span>Gönderiliyor...</span>
+                  } @else {
+                    <span> Tekrar Gönder</span>
+                  }
+                </button>
+              </div>
+            </div>
+
+            <div class="auth-footer">
+              <div class="footer-row">
+                <span>Zaten onayladınız mı?</span>
+                <a routerLink="/login" class="link-text">Giriş Yapın</a>
+              </div>
+            </div>
+          </div>
+        }
+
+      </div>
+    </div>
+  

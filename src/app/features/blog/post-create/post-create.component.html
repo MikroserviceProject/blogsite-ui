@@ -1,0 +1,119 @@
+
+    <div class="container create-post-page">
+      <div class="header-row">
+        <div>
+          <a routerLink="/" class="back-link">← Ana Sayfaya Dön</a>
+          <h1 class="page-title">{{ editingId() ? 'Yazıyı Düzenle' : 'Yeni İçerik / Köşe Yazısı Oluştur' }}</h1>
+          <p class="page-desc">Lumina okurları için yeni bir blog yazısı veya köşe yazısı hazırlayın.</p>
+        </div>
+      </div>
+
+      <div class="create-grid">
+        <!-- Editor Form -->
+        <div class="card editor-card">
+          <form (ngSubmit)="onSubmit()">
+            <div class="form-group">
+              <label class="form-label">Başlık</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="title"
+                name="title"
+                placeholder="Örn: Dağıtık Sistemlerde Kimlik Doğrulama"
+                required
+              />
+            </div>
+
+            <!-- Fotoğraf Yükleme Alanı -->
+            <div class="form-group">
+              <label class="form-label">📸 Kapak Fotoğrafı</label>
+              <p class="field-hint">Fotoğraflı gönderiler "Blog" başlığı altında, fotoğrafsız olanlar "Köşe Yazısı" olarak yayınlanır.</p>
+              <div class="photo-upload-container">
+                <input
+                  type="file"
+                  #fileInput
+                  (change)="onFileSelected($event)"
+                  accept="image/*"
+                  style="display: none;"
+                />
+                <button
+                  type="button"
+                  class="upload-trigger-btn"
+                  (click)="fileInput.click()"
+                >
+                  📁 Bilgisayardan Fotoğraf Seç
+                </button>
+                @if (selectedFileName()) {
+                  <span class="upload-or-text">{{ selectedFileName() }}</span>
+                } @else if (existingPhotoUrl()) {
+                  <span class="upload-or-text">Mevcut fotoğraf korunuyor</span>
+                }
+              </div>
+            </div>
+
+            <!-- Etiket (Tags) Yükleme Alanı -->
+            <div class="form-group">
+              <label class="form-label">🏷️ Etiketler</label>
+              <div class="tags-input-container form-control" (click)="tagsInputField.focus()">
+                @for (tag of tagsArray(); track tag) {
+                  <span class="tag-badge">
+                    {{ tag }}
+                    <button type="button" class="tag-remove" (click)="removeTag(tag)">&times;</button>
+                  </span>
+                }
+                <input
+                  #tagsInputField
+                  type="text"
+                  class="tags-input-field"
+                  [(ngModel)]="tagsInputText"
+                  name="tagsInputText"
+                  (keydown)="onTagKeydown($event)"
+                  placeholder="Etiket yazıp Boşluk, Virgül veya Enter'a basın"
+                />
+              </div>
+              <p class="field-hint">Tarihçe ve filtreleme için dillerin veya konuların adlarını virgülle ayırarak yazabilirsiniz.</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">İçerik Metni</label>
+              <textarea
+                class="form-control"
+                rows="10"
+                [(ngModel)]="content"
+                name="content"
+                placeholder="Yazınızın detaylı içeriğini buraya yazınız..."
+                required
+              ></textarea>
+            </div>
+
+            @if (submitError()) {
+              <p class="submit-error">{{ submitError() }}</p>
+            }
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary btn-lg" [disabled]="submitting()">
+                {{ submitting() ? 'Kaydediliyor...' : 'Yayınla' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Live Preview Sidebar -->
+        <div class="card preview-card">
+          <div class="preview-card-header">
+            <h3 class="preview-title">Önizleme </h3>
+            <span class="preview-type-tag">{{ (selectedFile() || existingPhotoUrl()) ? 'Blog' : 'Köşe Yazısı' }}</span>
+          </div>
+          <div class="preview-box">
+            @if (previewUrl() || existingPhotoUrl()) {
+              <img [src]="previewUrl() || photoSrc(existingPhotoUrl()!)" alt="Kapak önizleme" class="preview-photo" />
+            }
+            <div class="preview-text">
+              <h4 class="preview-heading">{{ title || 'Yazı başlığı burada görünecek' }}</h4>
+              <p class="preview-summary">{{ content ? (content.slice(0, 150) + (content.length > 150 ? '...' : '')) : 'İçerik burada görünecek...' }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  

@@ -1,0 +1,264 @@
+
+    <div class="admin-tab-seamless-container">
+      <div class="admin-main-card">
+        <!-- Top Actions Bar -->
+        <div class="admin-actions-bar" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 24px;">
+          <div>
+            <h2 class="card-section-title" style="margin: 0; color: #ffffff; font-size: 18px; font-weight: 800;">Yazar & Başvuru Yönetimi</h2>
+            <p class="card-section-desc" style="margin: 0; color: #94a3b8; font-size: 13px;">Sisteme yazar olarak başvuran adayların CV'lerini inceleyin ve onaylayın.</p>
+          </div>
+          <button class="btn btn-navy-outline btn-sm" (click)="loadAuthors()" [disabled]="isLoading()">
+            <span></span> Listeyi Yenile
+          </button>
+        </div>
+
+      <!-- Main Applications Table Card -->
+      <div class="applications-card">
+        <!-- Filter Toolbar -->
+        <div class="posts-filter-bar" style="margin-bottom: 20px;">
+          <div class="pills-row">
+            <button class="filter-pill" [class.active]="activeTab() === 'pending'" (click)="setTab('pending')">
+               Onay Bekleyenler ({{ pendingList().length }})
+            </button>
+            <button class="filter-pill" [class.active]="activeTab() === 'approved'" (click)="setTab('approved')">
+               Onaylanan Yazarlar ({{ approvedList().length }})
+            </button>
+            <button class="filter-pill" [class.active]="activeTab() === 'rejected'" (click)="setTab('rejected')">
+              ❌ Reddedilenler ({{ rejectedList().length }})
+            </button>
+            <button class="filter-pill" [class.active]="activeTab() === 'all'" (click)="setTab('all')">
+               Tümü ({{ allAuthors().length }})
+            </button>
+          </div>
+
+          <div class="post-search-box" style="display:flex; gap:8px;">
+            <input 
+              type="text" 
+              class="form-control form-control-sm" 
+              placeholder="İsim, e-posta veya üniversite ara..."
+              [(ngModel)]="searchQuery"
+              style="min-width: 240px;"
+            />
+          </div>
+        </div>
+
+        @if (isLoading()) {
+          <div class="loading-container">
+            <span class="spinner-icon"></span>
+            <p>Veriler yükleniyor, lütfen bekleyin...</p>
+          </div>
+        } @else if (filteredAuthors().length === 0) {
+          <div class="empty-state">
+            <span class="empty-icon">
+              @if (activeTab() === 'pending') {  }
+              @else if (activeTab() === 'approved') {  }
+              @else {  }
+            </span>
+            <h3>
+              @if (activeTab() === 'pending') { Bekleyen Başvuru Bulunmuyor }
+              @else if (activeTab() === 'approved') { Henüz Onaylanmış Yazar Yok }
+              @else if (activeTab() === 'rejected') { Reddedilen Başvuru Yok }
+              @else { Kayıt Bulunamadı }
+            </h3>
+            <p>
+              @if (activeTab() === 'pending') { İnceleme bekleyen yeni bir yazar başvurusu bulunmuyor. }
+              @else { Bu filtreleme kriterine uyan herhangi bir kullanıcı listelenemedi. }
+            </p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="applications-table">
+              <thead>
+                <tr>
+                  <th>Yazar / Kullanıcı</th>
+                  <th>E-Posta</th>
+                  <th>Üniversite / Bölüm</th>
+                  <th>CV / Özgeçmiş</th>
+                  <th>Başvuru Durumu</th>
+                  <th>E-Posta Durumu</th>
+                  <th>Tarih</th>
+                  <th class="text-center">Onayla</th>
+                  <th class="text-center">Reddet</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (author of filteredAuthors(); track author.id) {
+                  <tr class="table-row">
+                    <td>
+                      <div class="user-cell">
+                        <div class="user-avatar-sm">
+                          {{ author.username.charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="user-name-info">
+                          <span class="uname">{{ author.username }}</span>
+                          <span class="role-subtext">Yazar Adayı</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="email-text">{{ author.email }}</span>
+                    </td>
+                    <td>
+                      <span class="uni-text">{{ author.university || 'Belirtilmemiş' }}</span>
+                    </td>
+                    <td>
+                      @if (author.cvUrl) {
+                        <div class="cv-actions">
+                          <button 
+                            type="button" 
+                            class="btn btn-xs btn-preview-cv" 
+                            (click)="openCvPreview(author)"
+                            title="CV'yi Sayfa İçinde İncele"
+                          >
+                            Önizle
+                          </button>
+                          <a 
+                            [href]="authService.getCvUrl(author.cvUrl)" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            class="btn btn-xs btn-open-cv"
+                            title="Yeni Sekmede Aç"
+                          >
+                            PDF ↗
+                          </a>
+                        </div>
+                      } @else {
+                        <span class="no-file-text">Dosya yok</span>
+                      }
+                    </td>
+                    <td class="text-center">
+                      <!-- Başvuru Durum Rozeti -->
+                      @if (isStatus(author, 'Pending')) {
+                        <i class="fa-solid fa-hourglass-half" title="Başvuru Bekliyor" style="font-size: 1.2rem; color: #333;"></i>
+                      } @else if (isStatus(author, 'Approved')) {
+                        <i class="fa-solid fa-check" title="Başvuru Onaylandı" style="font-size: 1.2rem; color: #333;"></i>
+                      } @else if (isStatus(author, 'Rejected')) {
+                        <i class="fa-solid fa-xmark" title="Başvuru Reddedildi" style="font-size: 1.2rem; color: #333;"></i>
+                      }
+                    </td>
+                    <td class="text-center">
+                      <!-- E-Posta Onay Durumu -->
+                      @if (author.isEmailConfirmed) {
+                        <i class="fa-solid fa-envelope-circle-check" title="E-Posta Onaylı" style="font-size: 1.2rem; color: #333;"></i>
+                      } @else {
+                        <i class="fa-regular fa-envelope" title="E-Posta Onay Bekliyor" style="font-size: 1.2rem; color: #333;"></i>
+                      }
+                    </td>
+                    <td>
+                      <span class="date-text">{{ (author.authorApplicationDate || author.createdAt) | date:'d MMM y, HH:mm' }}</span>
+                    </td>
+                    
+                    <td class="text-center">
+                      @if (isStatus(author, 'Pending') || isStatus(author, 'Rejected')) {
+                        <button 
+                          type="button" 
+                          class="btn btn-sm" 
+                          style="background: transparent; border: 1px solid #ccc; color: #333; padding: 4px 10px;"
+                          (click)="onApprove(author)"
+                          [disabled]="isProcessing(author.id)"
+                          title="Onayla"
+                        >
+                          <i class="fa-solid fa-check"></i>
+                        </button>
+                      }
+                    </td>
+                    <td class="text-center">
+                      @if (isStatus(author, 'Pending')) {
+                        <button 
+                          type="button" 
+                          class="btn btn-sm" 
+                          style="background: transparent; border: 1px solid #ccc; color: #333; padding: 4px 10px;"
+                          (click)="openRejectModal(author)"
+                          [disabled]="isProcessing(author.id)"
+                          title="Reddet"
+                        >
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div> <!-- /applications-card -->
+      </div> <!-- /admin-main-card -->
+
+      <!-- CV Görüntüleme Modalı -->
+      @if (cvPreviewModal()) {
+        <div class="modal-backdrop" (click)="closeCvPreview()">
+          <div class="modal-card modal-cv-card card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <div class="modal-header-title">
+                <span class="modal-header-icon"></span>
+                <div>
+                  <h3 class="modal-title">{{ cvPreviewModal()?.username }} - Özgeçmiş (CV)</h3>
+                  <p class="modal-sub">{{ cvPreviewModal()?.email }} | {{ cvPreviewModal()?.university || 'Üniversite belirtilmemiş' }}</p>
+                </div>
+              </div>
+              <div class="modal-actions-right">
+                <a 
+                  [href]="authService.getCvUrl(cvPreviewModal()?.cvUrl)" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  class="btn btn-primary btn-sm"
+                >
+                  Tam Ekranda Aç ↗
+                </a>
+                <button type="button" class="btn-close" (click)="closeCvPreview()"></button>
+              </div>
+            </div>
+            <div class="modal-body-cv">
+              @if (safeCvPreviewUrl) {
+                <iframe [src]="safeCvPreviewUrl" class="cv-iframe" title="CV Önizleme"></iframe>
+              } @else {
+                <div class="empty-state">
+                  <p>CV dosyası yüklenemedi veya desteklenmiyor.</p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Reddetme Modalı -->
+      @if (rejectModalAuthor()) {
+        <div class="modal-backdrop" (click)="closeRejectModal()">
+          <div class="modal-card card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3 class="modal-title"> Yazar Başvurusunu Reddet</h3>
+              <button type="button" class="btn-close" (click)="closeRejectModal()"></button>
+            </div>
+            <div class="modal-body">
+              <p class="modal-desc">
+                <strong>{{ rejectModalAuthor()?.username }}</strong> kullanıcısının yazar başvurusunu reddetmek üzeresiniz. 
+                Adaya gönderilecek e-postada yer alacak ret gerekçesini belirtebilirsiniz:
+              </p>
+              <div class="form-group">
+                <label class="form-label" for="reject-reason">Ret Gerekçesi (Opsiyonel)</label>
+                <textarea
+                  id="reject-reason"
+                  class="form-control"
+                  rows="3"
+                  [(ngModel)]="rejectionReason"
+                  placeholder="Örn: Yüklenen CV belgesi okunamıyor veya akademik kriterleri karşılamıyor."
+                ></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" (click)="closeRejectModal()">İptal</button>
+              <button 
+                type="button" 
+                class="btn btn-danger" 
+                (click)="confirmReject()"
+                [disabled]="isProcessing(rejectModalAuthor()!.id)"
+              >
+                Başvuruyu Reddet
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  

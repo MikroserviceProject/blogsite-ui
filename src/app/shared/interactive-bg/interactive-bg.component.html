@@ -1,0 +1,16 @@
+
+    <div class="starry-sky-wrapper">
+      <!-- Deep Midnight Navy Night Sky Base -->
+      <div class="sky-cosmic-glow"></div>
+      
+      <!-- Dynamic Starfield & Constellations Canvas -->
+      <canvas #bgCanvas class="star-canvas"></canvas>
+      
+      <!-- Starlight Spotlight behind Cursor -->
+      <div
+        class="starlight-cursor-glow"
+        [style.transform]="'translate3d(' + glowX + 'px, ' + glowY + 'px, 0)'"
+        [style.opacity]="isMouseInside ? 1 : 0"
+      ></div>
+    </div>
+  

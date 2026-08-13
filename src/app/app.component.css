@@ -72,3 +72,63 @@
     transform: scale(1);
   }
 }
+
+/* 🧚‍♀️ Peri Modu Butonu (Sol Ortada Sabit) */
+.fairy-toggle-btn {
+  position: fixed;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 99999;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.fairy-toggle-btn:hover {
+  background: rgba(244, 114, 182, 0.3);
+  border-color: #f472b6;
+  transform: translateY(-50%) scale(1.15);
+  box-shadow: 0 6px 16px rgba(244, 114, 182, 0.4);
+}
+
+.fairy-toggle-btn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* 🎵 Müzik Açma/Kapama Butonu */
+.fairy-music-btn {
+  position: fixed;
+  top: calc(50% + 55px);
+  left: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 99999;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.fairy-music-btn:hover {
+  background: rgba(244, 114, 182, 0.4);
+  border-color: #f472b6;
+  transform: scale(1.1);
+}

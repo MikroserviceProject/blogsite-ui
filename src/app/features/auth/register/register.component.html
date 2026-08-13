@@ -1,0 +1,329 @@
+
+    <div class="auth-page-container container">
+      <div class="auth-card card register-card">
+        <div class="auth-header">
+          <div class="auth-icon-badge"></div>
+          <h1 class="auth-title">Hesap Oluştur</h1>
+          <p class="auth-subtitle">Lumina kimlik ve yayın platformuna katılın</p>
+        </div>
+
+        <form (ngSubmit)="onSubmit()">
+          <!-- Rol Seçimi (Okur & Yazar) -->
+          <div class="form-group">
+            <label class="form-label">Üyelik Türü</label>
+            <div class="role-selector">
+              <label class="role-option" [class.role-selected]="role === 'User'">
+                <input type="radio" name="role" value="User" [(ngModel)]="role" />
+                <div class="role-content">
+                  <span class="role-emoji"></span>
+                  <div class="role-info">
+                    <span class="role-title">Okur</span>
+                    <span class="role-desc">Standart üye profili</span>
+                  </div>
+                </div>
+              </label>
+
+              <label class="role-option" [class.role-selected]="role === 'Author'">
+                <input type="radio" name="role" value="Author" [(ngModel)]="role" />
+                <div class="role-content">
+                  <span class="role-emoji"></span>
+                  <div class="role-info">
+                    <span class="role-title">Yazar</span>
+                    <span class="role-desc">İçerik üretici (Onaylı)</span>
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-username">Kullanıcı Adı</label>
+            <input
+              id="reg-username"
+              type="text"
+              class="form-control"
+              [(ngModel)]="username"
+              name="username"
+              placeholder="Örn: salihacicek"
+              required
+              autocomplete="username"
+            />
+            <div class="form-hint">3-50 karakter, benzersiz kullanıcı adı</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-email">E-Posta Adresi</label>
+            <input
+              id="reg-email"
+              type="email"
+              class="form-control"
+              [(ngModel)]="email"
+              name="email"
+              placeholder="adiniz@ornek.com"
+              required
+              pattern="^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$"
+              autocomplete="email"
+              #emailCtrl="ngModel"
+            />
+            @if (emailCtrl.invalid && (emailCtrl.dirty || emailCtrl.touched)) {
+              <div class="form-error" style="color: #ef4444; font-size: 13px; margin-top: 5px;">
+                Lütfen geçerli bir e-posta adresi giriniz.
+              </div>
+            } @else {
+              <div class="form-hint">Aktivasyon ve bildirimler bu adrese gönderilir.</div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Şifre</label>
+            <div class="password-input-wrapper">
+              <input
+                id="reg-password"
+                [type]="showPassword() ? 'text' : 'password'"
+                class="form-control"
+                [(ngModel)]="password"
+                name="password"
+                (ngModelChange)="onPasswordChange($event)"
+                placeholder="En az 8 karakter, güçlü şifre"
+                required
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="toggle-password-btn"
+                (click)="togglePassword()"
+                tabindex="-1"
+              >
+                {{ showPassword() ? '🙈' : '🐵' }}
+              </button>
+            </div>
+
+
+            @if (password) {
+              <div class="password-strength">
+                <div class="strength-bar-track">
+                  <div
+                    class="strength-bar-fill"
+                    [style.width.%]="passwordStrengthPercent()"
+                    [ngClass]="passwordStrengthClass()"
+                  ></div>
+                </div>
+                <span class="strength-label" [ngClass]="passwordStrengthClass()">
+                  {{ passwordStrengthLabel() }}
+                </span>
+              </div>
+
+              <ul class="password-rules">
+                <li [class.rule-pass]="rules().hasMinLength">
+                  <span class="rule-icon">{{ rules().hasMinLength ? '✓' : '○' }}</span> En az 8 karakter
+                </li>
+                <li [class.rule-pass]="rules().hasUpperCase">
+                  <span class="rule-icon">{{ rules().hasUpperCase ? '✓' : '○' }}</span> En az 1 büyük harf (A-Z)
+                </li>
+                <li [class.rule-pass]="rules().hasLowerCase">
+                  <span class="rule-icon">{{ rules().hasLowerCase ? '✓' : '○' }}</span> En az 1 küçük harf (a-z)
+                </li>
+                <li [class.rule-pass]="rules().hasDigit">
+                  <span class="rule-icon">{{ rules().hasDigit ? '✓' : '○' }}</span> En az 1 rakam (0-9)
+                </li>
+                <li [class.rule-pass]="rules().hasSpecial">
+                  <span class="rule-icon">{{ rules().hasSpecial ? '✓' : '○' }}</span> En az 1 özel karakter (!&#64;#$%^&*)
+                </li>
+              </ul>
+            }
+          </div>
+
+          <div class="form-group" style="margin-top: 15px;">
+            <label class="form-label" for="reg-confirm-password">Şifre Tekrarı</label>
+            <div class="password-input-wrapper">
+              <input
+                id="reg-confirm-password"
+                [type]="showConfirmPassword() ? 'text' : 'password'"
+                class="form-control"
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                placeholder="Şifrenizi doğrulayın"
+                required
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="toggle-password-btn"
+                (click)="toggleConfirmPassword()"
+                tabindex="-1"
+              >
+                {{ showConfirmPassword() ? '🙈' : '🐵' }}
+              </button>
+            </div>
+            @if (password && confirmPassword && password !== confirmPassword) {
+              <div class="form-error" style="color: #ef4444; font-size: 13px; margin-top: 5px;">
+                Şifreler uyuşmuyor.
+              </div>
+            }
+          </div>
+
+
+          <!-- YAZAR BAŞVURUSU EK ALANLARI -->
+          @if (role === 'Author') {
+            <div class="author-extra-fields">
+              <div class="author-fields-badge">
+                <span> Yazar Başvuru Bilgileri</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="reg-university">Mezun Olduğunuz Üniversite / Bölüm <span class="required-star">*</span></label>
+                <input
+                  id="reg-university"
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="university"
+                  name="university"
+                  placeholder="Örn: Hacettepe Üniversitesi - Bilgisayar Mühendisliği"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Özgeçmiş / CV Dosyası (PDF) <span class="required-star">*</span></label>
+                
+                <div class="file-dropzone" [class.file-selected]="!!selectedCvFile">
+                  <input
+                    type="file"
+                    id="cv-file-input"
+                    class="file-input-hidden"
+                    accept=".pdf"
+                    (change)="onCvFileSelected($event)"
+                  />
+                  <label for="cv-file-input" class="file-dropzone-label">
+                    @if (selectedCvFile) {
+                      <div class="file-info-badge">
+                        <span class="file-icon"></span>
+                        <div class="file-text">
+                          <span class="file-name">{{ selectedCvFile.name }}</span>
+                          <span class="file-size">({{ getFormattedFileSize(selectedCvFile.size) }})</span>
+                        </div>
+                        <button type="button" class="btn-remove-file" (click)="removeCvFile($event)"></button>
+                      </div>
+                    } @else {
+                      <span class="upload-icon">📤</span>
+                      <span class="upload-title">CV Dosyanızı Buraya Yükleyin</span>
+                      <span class="upload-hint">Yalnızca PDF formatı (Maksimum 10 MB)</span>
+                    }
+                  </label>
+                </div>
+              </div>
+
+              <div class="author-notice-box">
+                <span>ℹ️</span>
+                <span>Yazar başvurunuz editörlerimiz ve sistem yöneticisi tarafından incelenecektir. Onaylandığında tarafınıza hesap aktivasyon bağlantısı iletilecektir.</span>
+              </div>
+            </div>
+          }
+
+          <!-- Detaylı Hata Kutusu -->
+          @if (parsedError()) {
+            <div class="custom-error-alert" [class.error-alert-pass]="parsedError()?.isPasswordError">
+              <div class="cea-head">
+                <span class="cea-icon">{{ parsedError()?.isPasswordError ? '' : '' }}</span>
+                <strong>{{ parsedError()?.title }}</strong>
+              </div>
+              <div class="cea-msg">{{ parsedError()?.generalMessage }}</div>
+
+              @if (parsedError()?.passwordErrors?.length) {
+                <ul class="cea-list">
+                  @for (p of parsedError()?.passwordErrors; track p) {
+                    <li>❌ {{ p }}</li>
+                  }
+                </ul>
+              }
+              @if (parsedError()?.emailErrors?.length) {
+                <ul class="cea-list">
+                  @for (e of parsedError()?.emailErrors; track e) {
+                    <li> {{ e }}</li>
+                  }
+                </ul>
+              }
+              @if (parsedError()?.usernameErrors?.length) {
+                <ul class="cea-list">
+                  @for (u of parsedError()?.usernameErrors; track u) {
+                    <li> {{ u }}</li>
+                  }
+                </ul>
+              }
+              @if (parsedError()?.otherErrors?.length) {
+                <ul class="cea-list">
+                  @for (o of parsedError()?.otherErrors; track o) {
+                    <li> {{ o }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block btn-lg"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <span><i class="fa fa-spinner fa-spin" style="margin-right: 8px;"></i> Mailiniz doğrulanıyor lütfen bekleyiniz...</span>
+            } @else {
+              <span>{{ role === 'Author' ? ' Yazar Başvurusunu Gönder' : ' Hesabımı Oluştur' }}</span>
+            }
+          </button>
+        </form>
+
+        <!-- Alt Kısım: Giriş Linki & Doğrulama Paneli Accordion -->
+        <div class="auth-footer">
+          <div class="footer-row">
+            <span>Zaten bir hesabınız var mı?</span>
+            <a routerLink="/login" class="link-gold">Giriş Yap</a>
+          </div>
+
+          <!-- Doğrulama E-Postası Gelmedi mi? Accordion Butonu -->
+          <div class="resend-accordion-wrapper">
+            <button 
+              type="button" 
+              class="btn-toggle-resend" 
+              (click)="isResendOpen.set(!isResendOpen())"
+            >
+              <span>{{ isResendOpen() ? '▲' : '▼' }}</span>
+              <span>Doğrulama e-postası almadınız mı? Tekrar Gönder</span>
+            </button>
+
+            @if (isResendOpen()) {
+              <div class="resend-panel card">
+                <div class="rp-title"> Doğrulama Bağlantısını Yeniden Alın</div>
+                <p class="rp-desc">Kayıt olduğunuz e-posta adresini girerek yeni bir aktivasyon bağlantısı isteyebilirsiniz:</p>
+                <div class="rp-form">
+                  <input
+                    type="email"
+                    class="form-control form-control-sm"
+                    [(ngModel)]="resendEmailInput"
+                    placeholder="ornek@mail.com"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    (click)="onResendConfirmation()"
+                    [disabled]="isResending() || !resendEmailInput"
+                  >
+                    @if (isResending()) {
+                      <span>Gönderiliyor...</span>
+                    } @else {
+                      <span>📨 Gönder</span>
+                    }
+                  </button>
+                </div>
+                @if (resendMessage()) {
+                  <div class="rp-result" [class.rp-error]="resendIsError()">
+                    {{ resendMessage() }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  
