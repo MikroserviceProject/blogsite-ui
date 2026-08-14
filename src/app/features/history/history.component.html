@@ -1,51 +1,57 @@
 
-    <div class="history-page container">
-      <div class="history-header">
-        <h1 class="page-title">Bilgisayar ve Yazılım Tarihçesi</h1>
-        <p class="page-subtitle">Programlama dillerinin ve donanım teknolojilerinin evrimi</p>
-      </div>
+<div class="history-page container">
+  <div class="history-header">
+    <h2 class="page-title">Bilgisayar ve Yazılım Tarihçesi</h2>
+    <p class="page-subtitle">Programlama dillerinin ve donanım teknolojilerinin evrimi</p>
+  </div>
 
-      <div class="timeline-container">
-        <!-- We can group by family or just list them chronologically and show the family badge -->
-        <div class="timeline">
-          @for (item of historyItems; track item.id; let i = $index) {
-              <div class="timeline-item" [style.animation-delay]="(i * 0.15) + 's'">
-                <div class="timeline-content" 
-                     [style.border-top-color]="item.color"
-                     [style.box-shadow]="hoveredItemId === item.id ? '0 15px 35px ' + item.color + '40' : ''"
-                     (mouseenter)="hoveredItemId = item.id"
-                     (mouseleave)="hoveredItemId = null">
-                  
-                  <div class="family-badge" [style.background-color]="item.color + '20'" [style.color]="item.color">
-                    {{ item.family }}
-                  </div>
-
-                  <div class="item-header">
-                    <span class="item-year" [style.color]="item.color">{{ item.year }}</span>
-                    <h3 class="item-name">{{ item.name }}</h3>
-                  </div>
-                  
-                  <div class="item-details">
-                    <p class="item-creator"><strong>Geliştirici / Kurucu:</strong> {{ item.creator }}</p>
-                    <p class="item-reason"><strong>Kuruluş Sebebi:</strong> {{ item.reason }}</p>
-                  </div>
-
-                  <p class="item-desc">{{ item.description }}</p>
-                  
-                  <div class="item-actions">
-                    <a [routerLink]="['/etiket', item.tag]" class="btn btn-outline" 
-                       [style.border-color]="item.color" 
-                       [style.color]="item.color"
-                       [class.btn-hovered]="hoveredItemId === item.id"
-                       [style.background]="hoveredItemId === item.id ? item.color + '15' : 'transparent'">
-                      {{ item.name }} ile ilgili blogları gör 
-                      <span class="arrow-icon" [class.arrow-move]="hoveredItemId === item.id">→</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            }
+  <div class="timeline-container">
+    <div class="timeline-line"></div>
+    <div class="timeline-nodes">
+      @for (item of historyItems; track item.id; let i = $index) {
+        <div class="timeline-node-wrapper" [class.is-top]="i % 2 === 0" [class.is-bottom]="i % 2 !== 0">
+          <div class="timeline-content" [class.active]="expandedItemId() === item.id">
+            <span class="node-year" [style.color]="item.color">{{ item.year }}</span>
+            <span class="node-name">{{ item.name }}</span>
+          </div>
+          <div class="timeline-dot" 
+               [class.active]="expandedItemId() === item.id"
+               [style.border-color]="item.color"
+               [style.background-color]="expandedItemId() === item.id ? item.color : 'var(--bg-surface)'"
+               (click)="toggleExpand(item.id)">
           </div>
         </div>
+      }
     </div>
+  </div>
+
+  <!-- Expanded Details Card -->
+  @for (item of historyItems; track item.id) {
+    @if (expandedItemId() === item.id) {
+      <div class="expanded-card card" [style.border-top-color]="item.color">
+        <div class="expanded-header">
+          <div class="family-badge" [style.background-color]="item.color + '20'" [style.color]="item.color">
+            {{ item.family }}
+          </div>
+          <h3 class="expanded-title">{{ item.name }} <span class="expanded-year">({{ item.year }})</span></h3>
+        </div>
+        
+        <div class="expanded-details">
+          <p><strong>Geliştirici / Kurucu:</strong> {{ item.creator }}</p>
+          <p><strong>Kuruluş Sebebi:</strong> {{ item.reason }}</p>
+        </div>
+
+        <p class="expanded-desc">{{ item.description }}</p>
+        
+        <div class="expanded-actions">
+          <a [routerLink]="['/etiket', item.tag]" class="btn btn-outline" 
+             [style.border-color]="item.color" 
+             [style.color]="item.color">
+            {{ item.name }} ile ilgili blogları ve köşe yazılarını gör →
+          </a>
+        </div>
+      </div>
+    }
+  }
+</div>
   

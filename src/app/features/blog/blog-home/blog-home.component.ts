@@ -119,14 +119,6 @@ export class BlogHomeComponent implements OnInit {
     });
   }
 
-  newsletterEmail = '';
-  newsletterSubscribed = signal<boolean>(false);
-
-  subscribeNewsletter() {
-    if (!this.newsletterEmail.trim()) return;
-    this.newsletterSubscribed.set(true);
-  }
-
   contentPreview(content: string): string {
     return content.length > 150 ? content.slice(0, 150) + '...' : content;
   }

@@ -5,13 +5,14 @@ import { BlogPost } from '../../core/models/blog.model';
 import { PublicUserProfile } from '../../core/models/auth.model';
 import { AuthService } from '../../core/services/auth.service';
 import { BlogService } from '../../core/services/blog.service';
+import { HistoryComponent } from '../history/history.component';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-internship',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, HistoryComponent],
   templateUrl: './internship.component.html',
   styleUrl: './internship.component.css'
 })

@@ -155,23 +155,3 @@
         }
       }
     </section>
-
-    <!-- Newsletter CTA -->
-    <section class="container newsletter-section">
-      <div class="newsletter-card card">
-        <div class="newsletter-content">
-          <span class="newsletter-badge">Haftalık Bülten</span>
-          <h2 class="newsletter-title">Yeni Yazıları ve Gelişmeleri Kaçırmayın</h2>
-          <p class="newsletter-desc">En güncel teknoloji ve köşe yazılarını her pazartesi sabahı e-posta kutunuza ulaştıralım.</p>
-        </div>
-        <div class="newsletter-form">
-          @if (newsletterSubscribed()) {
-            <span class="newsletter-thanks">Teşekkürler! Abone oldunuz.</span>
-          } @else {
-            <input type="email" placeholder="E-posta adresiniz..." class="form-control" [(ngModel)]="newsletterEmail" name="newsletterEmail" />
-            <button class="btn btn-primary" (click)="subscribeNewsletter()">Abone Ol</button>
-          }
-        </div>
-      </div>
-    </section>
-  

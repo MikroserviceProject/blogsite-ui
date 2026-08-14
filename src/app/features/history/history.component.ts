@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -23,26 +23,68 @@ interface HistoryItem {
 })
 export class HistoryComponent {
   hoveredItemId: string | null = null;
+  expandedItemId = signal<string | null>(null);
+
+  toggleExpand(id: string) {
+    if (this.expandedItemId() === id) {
+      this.expandedItemId.set(null);
+    } else {
+      this.expandedItemId.set(id);
+    }
+  }
 
   historyItems: HistoryItem[] = [
+    {
+      id: 'ada',
+      year: 1843,
+      name: 'İlk Algoritma & Yazılımın Doğuşu',
+      creator: 'Ada Lovelace',
+      reason: 'Charles Babbage\'ın "Analitik Motor" adı verilen genel amaçlı mekanik bilgisayarı için Bernoulli sayılarını hesaplamak.',
+      description: 'Makinenin sadece sayıları değil, sembolleri de işleyebileceğini fark eden Lovelace, tarihteki ilk bilgisayar programcısı olarak kabul edilir. Bu, yazılım kavramının donanımdan bağımsız ilk düşünsel tohumuydu.',
+      tag: 'Tarihçe',
+      color: '#eab308', // Yellow
+      family: 'Yazılımın Kökenleri'
+    },
     {
       id: 'eniac',
       year: 1945,
       name: 'ENIAC & Turing Makinesi',
       creator: 'Alan Turing & John Mauchly',
-      reason: '2. Dünya Savaşı sırasında şifre kırmak ve karmaşık topçu atış hesaplamalarını çok hızlı bir şekilde yapmak amacıyla üretildiler.',
-      description: 'Modern bilgisayarların ataları. Turing makinesi teorik hesaplamanın temelini atarken, ENIAC dünyanın ilk genel amaçlı elektronik dijital bilgisayarı olmuştur.',
-      tag: 'Bilgisayar',
+      reason: '2. Dünya Savaşı sırasında şifre kırmak (Enigma) ve karmaşık topçu atış hesaplamalarını hızlıca yapabilmek.',
+      description: 'Alan Turing, "Turing Makinesi" konseptiyle teorik bilgisayar biliminin ve yapay zekanın temellerini atarken, ENIAC dünyanın ilk elektronik ve genel amaçlı dijital bilgisayarı olarak tarihe geçti.',
+      tag: 'Donanım',
       color: '#64748b', // Slate
       family: 'Donanım ve İlk Bilgisayarlar'
     },
     {
+      id: 'compiler',
+      year: 1952,
+      name: 'İlk Derleyici (Compiler)',
+      creator: 'Grace Hopper',
+      reason: 'Sadece 0 ve 1\'lerden oluşan makine dilinden kurtulup, insanların daha rahat anlayabileceği kodlar yazılmasını sağlamak.',
+      description: 'Grace Hopper\'ın A-0 Sistemi, kaynak kodunu makine koduna çeviren ilk yazılımdı. Bu gelişme, yazılımı donanımın tekelinden çıkararak modern programlama dillerinin (COBOL vb.) doğmasını sağladı.',
+      tag: 'Tarihçe',
+      color: '#f97316', // Orange
+      family: 'Yazılımın Kökenleri'
+    },
+    {
+      id: 'unix',
+      year: 1969,
+      name: 'UNIX İşletim Sistemi',
+      creator: 'Ken Thompson & Dennis Ritchie (Bell Labs)',
+      reason: 'Büyük, karmaşık ve pahalı işletim sistemlerine alternatif olarak küçük, modüler ve çok kullanıcılı bir sistem tasarlamak.',
+      description: 'Sadece bir işletim sistemi değil, aynı zamanda modern bilişimin kalbidir. macOS, Linux, Android ve iOS\'un genlerinde UNIX felsefesi (her şey bir dosyadır, küçük programlar tek bir işi iyi yapar) yatar.',
+      tag: 'İşletim Sistemi',
+      color: '#14b8a6', // Teal
+      family: 'Sistem Yazılımları'
+    },
+    {
       id: 'c',
       year: 1972,
-      name: 'C',
+      name: 'C Programlama Dili',
       creator: 'Dennis Ritchie',
-      reason: 'Unix işletim sistemini geliştirmek ve donanıma daha yakın, hızlı ancak taşınabilir bir programlama ortamı sağlamak için yaratıldı.',
-      description: 'C programlama dili modern sistem programlamanın temelini oluşturur. İşletim sistemleri, gömülü sistemler ve çekirdek (kernel) geliştirmesinde altın standarttır.',
+      reason: 'UNIX işletim sistemini farklı donanımlara (makinelere) kolayca taşıyabilmek için assembly dili yerine daha yüksek seviyeli bir dile ihtiyaç duyulması.',
+      description: 'Sistem programlamanın babasıdır. Kendinden sonraki C++, Java, C#, JavaScript gibi hemen hemen tüm modern dillerin söz dizimini (syntax) doğrudan etkilemiştir. Bilişim dünyasının yapı taşıdır.',
       tag: 'C',
       color: '#3b82f6', // Blue
       family: 'C Ailesi'
@@ -59,14 +101,14 @@ export class HistoryComponent {
       family: 'C Ailesi'
     },
     {
-      id: 'html',
-      year: 1990,
-      name: 'HTML & CSS',
-      creator: 'Tim Berners-Lee',
-      reason: 'CERN laboratuvarındaki bilim insanlarının dökümanları ve akademik araştırmaları bir ağ (Web) üzerinden birbirleriyle kolayca paylaşabilmesi.',
-      description: 'HTML internetin iskeleti, CSS ise makyajıdır. Bilgiyi yapılandırarak tarayıcılarda görünür kılan temel web teknolojileridir.',
+      id: 'www',
+      year: 1989,
+      name: 'World Wide Web (WWW)',
+      creator: 'Tim Berners-Lee (CERN)',
+      reason: 'Bilim insanları ve üniversiteler arasında bilgi paylaşımını ve döküman takibini kolaylaştıracak evrensel bir ağ kurmak.',
+      description: 'HTML, HTTP ve ilk web tarayıcısının icadı... İnterneti sadece askeri/akademik bir altyapı olmaktan çıkarıp herkesin erişebildiği global bir bilgi ağına (Web) dönüştüren en devrimsel yazılım adımı.',
       tag: 'Web',
-      color: '#f97316', // Orange
+      color: '#8b5cf6', // Violet
       family: 'Web Teknolojileri'
     },
     {
@@ -78,62 +120,62 @@ export class HistoryComponent {
       description: 'Sade sözdizimi ile öne çıkan Python, günümüzde veri bilimi, yapay zeka, makine öğrenmesi ve web geliştirme alanlarında dünyanın en popüler dillerinden biridir.',
       tag: 'Python',
       color: '#eab308', // Yellow
-      family: 'Modern Betik Dilleri'
+      family: 'Betik ve Veri Bilimi Dilleri'
     },
     {
       id: 'java',
       year: 1995,
       name: 'Java',
       creator: 'James Gosling (Sun Microsystems)',
-      reason: 'Televizyon ve ev aletleri gibi cihazlar için donanımdan bağımsız bir dil yapma projesi (Oak) olarak başladı. Daha sonra "Bir kere yaz, her yerde çalıştır" vizyonuyla internete adapte edildi.',
-      description: 'Kurumsal yazılımların ve Android ekosisteminin can damarıdır. Platform bağımsızlığı (JVM) sayesinde günümüzde devasa ölçekli sistemlerde kullanılır.',
+      reason: '"Bir kere yaz, her yerde çalıştır" felsefesiyle, farklı donanım ve işletim sistemlerinde sorunsuz çalışabilen sanal makine (JVM) tabanlı bir dil oluşturmak.',
+      description: 'Kurumsal sistemlerin, bankacılık altyapılarının ve uzun yıllar Android mobil geliştirmesinin belkemiği olmuştur.',
       tag: 'Java',
       color: '#ef4444', // Red
-      family: 'C Ailesi'
+      family: 'JVM ve Kurumsal Diller'
     },
     {
       id: 'javascript',
       year: 1995,
       name: 'JavaScript',
       creator: 'Brendan Eich',
-      reason: 'Netscape tarayıcısında, statik HTML sayfalarına 10 gün gibi kısa bir sürede dinamik özellikler (animasyonlar, form kontrolleri) katabilmek için aceleyle yaratıldı.',
-      description: 'Sadece 10 günde yazılan bu dil, bugün frontend dünyasının tek hakimidir. Node.js ile birlikte hem tarayıcıda hem de sunucuda çalışabilen devasa bir ekosisteme dönüştü.',
-      tag: 'Web',
-      color: '#facc15', // JS Yellow
+      reason: 'Sadece statik olan web sayfalarına tarayıcı üzerinde hareket (etkileşim) katabilmek için 10 günde tasarlandı.',
+      description: 'Bugün web dünyasının evrensel dilidir. Sadece ön yüzde değil, Node.js sayesinde sunucu tarafında da devasa bir ekosisteme sahiptir.',
+      tag: 'JavaScript',
+      color: '#fbbf24', // Amber
       family: 'Web Teknolojileri'
-    },
-    {
-      id: 'ruby',
-      year: 1995,
-      name: 'Ruby',
-      creator: 'Yukihiro Matsumoto',
-      reason: 'Programcıların makine gibi değil, insan gibi kod yazmasını sağlamak. Performanstan ziyade geliştirici mutluluğunu ve üretkenliğini maksimize etmek.',
-      description: "Zarif sözdizimine sahip nesne yönelimli bir dil. \"Ruby on Rails\" framework'ü sayesinde web geliştirmede devrim yaratmış, GitHub ve Shopify gibi devlerin ilk tercihi olmuştur.",
-      tag: 'Ruby',
-      color: '#cc342d', // Ruby Red
-      family: 'Modern Betik Dilleri'
-    },
-    {
-      id: 'postgres',
-      year: 1996,
-      name: 'PostgreSQL',
-      creator: 'Michael Stonebraker',
-      reason: 'Karmaşık veri türlerini, tam ACID uyumluluğunu ve genişletilebilirliği (nesne-ilişkisel) destekleyen güçlü, açık kaynaklı bir veritabanı ihtiyacı.',
-      description: 'Dünyanın en gelişmiş açık kaynaklı ilişkisel veritabanı yönetim sistemidir. Coğrafi verilerden (PostGIS), JSON dokümanlarına kadar her şeyi güvenle saklar.',
-      tag: 'Veritabanı',
-      color: '#336791', // Postgres Blue
-      family: 'Veritabanı ve Altyapı'
     },
     {
       id: 'csharp',
       year: 2000,
       name: 'C#',
       creator: 'Anders Hejlsberg (Microsoft)',
-      reason: "Microsoft'un Java ekosistemine rakip olarak ve kendi .NET platformunun gücünü göstermek amacıyla modern ve nesne yönelimli bir dil yaratması.",
-      description: 'Microsoft ekosisteminin ana dili. Oyun geliştirmeden (Unity), masaüstü uygulamalarına ve yüksek performanslı backend web servislerine (.NET Core) kadar son derece güçlüdür.',
+      reason: 'Microsoft\'un .NET ekosistemi için, Java\'nın "Nesne Yönelimli" yaklaşımına rakip olarak kurumsal dünya için tasarlandı.',
+      description: 'Günümüzde ASP.NET Core ile sunucu tarafında, Unity ile oyun geliştirmede en popüler, en güçlü ve modern dillerden biridir.',
       tag: 'C#',
       color: '#8b5cf6', // Purple
       family: 'C Ailesi'
+    },
+    {
+      id: 'go',
+      year: 2009,
+      name: 'Go',
+      creator: 'Robert Griesemer, Rob Pike, Ken Thompson (Google)',
+      reason: 'C++\'ın karmaşıklığını ve derlenme süresini çözmek; çok çekirdekli işlemcilerde ve ağ tabanlı sistemlerde daha performanslı, basit bir dil oluşturmak.',
+      description: 'Harika "Concurrency (eşzamanlılık)" modeli ile günümüzde Docker, Kubernetes gibi devasa bulut ve mikroservis altyapılarının temel taşıdır.',
+      tag: 'Go',
+      color: '#06b6d4', // Cyan
+      family: 'Modern Sistem Dilleri'
+    },
+    {
+      id: 'typescript',
+      year: 2012,
+      name: 'TypeScript',
+      creator: 'Anders Hejlsberg (Microsoft)',
+      reason: 'Büyüyen JavaScript projelerinde statik tip kontrolü eksikliğinden kaynaklanan hataları derleme aşamasında yakalayabilmek.',
+      description: 'JavaScript\'in süper kümesidir. Angular gibi modern frontend çerçevelerinin endüstri standardı haline gelmiştir ve hata yapma riskini çok azaltır.',
+      tag: 'TypeScript',
+      color: '#3b82f6', // Blue
+      family: 'Web Teknolojileri'
     }
   ];
 }
