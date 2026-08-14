@@ -231,13 +231,15 @@ interface PasswordRules {
               </button>
             }
 
-            <button
-              class="tab-btn"
-              [class.active]="activeTab() === 'SUPPORT'"
-              (click)="activeTab.set('SUPPORT')"
-            >
-              Destek & Şikayet
-            </button>
+            @if (!authService.isAdmin()) {
+              <button
+                class="tab-btn"
+                [class.active]="activeTab() === 'SUPPORT'"
+                (click)="activeTab.set('SUPPORT')"
+              >
+                Destek & Şikayet
+              </button>
+            }
 
             <button
               class="tab-btn tab-btn-warning"
@@ -678,14 +680,14 @@ interface PasswordRules {
                         @if (post.photoUrl) {
                           <img [src]="blogService.getPhotoUrl(post.photoUrl)" [alt]="post.title" />
                         } @else {
-                          <div class="thumb-empty">{{ post.type === 'Koseyazisi' ? '' : '' }}</div>
+                          <div class="thumb-empty">❝</div>
                         }
                       </div>
 
                       <div class="my-post-content">
                         <div class="my-post-badges">
                           <span class="badge" [class.badge-primary]="post.type === 'Blog'" [class.badge-author]="post.type === 'Koseyazisi'">
-                            {{ post.type === 'Koseyazisi' ? ' Köşe Yazısı' : ' Blog' }}
+                            {{ post.type === 'Koseyazisi' ? 'Köşe Yazısı' : 'Blog' }}
                           </span>
                           <span class="badge" [class.badge-success]="post.status === 'Published'" [class.badge-warning]="post.status === 'Draft'">
                             {{ post.status === 'Published' ? 'Yayında' : 'Taslak' }}
@@ -811,7 +813,7 @@ interface PasswordRules {
           <!-- ==================================================== -->
           <!-- TAB 4: DESTEK & ŞİKAYET BİLDİRİMİ                    -->
           <!-- ==================================================== -->
-          @if (activeTab() === 'SUPPORT') {
+          @if (activeTab() === 'SUPPORT' && !authService.isAdmin()) {
             <div class="card mb-4">
               <div class="card-header-flex">
                 <div>
@@ -1776,7 +1778,15 @@ interface PasswordRules {
     }
 
     .thumb-empty {
-      font-size: 32px;
+      font-size: 48px;
+      line-height: 1;
+      color: #7c3aed;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
     }
 
     .my-post-content {

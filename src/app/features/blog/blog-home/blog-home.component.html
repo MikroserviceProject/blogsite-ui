@@ -1,0 +1,156 @@
+<!-- Hero Banner -->
+<section class="hero-section">
+  <div class="container hero-container">
+    <h1 class="hero-title">
+      @if (fixedType() === 'Koseyazisi') {
+        <span class="text-gradient">Köşe Yazıları</span>
+      } @else {
+        <span class="text-gradient">Bloglar</span>
+      }
+    </h1>
+    <p class="hero-subtitle">
+      Fikirlerin teknolojiyle, teknolojinin gelecekle buluştuğu yer.
+    </p>
+
+    <!-- Search Bar -->
+    <div class="hero-search-wrapper">
+      <form class="hero-search-box" (ngSubmit)="submitSearch()">
+        <span class="search-icon">🔍</span>
+        <input
+          type="text"
+          class="hero-search-input"
+          name="searchQuery"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Başlık veya içerikte ara..."
+        />
+        @if (searchQuery()) {
+          <button type="button" class="clear-search" (click)="clearSearch()">✕</button>
+        }
+        <button type="submit" class="search-submit-btn">Ara</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- Main Content Area -->
+<section class="container blog-content-section">
+  <!-- Section Header -->
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">{{ fixedType() === 'Koseyazisi' ? 'Tüm Köşe Yazıları' : 'Tüm Bloglar' }}</h2>
+      <p class="section-subtitle">Toplam {{ totalCount() }} yayın bulundu</p>
+    </div>
+  </div>
+
+  @if (currentTag()) {
+    <div class="tag-filter-banner">
+      <span class="tag-filter-icon">🏷️</span>
+      <span class="tag-filter-text">Şu an <strong>{{ currentTag() }}</strong> ile ilgili içerikleri görüntülüyorsunuz.</span>
+      <button class="btn-clear-filter" (click)="clearTagFilter()">Tümünü Göster </button>
+    </div>
+  }
+
+  <!-- Loading state -->
+  @if (loading()) {
+    <p class="text-muted">Yazılar yükleniyor...</p>
+  }
+
+  <!-- Error state -->
+  @if (loadError()) {
+    <div class="empty-state card">
+      <div class="empty-icon"></div>
+      <h3>Yazılar yüklenemedi</h3>
+      <p>{{ loadError() }}</p>
+    </div>
+  }
+
+  <!-- Articles Grid -->
+  @if (!loading() && !loadError()) {
+    <div class="posts-grid">
+      @for (post of posts(); track post.id) {
+        <a [routerLink]="['/post', post.id]" class="post-card card">
+          @if (post.photoUrl) {
+            <div class="post-cover-wrapper">
+              <img [src]="photoSrc(post.photoUrl)" [alt]="post.title" class="post-cover" />
+              <span class="post-type-badge" [class.badge-column]="post.type === 'Koseyazisi'">
+                {{ post.type === 'Koseyazisi' ? ' Köşe Yazısı' : ' Blog' }}
+              </span>
+            </div>
+          }
+
+          <div class="post-body">
+            <div class="post-meta-top">
+              <div class="post-meta-left">
+                @if (!post.photoUrl) {
+                  <span class="post-type-badge-inline" [class.badge-column]="post.type === 'Koseyazisi'">
+                    {{ post.type === 'Koseyazisi' ? ' Köşe Yazısı' : ' Blog' }}
+                  </span>
+                }
+              </div>
+              <span class="post-read-time">
+                @if (isNew(post.createdAt)) {
+                  <span class="new-badge"><span class="new-badge-dot"></span>Yeni</span>
+                }
+                {{ post.createdAt | date:'dd.MM.yyyy' }}
+              </span>
+            </div>
+
+            @if (post.tags && post.tags.length > 0) {
+              <div class="post-tags">
+                @for (t of post.tags; track t) {
+                  <button type="button" class="tag-link" (click)="goToTag($event, t)">{{ t }}</button>
+                }
+              </div>
+            }
+
+            <h3 class="post-title">{{ post.title }}</h3>
+
+            <p class="post-summary">{{ contentPreview(post.content) }}</p>
+
+            <div class="post-footer">
+              <span class="read-more-btn">Oku →</span>
+            </div>
+          </div>
+        </a>
+      }
+    </div>
+
+    <!-- Empty State -->
+    @if (posts().length === 0) {
+      <div class="empty-state card">
+        <div class="empty-icon">🔍</div>
+        <h3>Aradığınız kriterde yazı bulunamadı</h3>
+        <p>Farklı bir arama kelimesi deneyebilir veya filtreyi sıfırlayabilirsiniz.</p>
+        <button class="btn btn-secondary btn-sm" (click)="clearSearch()">
+          Aramayı Temizle
+        </button>
+      </div>
+    }
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <nav class="pagination">
+        <button
+          class="page-btn page-nav"
+          [disabled]="page() === 1"
+          (click)="goToPage(page() - 1)"
+        >← Önceki</button>
+
+        @for (p of pageNumbers(); track p) {
+          <button
+            class="page-btn"
+            [class.page-active]="p === page()"
+            (click)="goToPage(p)"
+          >{{ p }}</button>
+        }
+
+        <button
+          class="page-btn page-nav"
+          [disabled]="page() === totalPages()"
+          (click)="goToPage(page() + 1)"
+        >Sonraki →</button>
+      </nav>
+    }
+  }
+</section>

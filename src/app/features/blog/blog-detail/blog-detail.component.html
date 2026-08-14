@@ -1,0 +1,69 @@
+<div class="container article-page">
+  <!-- Back Link -->
+  <a routerLink="/" class="back-link">← Tüm Yazılara Dön</a>
+
+  @if (loading()) {
+    <p class="text-muted">Yazı yükleniyor...</p>
+  }
+
+  @if (loadError()) {
+    <div class="empty-state card">
+      <div class="empty-icon"></div>
+      <h3>Yazı yüklenemedi</h3>
+      <p>{{ loadError() }}</p>
+    </div>
+  }
+
+  @if (post(); as p) {
+    <article class="article-container card">
+      <!-- Header -->
+      <header class="article-header">
+        <div class="article-meta">
+          <span class="badge" [class.badge-primary]="p.type === 'Blog'" [class.badge-author]="p.type === 'Koseyazisi'">
+            {{ p.type === 'Koseyazisi' ? 'Köşe Yazısı' : 'Blog' }}
+          </span>
+          <span class="article-cat">Yayında</span>
+          <span class="article-date">• {{ p.createdAt | date:'dd.MM.yyyy' }}</span>
+        </div>
+
+        <h1 class="article-title">{{ p.title }}</h1>
+      </header>
+
+      <!-- Cover Image -->
+      @if (p.photoUrl) {
+        <div class="article-cover">
+          <img [src]="photoSrc(p.photoUrl)" [alt]="p.title" />
+        </div>
+      }
+
+      <!-- Article Content -->
+      <div class="article-body">
+        <p>{{ p.content }}</p>
+      </div>
+
+      <!-- Author Info -->
+      @if (authorProfile(); as author) {
+        <div class="author-box">
+          <div class="author-avatar">
+            @if (authService.getAvatarUrl(author.profilePictureUrl); as avatarUrl) {
+              <img [src]="avatarUrl" [alt]="author.username" />
+            } @else {
+              <span>{{ author.username.charAt(0).toUpperCase() }}</span>
+            }
+          </div>
+          <div class="author-details">
+            <span class="author-label">Yazar</span>
+            <span class="author-name">{{ author.username }}</span>
+          </div>
+
+          @if (isOwner()) {
+            <div class="owner-actions">
+              <a [routerLink]="['/create-post', p.id]" class="btn btn-secondary btn-sm">✏️ Düzenle</a>
+              <button type="button" class="btn btn-danger btn-sm" (click)="deletePost(p.id)">🗑️ Sil</button>
+            </div>
+          }
+        </div>
+      }
+    </article>
+  }
+</div>
