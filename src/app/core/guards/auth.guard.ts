@@ -17,7 +17,7 @@ export const authGuard: CanActivateFn = (route, state) => {
   }
 
   toastService.warning('Yetkisiz Erişim', 'Bu sayfayı görüntülemek için lütfen giriş yapınız.');
-  router.navigate(['/login']);
+  router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
   return false;
 };
 
@@ -32,7 +32,7 @@ export const authorGuard: CanActivateFn = (route, state) => {
 
   if (!authService.isLoggedIn()) {
     toastService.warning('Yetkisiz Erişim', 'Yazı yazabilmek için lütfen giriş yapınız.');
-    router.navigate(['/login']);
+    router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 
@@ -64,7 +64,7 @@ export const adminGuard: CanActivateFn = (route, state) => {
 
   if (!authService.isLoggedIn()) {
     toastService.warning('Yetkisiz Erişim', 'Yönetici paneline erişmek için lütfen giriş yapınız.');
-    router.navigate(['/login']);
+    router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
     return false;
   }
 

@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { parseAuthError } from '../../../core/utils/auth-error-parser';
@@ -17,6 +17,7 @@ export class LoginComponent implements OnInit {
   authService = inject(AuthService);
   toastService = inject(ToastService);
   router = inject(Router);
+  route = inject(ActivatedRoute);
 
   emailOrUsername = '';
   password = '';
@@ -106,7 +107,8 @@ export class LoginComponent implements OnInit {
         this.isLoading.set(false);
         if (res.success) {
           this.toastService.success('Giriş Başarılı ', `Hoş geldiniz, ${res.data?.user.username}!`);
-          this.router.navigate(['/']);
+          const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
+          this.router.navigateByUrl(returnUrl);
         } else {
           this.errorMessage.set(res.message);
           this.isEmailConfirmError.set(
