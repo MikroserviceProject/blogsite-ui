@@ -16,6 +16,11 @@
     {{ getFairyIcon() }}
   </button>
 
+  <!-- 🕷️ Spiderman Modu Butonu (Peri butonunun altında) -->
+  <button class="spider-toggle-btn" (click)="toggleSpiderMode()" [title]="getSpiderTitle()">
+    🕷️
+  </button>
+
   @if (fairyModeState > 0) {
     <!-- 🎵 Müzik Aç/Kapat Butonu -->
     <button class="fairy-music-btn" (click)="toggleMusic()" [title]="isMusicMuted ? 'Müziği Aç' : 'Müziği Sustur'">
@@ -24,6 +29,48 @@
 
     <!-- 🧚‍♀️ Uçuşan Periler -->
     <div class="hovering-fairies">🧚‍♀️✨🧚‍♂️</div>
+  }
+
+  @if (spiderModeState === 1) {
+    <!-- 🕸️ Yukarıdaki Örümcek Ağı (Bağlantı Noktası) -->
+    <div class="spider-web-top"></div>
+    
+    <!-- 🕸️ Sağ Alttaki Örümcek Ağı ve Yürüyen Örümcekler -->
+    <div class="spider-web-bottom">
+      <!-- 1. Örümcek -->
+      <div class="walking-spider-container spider-1">
+        <div class="walking-spider-radial spider-1-radial">
+          <div class="walking-spider-spin spider-1-spin">
+            <div class="walking-spider-wiggle">🕷️</div>
+          </div>
+        </div>
+      </div>
+      <!-- 2. Örümcek -->
+      <div class="walking-spider-container spider-2">
+        <div class="walking-spider-radial spider-2-radial">
+          <div class="walking-spider-spin spider-2-spin">
+            <div class="walking-spider-wiggle">🕷️</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 🕷️ Yukarıdan Sarkan Spiderman -->
+    <div class="hanging-spiderman">
+      <img src="/assets/images/hanging-spiderman.png" alt="Spiderman" class="spider-img">
+    </div>
+  }
+
+  @if (spiderModeState === 2) {
+    <!-- 🔥 Etraftan Çıkan Alevler (Anger Modu) -->
+    <div class="anger-flames-container">
+      <div class="flame flame-1">🔥</div>
+      <div class="flame flame-2">🔥</div>
+      <div class="flame flame-3">🔥</div>
+      <div class="flame flame-4">🔥</div>
+      <div class="flame flame-5">🔥</div>
+      <div class="flame flame-6">🔥</div>
+    </div>
   }
 
   <main class="main-content">

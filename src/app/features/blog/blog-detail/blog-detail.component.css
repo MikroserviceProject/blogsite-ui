@@ -141,3 +141,5 @@
       margin-bottom: 12px;
     }
   
+.author-name-link { text-decoration: none; color: inherit; }
+.author-name-link:hover .author-name { text-decoration: underline; color: #4a6ee0; }

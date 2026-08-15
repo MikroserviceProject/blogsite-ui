@@ -1,0 +1,99 @@
+<div class="container profile-page">
+  <div *ngIf="isLoading" class="loading-state">
+    <p>Profil yükleniyor...</p>
+  </div>
+
+  <div *ngIf="error" class="error-state card">
+    <h3>Bir sorun oluştu</h3>
+    <p>{{ error }}</p>
+    <a routerLink="/" class="btn btn-secondary mt-1">Ana Sayfaya Dön</a>
+  </div>
+
+  <div *ngIf="!isLoading && !error && profile" class="profile-container">
+    <!-- Profile Header Card -->
+    <div class="profile-header card" style="padding: 0; overflow: hidden; position: relative;">
+      <div class="profile-cover"
+           [style.backgroundImage]="profile.coverPictureUrl ? 'url(' + getProfileImageUrl(profile.coverPictureUrl) + ')' : 'linear-gradient(135deg, var(--accent-light, #1e3a8a), var(--accent-color, #3b82f6))'"
+           style="position: relative; background-size: cover; background-position: center; z-index: 0; opacity: 1 !important;">
+      </div>
+      
+      <div class="profile-info-section" style="position: relative; z-index: 1; padding: 70px 24px 24px 24px; margin-top: 0; display: flex; flex-direction: column; align-items: center;">
+        <div class="profile-avatar" style="margin-top: -60px; margin-bottom: 16px;">
+          <ng-container *ngIf="profile.profilePictureUrl; else noAvatar">
+            <img [src]="getProfileImageUrl(profile.profilePictureUrl)" [alt]="profile.username" (error)="onAvatarError($event)">
+          </ng-container>
+          <ng-template #noAvatar>
+            <span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 3rem; background: var(--bg-hover, #eee); color: var(--text-muted, #888); border-radius: 50%;">
+              <i class="fa-solid fa-user"></i>
+            </span>
+          </ng-template>
+        </div>
+        
+        <div class="profile-details">
+          <h1 class="profile-name">&#64;{{ profile.username }}</h1>
+          <p class="profile-bio text-muted">Kayıt tarihi: {{ profile.createdAt | date:'MMMM yyyy' }}</p>
+          
+          <div class="profile-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{ stats.followersCount }}</span>
+              <span class="stat-label">Takipçi</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ stats.followingCount }}</span>
+              <span class="stat-label">Takip Edilen</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ posts.length }}</span>
+              <span class="stat-label">Gönderi</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <ng-container *ngIf="!isOwnProfile">
+            <button 
+              class="btn" 
+              [ngClass]="isFollowing ? 'btn-secondary' : 'btn-primary'"
+              (click)="toggleFollow()">
+              {{ isFollowing ? 'Takipten Çık' : 'Takip Et' }}
+            </button>
+          </ng-container>
+          <ng-container *ngIf="isOwnProfile">
+            <a routerLink="/account" class="btn btn-secondary">Profili Düzenle</a>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unified Content Area -->
+    <div class="profile-content-card card">
+      <!-- User's Posts -->
+      <div class="profile-posts-section">
+        <div *ngIf="posts.length === 0" class="empty-posts">
+          <p>Bu kullanıcı henüz bir yazı paylaşmadı.</p>
+        </div>
+
+        <div class="posts-grid" *ngIf="posts.length > 0">
+          <article class="post-card card" *ngFor="let post of posts" [routerLink]="['/post', post.id]">
+            <div class="post-image">
+              <img *ngIf="post.photoUrl; else emptyThumb" [src]="getPostImageUrl(post.photoUrl)" [alt]="post.title">
+              <ng-template #emptyThumb>
+                <div class="thumb-empty">
+                  <i class="fa-solid fa-feather-pointed"></i>
+                </div>
+              </ng-template>
+            </div>
+            
+            <div class="post-content">
+              <span class="badge" [class.badge-primary]="post.type === 'Blog'" [class.badge-author]="post.type === 'Koseyazisi'">
+                {{ post.type === 'Koseyazisi' ? 'Köşe Yazısı' : 'Blog' }}
+              </span>
+              <h3 class="post-title">{{ post.title }}</h3>
+              <p class="post-date">{{ post.createdAt | date:'dd.MM.yyyy' }}</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

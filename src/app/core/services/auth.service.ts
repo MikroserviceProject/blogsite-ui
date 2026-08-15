@@ -182,6 +182,19 @@ export class AuthService {
     );
   }
 
+  uploadCover(file: File): Observable<ApiResponse<User>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/upload-cover`, formData).pipe(
+      tap(res => {
+        if (res.success && res.data) {
+          this.currentUser.set(res.data);
+          localStorage.setItem('lumina_auth_user', JSON.stringify(res.data));
+        }
+      })
+    );
+  }
+
   getPublicProfile(userId: string): Observable<ApiResponse<PublicUserProfile>> {
     return this.http.get<ApiResponse<PublicUserProfile>>(`${this.apiUrl}/users/${userId}/public-profile`);
   }

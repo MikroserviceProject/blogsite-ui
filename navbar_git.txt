@@ -1,0 +1,196 @@
+commit dd26475398ede431688a049c74f631f262229d0b
+Author: salihacicek <slihacicek@gmail.com>
+Date:   Thu Aug 13 17:34:26 2026 +0300
+
+    feat: Extract inline templates, add Fairy modes and audio
+
+diff --git a/src/app/shared/navbar/navbar.component.html b/src/app/shared/navbar/navbar.component.html
+new file mode 100644
+index 0000000..d5ccf4f
+--- /dev/null
++++ b/src/app/shared/navbar/navbar.component.html
+@@ -0,0 +1,183 @@
++
++    <header class="navbar-header">
++      <div class="container navbar-container">
++        <!-- Logo -->
++        <a routerLink="/" class="navbar-logo">
++          <div class="logo-text">
++            <span class="brand-name">Lumina</span>
++          </div>
++        </a>
++
++        <!-- Desktop Navigation Links -->
++        <nav class="navbar-nav">
++          @if (!authService.isBanned()) {
++            <a routerLink="/" routerLinkActive="nav-active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Ana Sayfa</a>
++            <a routerLink="/bloglar" routerLinkActive="nav-active" class="nav-link">Bloglar</a>
++            <a routerLink="/kose-yazilari" routerLinkActive="nav-active" class="nav-link">Köşe Yazıları</a>
++          }
++        </nav>
++
++        <!-- Right Side Actions -->
++        <div class="navbar-actions">
++          @if (!authService.isLoggedIn()) {
++            <button
++              class="theme-toggle"
++              (click)="themeService.toggle()"
++              [attr.aria-label]="themeService.theme() === 'light' ? 'Karanlık temaya geç' : 'Aydınlık temaya geç'"
++            >
++              {{ themeService.theme() === 'light' ? '🌙' : '☀️' }}
++            </button>
++            <a routerLink="/login" class="btn btn-navy-outline btn-sm">
++              Giriş Yap
++            </a>
++            <a routerLink="/register" class="btn btn-navy-outline btn-sm">
++              Kayıt Ol
++            </a>
++          } @else {
++            @if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin())) {
++              @if (!authService.currentUser()?.isEmailConfirmed) {
++                <button class="btn-create-post" disabled title="Lütfen e-posta adresinizi onaylayın" style="opacity:0.6; cursor:not-allowed;">
++                  Gönderi Oluştur
++                </button>
++              } @else {
++                <a routerLink="/create-post" class="btn-create-post">
++                  Gönderi Oluştur
++                </a>
++              }
++            }
++            <button
++              class="theme-toggle"
++              (click)="themeService.toggle()"
++              [attr.aria-label]="themeService.theme() === 'light' ? 'Karanlık temaya geç' : 'Aydınlık temaya geç'"
++            >
++              {{ themeService.theme() === 'light' ? '🌙' : '☀️' }}
++            </button>
++            
++            <!-- Bildirim İkonu -->
++            <div class="notif-menu-wrapper">
++              <button class="notif-btn" title="Bildirimler" (click)="toggleNotif()">
++                <i class="fa-solid fa-bell" style="font-size: 16px;"></i>
++                @if (authService.unreadNotificationCount() > 0) {
++                  <span class="notif-badge-red">{{ authService.unreadNotificationCount() }}</span>
++                }
++              </button>
++
++              @if (isNotifOpen()) {
++                <div class="notif-dropdown">
++                  <div class="nd-header">
++                    <span class="nd-title">Bildirimler</span>
++                  </div>
++                  <div class="nd-body">
++                    @if (isLoadingNotifs()) {
++                      <div class="nd-loading">Yükleniyor...</div>
++                    } @else if (allNotifs().length === 0) {
++                      <div class="nd-empty">Bildiriminiz bulunmuyor.</div>
++                    } @else {
++                      @for (n of paginatedNotifs(); track n.id) {
++                        <button type="button" class="nd-item" [class.nd-unread]="!n.isRead" (click)="openNotifModal(n)">
++                          <div class="nd-item-title">{{ n.title }}</div>
++                          <div class="nd-item-msg">{{ n.message }}</div>
++                          <div class="nd-item-time">{{ n.createdAt | date:'dd MMM HH:mm' }}</div>
++                        </button>
++                      }
++                    }
++                  </div>
++                  
++                  @if (paginatedNotifsTotalPages > 1) {
++                    <div class="nd-pagination" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
++                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() === 1" (click)="prevNotifPage($event)">Önceki</button>
++                      <span style="font-size: 12px;">Sayfa {{ currentNotifPage() }} / {{ paginatedNotifsTotalPages }}</span>
++                      <button class="btn btn-sm btn-secondary" [disabled]="currentNotifPage() >= paginatedNotifsTotalPages" (click)="nextNotifPage($event)">Sonraki</button>
++                    </div>
++                  }
++                  
++                  <a routerLink="/profile" [queryParams]="{tab: 'NOTIFICATIONS'}" class="nd-footer" (click)="closeNotif()">
++                    Tüm Bildirimleri Gör
++                  </a>
++                </div>
++              }
++            </div>
++
++            <!-- Bildirim Okuma Modalı -->
++            @if (activeModalNotif()) {
++              <div class="modal-backdrop notif-modal-backdrop">
++                <div class="modal-card" style="max-width: 600px; padding: 24px;">
++                  <div class="modal-header">
++                    <h3 class="modal-title" style="font-size: 1.3rem;">{{ activeModalNotif()?.title }}</h3>
++                    <button type="button" class="btn-close" (click)="closeNotifModal()"></button>
++                  </div>
++                  <div class="modal-body">
++                    <p style="font-size: 16px; line-height: 1.7;">{{ activeModalNotif()?.message }}</p>
++                  </div>
++                  <div class="modal-footer text-muted" style="font-size: 13px; display: flex; justify-content: space-between;">
++                    <span>{{ activeModalNotif()?.createdAt | date:'d MMMM yyyy, HH:mm' }}</span>
++                    <button type="button" class="btn btn-secondary" (click)="closeNotifModal()">Kapat</button>
++                  </div>
++                </div>
++              </div>
++            }
++            <!-- User Menu Dropdown -->
++            <div class="user-menu-wrapper">
++              <button class="user-menu-btn" (click)="toggleDropdown()">
++                <div class="user-avatar">
++                  @if (authService.currentUser()?.profilePictureUrl) {
++                    <img 
++                      [src]="authService.getAvatarUrl(authService.currentUser()?.profilePictureUrl)" 
++                      alt="Avatar" 
++                      class="user-avatar-img" 
++                    />
++                  } @else {
++                    <span>{{ authService.currentUser()?.username?.charAt(0)?.toUpperCase() || 'U' }}</span>
++                  }
++                </div>
++                <div class="user-details">
++                  <span class="user-name">{{ authService.currentUser()?.username }}</span>
++                  <span class="badge" [ngClass]="'badge-' + (authService.userRole()?.toLowerCase() || 'user')">
++                    {{ authService.roleDisplayName() }}
++                  </span>
++                </div>
++                <span class="dropdown-chevron">▾</span>
++              </button>
++
++              <!-- Dropdown Menu -->
++              @if (isDropdownOpen()) {
++                <div class="dropdown-menu">
++                  <div class="dropdown-header">
++                    <div class="dh-name">{{ authService.currentUser()?.username }}</div>
++                    <div class="dh-email">{{ authService.currentUser()?.email }}</div>
++                  </div>
++                  <div class="dropdown-divider"></div>
++                  <a routerLink="/profile" class="dropdown-item" (click)="closeDropdown()">
++                    Profilim & Hesap Ayarları
++                  </a>
++                  @if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin())) {
++                    @if (!authService.currentUser()?.isEmailConfirmed) {
++                      <button class="dropdown-item dropdown-item-cta" disabled title="Lütfen e-posta adresinizi onaylayın" style="opacity:0.6; cursor:not-allowed;">
++                        Yeni Gönderi Oluştur
++                      </button>
++                    } @else {
++                      <a routerLink="/create-post" class="dropdown-item dropdown-item-cta" (click)="closeDropdown()">
++                        Yeni Gönderi Oluştur
++                      </a>
++                    }
++                  }
++                  @if (authService.isAdmin()) {
++                    <a routerLink="/profile" [queryParams]="{tab: 'ADMIN_USERS'}" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
++                      Kullanıcı & İçerik Yönetimi
++                    </a>
++                    <a routerLink="/profile" [queryParams]="{tab: 'ADMIN_AUTHORS'}" class="dropdown-item dropdown-admin-item" (click)="closeDropdown()">
++                      Yazar Başvuru Yönetimi
++                    </a>
++                  }
++                  <div class="dropdown-divider"></div>
++                  <button class="dropdown-item dropdown-logout" (click)="logout()">
++                    Çıkış Yap
++                  </button>
++                </div>
++              }
++            </div>
++          }
++        </div>
++      </div>
++    </header>
++  
+\ No newline at end of file

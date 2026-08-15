@@ -54,7 +54,9 @@
               </div>
               <div class="author-details">
                 <span class="author-label">Yazar</span>
-                <span class="author-name">{{ author.username }}</span>
+                <a [routerLink]="['/profile', author.username]" class="author-name-link">
+                  <span class="author-name">{{ author.username }}</span>
+                </a>
               </div>
 
               @if (isOwner()) {
