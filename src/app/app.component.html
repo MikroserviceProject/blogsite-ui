@@ -1,0 +1,34 @@
+@if (authService.isBanned()) {
+  <div class="global-ban-overlay">
+    <div class="ban-modal">
+      <div class="ban-icon"></div>
+      <h1>Hesabınız Askıya Alındı</h1>
+      <p>Sistem kurallarını ihlal ettiğiniz veya yöneticiler tarafından kısıtlandığınız için hesabınız yasaklanmıştır.</p>
+      <button class="btn btn-danger" (click)="logout()">🚪 Çıkış Yap</button>
+    </div>
+  </div>
+} @else {
+
+  <app-navbar></app-navbar>
+  
+  <!-- 🧚‍♀️ Peri Modu Gizli Butonu (Silebilirsiniz) -->
+  <button class="fairy-toggle-btn" (click)="toggleFairyMode()" [title]="getFairyTitle()">
+    {{ getFairyIcon() }}
+  </button>
+
+  @if (fairyModeState > 0) {
+    <!-- 🎵 Müzik Aç/Kapat Butonu -->
+    <button class="fairy-music-btn" (click)="toggleMusic()" [title]="isMusicMuted ? 'Müziği Aç' : 'Müziği Sustur'">
+      {{ isMusicMuted ? '🔇' : '🎵' }}
+    </button>
+
+    <!-- 🧚‍♀️ Uçuşan Periler -->
+    <div class="hovering-fairies">🧚‍♀️✨🧚‍♂️</div>
+  }
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+  <app-footer></app-footer>
+  <app-toast></app-toast>
+}

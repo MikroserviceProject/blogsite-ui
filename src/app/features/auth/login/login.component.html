@@ -1,0 +1,149 @@
+
+    <div class="auth-page-container container">
+      <div class="auth-card card login-card">
+        <div class="auth-header">
+          <div class="auth-icon-badge">🔐</div>
+          <h1 class="auth-title">Giriş Yap</h1>
+          <p class="auth-subtitle">Lumina hesabınıza erişmek için bilgilerinizi giriniz</p>
+        </div>
+
+        @if (authService.sessionWarning()) {
+          <div class="session-alert">
+            <span class="alert-icon"></span>
+            <div class="alert-msg">
+              <strong>Oturum Uyarısı:</strong> {{ authService.sessionWarning() }}
+            </div>
+            <button type="button" class="alert-dismiss" (click)="authService.clearSessionWarning()"></button>
+          </div>
+        }
+
+        <form (ngSubmit)="onSubmit()" autocomplete="off">
+          <div class="form-group">
+            <label class="form-label" for="login-email">E-Posta veya Kullanıcı Adı</label>
+            <input
+              id="login-email"
+              type="text"
+              class="form-control"
+              [(ngModel)]="emailOrUsername"
+              name="emailOrUsername"
+              placeholder="adiniz@ornek.com veya kullaniciadi"
+              required
+              autocomplete="off"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+            />
+          </div>
+
+          <div class="form-group">
+            <div class="password-label-row">
+              <label class="form-label" for="login-password">Şifre</label>
+              <a routerLink="/forgot-password" class="forgot-link">Şifrenizi mi unuttunuz?</a>
+            </div>
+            <div class="password-input-wrapper">
+              <input
+                id="login-password"
+                [type]="showPassword() ? 'text' : 'password'"
+                class="form-control"
+                [(ngModel)]="password"
+                name="password"
+                placeholder="••••••••"
+                required
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="toggle-password-btn"
+                (click)="togglePassword()"
+                tabindex="-1"
+              >
+                {{ showPassword() ? '🙈' : '🐵' }}
+              </button>
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="error-alert" [class.error-email-confirm]="isEmailConfirmError()">
+              <span class="error-icon">{{ isEmailConfirmError() ? '' : '' }}</span>
+              <div class="error-content">
+                <span>{{ errorMessage() }}</span>
+                @if (bannedCountdown()) {
+                  <div class="ban-countdown mt-2" style="font-weight: 700; color: #b91c1c;">
+                    Kalan Süre: {{ bannedCountdown() }}
+                  </div>
+                }
+                @if (isEmailConfirmError()) {
+                  <button type="button" class="confirm-redirect-btn" (click)="goToConfirmEmail()">
+                     E-Posta Doğrulama Sayfasına Git →
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block btn-lg"
+            [disabled]="isLoading()"
+          >
+            @if (isLoading()) {
+              <span>Giriş Yapılıyor...</span>
+            } @else {
+              <span>🔐 Giriş Yap</span>
+            }
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <div class="footer-row">
+            <span>Hesabınız yok mu?</span>
+            <a routerLink="/register" class="link-gold">Hemen Kayıt Olun</a>
+          </div>
+
+          <!-- Doğrulama E-Postası Almadınız mı? Accordion Butonu -->
+          <div class="resend-accordion-wrapper">
+            <button 
+              type="button" 
+              class="btn-toggle-resend" 
+              (click)="isResendOpen.set(!isResendOpen())"
+            >
+              <span>{{ isResendOpen() ? '▲' : '▼' }}</span>
+              <span>Doğrulama e-postası almadınız mı? Tekrar Gönder</span>
+            </button>
+
+            @if (isResendOpen()) {
+              <div class="resend-panel card">
+                <div class="rp-title"> Doğrulama Bağlantısını Yeniden Alın</div>
+                <p class="rp-desc">Kayıtlı e-posta adresinizi girerek yeni bir aktivasyon bağlantısı isteyebilirsiniz:</p>
+                <div class="rp-form">
+                  <input
+                    type="email"
+                    class="form-control form-control-sm"
+                    [(ngModel)]="resendEmailInput"
+                    placeholder="ornek@mail.com"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    (click)="onResendConfirmation()"
+                    [disabled]="isResending() || !resendEmailInput"
+                  >
+                    @if (isResending()) {
+                      <span>Gönderiliyor...</span>
+                    } @else {
+                      <span>📨 Gönder</span>
+                    }
+                  </button>
+                </div>
+                @if (resendMessage()) {
+                  <div class="rp-result" [class.rp-error]="resendIsError()">
+                    {{ resendMessage() }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  

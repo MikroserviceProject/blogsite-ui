@@ -1,0 +1,204 @@
+
+    .history-page {
+      padding-top: 40px;
+      padding-bottom: 80px;
+    }
+
+    .history-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-title {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 24px;
+    }
+
+    .timeline-container {
+      animation: fadeInDown 0.6s ease-out;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .timeline {
+      display: flex;
+      overflow-x: auto;
+      gap: 24px;
+      padding: 20px 10px 40px 10px;
+      scroll-behavior: smooth;
+    }
+    
+    .timeline::-webkit-scrollbar {
+      height: 8px;
+    }
+    .timeline::-webkit-scrollbar-track {
+      background: var(--bg-surface); 
+      border-radius: 4px;
+    }
+    .timeline::-webkit-scrollbar-thumb {
+      background: var(--primary); 
+      border-radius: 4px;
+    }
+
+    .timeline-item {
+      flex: 0 0 350px;
+      padding: 10px;
+      position: relative;
+      background-color: inherit;
+      box-sizing: border-box;
+      opacity: 0;
+      animation: fadeInUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+
+
+    .timeline-content {
+      padding: 28px;
+      border-radius: var(--radius-lg);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--primary);
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    :host-context(.light-theme) .timeline-content {
+      background: rgba(255, 255, 255, 0.75);
+    }
+    
+    :host-context(.dark-theme) .timeline-content {
+      background: rgba(13, 23, 50, 0.65);
+    }
+
+    :host-context(.true-dark-theme) .timeline-content {
+      background: rgba(10, 10, 10, 0.85);
+    }
+
+    .timeline-item:hover .timeline-content {
+      transform: scale(1.02) translateY(-6px);
+      z-index: 10;
+    }
+
+    .family-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .item-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .item-year {
+      font-size: 28px;
+      font-weight: 900;
+      opacity: 0.9;
+    }
+
+    .item-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .item-details {
+      background: var(--bg-subtle);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
+    }
+
+    .item-creator, .item-reason {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .item-reason {
+      margin-bottom: 0;
+    }
+
+    .item-details strong {
+      color: var(--text-primary);
+    }
+
+    .item-desc {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+
+    .item-actions {
+      display: flex;
+      justify-content: flex-start;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .arrow-icon {
+      display: inline-block;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .arrow-move {
+      transform: translateX(6px);
+    }
+
+    @media screen and (max-width: 768px) {
+      .timeline::after {
+        left: 31px;
+      }
+      .timeline-item {
+        width: 100%;
+        padding-left: 70px;
+        padding-right: 20px;
+      }
+      .timeline-item.right {
+        left: 0%;
+      }
+      .timeline-item .timeline-dot, .timeline-item.right .timeline-dot {
+        left: 19px;
+      }
+    }
+  

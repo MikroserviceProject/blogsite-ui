@@ -1,0 +1,117 @@
+
+    <div class="home-container container">
+      <div class="home-main-card">
+      @if (authService.isLoggedIn()) {
+        <!-- Giriş Yapmış Kullanıcı Dashboard -->
+        <div class="welcome-banner card">
+          <div class="welcome-content">
+            <div class="welcome-avatar">
+              @if (authService.currentUser()?.profilePictureUrl) {
+                <img 
+                  [src]="authService.getAvatarUrl(authService.currentUser()?.profilePictureUrl)" 
+                  alt="Avatar" 
+                  class="welcome-avatar-img" 
+                />
+              } @else {
+                <span>{{ authService.currentUser()?.username?.charAt(0)?.toUpperCase() || 'U' }}</span>
+              }
+            </div>
+            <div class="welcome-text">
+              <div class="welcome-greeting">
+                <h1>Hoş Geldiniz, {{ authService.currentUser()?.username }}!</h1>
+                <span class="badge" [ngClass]="'badge-' + (authService.userRole()?.toLowerCase() || 'user')">
+                  {{ authService.userRole() }}
+                </span>
+              </div>
+              <p class="welcome-desc">
+                Lumina sistemine başarıyla giriş yaptınız. Hesabınızı güvenle yönetebilirsiniz.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        @if (!authService.currentUser()?.isEmailConfirmed) {
+          <div class="alert-banner warning-banner">
+            <div class="alert-body">
+              <strong>E-Posta Adresiniz Doğrulanmadı!</strong>
+              <p>Hesap güvenliğiniz için lütfen e-posta adresinize gönderilen kodu onaylayınız.</p>
+            </div>
+            <a routerLink="/confirm-email" class="btn btn-warning btn-sm">Hemen Doğrula</a>
+          </div>
+        }
+
+        <!-- Hızlı Erişim Kartları -->
+        <div class="dashboard-grid">
+          <div class="dashboard-card card">
+            <h3>Profil & Hesap Yönetimi</h3>
+            <p>Kullanıcı adı ve e-posta bilgilerinizi güncelleyin, hesap detaylarınızı görüntüleyin.</p>
+            <a routerLink="/profile" class="btn btn-primary btn-sm">Hesabıma Git →</a>
+          </div>
+
+          <div class="dashboard-card card">
+            <h3>Güvenlik & Oturum</h3>
+            <p>Hesabınız tekil oturum koruması altındadır. Farklı bir cihazdan giriş yapıldığında önceki oturum güvenle sonlandırılır.</p>
+            <div class="status-indicator">
+              <span class="status-dot"></span> Oturum Koruması Aktif
+            </div>
+          </div>
+
+          <div class="dashboard-card card">
+            <h3>E-Posta Durumu</h3>
+            <p>
+              Mevcut E-Posta: <strong>{{ authService.currentUser()?.email }}</strong>
+            </p>
+            @if (authService.currentUser()?.isEmailConfirmed) {
+              <div class="confirmed-badge">✓ E-Posta Onaylanmış</div>
+            } @else {
+              <a routerLink="/confirm-email" class="btn btn-secondary btn-sm">Doğrulama Ekranı</a>
+            }
+          </div>
+        </div>
+      } @else {
+        <!-- Giriş Yapmamış Kullanıcı Karşılama Ekranı -->
+        <div class="hero-section">
+          <div class="hero-badge">Lumina Platformu</div>
+          <h1 class="hero-title">Güvenli Kimlik & Erişim Yönetimi</h1>
+          <p class="hero-subtitle">
+            Merkezi kimlik doğrulama, tekil oturum güvenliği ve e-posta onaylı hesap altyapısıyla güvenle bağlanın.
+          </p>
+
+          <div class="hero-cta-group">
+            <a routerLink="/login" class="btn btn-primary btn-lg">
+              Giriş Yap
+            </a>
+            <a routerLink="/register" class="btn btn-secondary btn-lg">
+              Hesap Oluştur
+            </a>
+            <a routerLink="/confirm-email" class="btn btn-subtle btn-lg">
+              E-Posta Doğrula
+            </a>
+          </div>
+
+          <div class="features-grid">
+            <div class="feature-card card">
+              <div class="feat-icon">🛡️</div>
+              <h4>Tekil Oturum Koruması</h4>
+              <p>Hesabınıza başka bir cihazdan giriş yapıldığında eski oturum güvenlik amacıyla anında kapatılır.</p>
+            </div>
+
+            <div class="feature-card card">
+              <div class="feat-icon"></div>
+              <h4>Güçlü Şifreleme</h4>
+              <p>PBKDF2 HMAC-SHA512 ve 100.000 iterasyon ile endüstri standardı şifre güvenliği.</p>
+            </div>
+
+            <div class="feature-card card">
+              <div class="feat-icon"></div>
+              <h4>E-Posta Doğrulama</h4>
+              <p>Tek tıkla güvenli aktivasyon bağlantısı ile doğrulanmış kullanıcı hesabı yönetimi.</p>
+            </div>
+        </div>
+      }
+      </div>
+      
+      <!-- Tarihçe Bölümü (Ana Sayfanın Altında) -->
+      <app-history></app-history>
+    </div>
+  

@@ -1,0 +1,151 @@
+
+    <div class="container internship-page">
+      @if (currentTag()) {
+        <div class="tag-filter-banner">
+          <span class="tag-filter-icon">🏷️</span>
+          <span class="tag-filter-text">Şu an <strong>{{ currentTag() }}</strong> ile ilgili içerikleri görüntülüyorsunuz.</span>
+          <button class="btn-clear-filter" (click)="clearFilter()">Tümünü Göster </button>
+        </div>
+      }
+
+      <div class="internship-grid" [class.filtered-grid]="currentTag()">
+        <!-- Left: Blog posts auto-scroll -->
+        <aside class="side-column">
+          <h4 class="side-title"> Bloglar</h4>
+          @if (blogPosts().length > 0) {
+            <div class="scroll-viewport" #blogViewport (mouseenter)="setPaused('blog', true)" (mouseleave)="setPaused('blog', false)">
+              <div class="scroll-track">
+                @for (post of blogPosts(); track post.id) {
+                  <a [routerLink]="['/post', post.id]" class="mini-card">
+                    @if (post.photoUrl) {
+                      <img [src]="photoSrc(post.photoUrl)" [alt]="post.title" class="mini-cover" />
+                    } @else {
+                      <div class="mini-cover mini-cover-placeholder"></div>
+                    }
+                    <span class="mini-author-avatar">
+                      <span class="mini-author-avatar-circle">
+                        @if (authService.getAvatarUrl(getAuthorProfile(post.authorId)?.profilePictureUrl); as avatarUrl) {
+                          <img [src]="avatarUrl" [alt]="getAuthorProfile(post.authorId)?.username || ''" />
+                        } @else {
+                          <span>{{ (getAuthorProfile(post.authorId)?.username || '?').charAt(0).toUpperCase() }}</span>
+                        }
+                      </span>
+                      @if (getAuthorProfile(post.authorId)?.username; as authorName) {
+                        <span class="mini-author-name">{{ authorName }}</span>
+                      }
+                    </span>
+                    @if (isNew(post.createdAt)) {
+                      <span class="mini-new-badge">✨ Yeni</span>
+                    }
+                    <div class="mini-overlay">
+                      @if (post.tags && post.tags.length > 0) {
+                        <div class="mini-tags">
+                          @for (t of post.tags.slice(0, 2); track t) {
+                            <span class="mini-tag-pill">{{ t }}</span>
+                          }
+                        </div>
+                      }
+                      <span class="mini-title">{{ post.title }}</span>
+                      <span class="mini-excerpt">{{ excerptPreview(post.content) }}</span>
+                    </div>
+                    <span class="mini-read-circle">Oku</span>
+                  </a>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="side-empty">Henüz blog yazısı yok.</p>
+          }
+        </aside>
+
+        <!-- Center: static internship story -->
+        <main class="center-column">
+          <article class="internship-article card">
+            <h1> Bir Stajyer Günlüğü: PostgreSQL, .NET ve Angular ile Full-Stack Blog Projesi</h1>
+
+            <p>
+              Yazılım dünyasında teorik bilgi tek başına yeterli olmuyor; işin içine girip kendi projenizi ekipçe uçtan uca inşa ettiğinizde taşlar yerine oturuyor. Bizim için de tam olarak böyle, birlikte harika tecrübeler edindiğimiz bir staj süreci geride kaldı!
+            </p>
+
+            <p>
+              Bu staj boyunca sadece var olan bir koda ekleme yapmadık; veri tabanından başlayıp ön yüze kadar uzanan tam teşekküllü bir Blog Sitesi geliştirdik. Peki bu süreçte mutfakta neler pişirdik, iki kişi olarak hangi teknolojilerle tanıştık ve nasıl bir görev paylaşımı yaptık? Gel birlikte bakalım.
+            </p>
+
+            <h2>🗄️ 1. Mutfağın Temeli: PostgreSQL ve pgAdmin 4</h2>
+            <p>
+              Bir projenin kalbi veridir. Blog sitemizin kullanıcılarını, yazılarını, yorumlarını ve kategorilerini düzenli tutmak için ilişkisel veri tabanı dünyasına adım attık:
+            </p>
+            <ul>
+              <li>pgAdmin 4 arayüzü üzerinden veri tabanı şemalarını birlikte tasarladık.</li>
+              <li>Tablolar arasındaki ilişkileri kurarken veri bütünlüğünü ve sorgu performansını ön planda tuttuk.</li>
+              <li>SQL sorgularıyla veri tabanı yönetiminin inceliklerini doğrudan tecrübe ettik.</li>
+            </ul>
+
+            <h2> 2. Motoru Çalıştırmak: .NET ile Güçlü Backend</h2>
+            <p>
+              Verileri topladık ama bunları frontend'e güvenle ve hızlıca sunmak gerekiyordu. Burada imdadımıza .NET (C#) yetişti:
+            </p>
+            <ul>
+              <li>RESTful API mimarisiyle ön yüzün konuşabileceği uç noktalar (endpoints) tasarladık.</li>
+              <li>Güvenli, katmanlı ve sürdürülebilir bir backend yapısı oluşturmayı öğrendik.</li>
+              <li>Veri tabanı ile API arasındaki köprüyü kurarak CRUD (Ekle, Oku, Güncelle, Sil) operasyonlarını sorunsuz çalışır hale getirdik.</li>
+            </ul>
+
+            <h2>🎨 3. Sahne Önü: Angular ile Dinamik Frontend</h2>
+            <p>
+              Veri tabanında saklanan ve .NET API ile sunulan verileri kullanıcıya şık bir şekilde gösterme vakti! İşin frontend tarafında Angular kullandık:
+            </p>
+            <ul>
+              <li>Bileşen Tabanlı (Component-based) mimari sayesinde tekrar kullanılabilir UI elemanları tasarladık.</li>
+              <li>.NET tarafından gelen verileri Angular servisleri (HttpClient) ile çekip kullanıcı arayüzüne bağladık.</li>
+              <li>TypeScript ve RxJS kullanarak asenkron veri akışlarını yönettik ve reaktif bir kullanıcı deneyimi sağladık.</li>
+            </ul>
+
+            <h2>🌟 Günün Sonu: Ne Kazandık?</h2>
+            <p>
+              Bu staj projesi bizim için sadece "kod yazmak" anlamına gelmedi. Bir projenin fikir aşamasından, veri tabanı katmanına (PostgreSQL / pgAdmin 4), sunucu tarafındaki mantığından (.NET) ve kullanıcının ekranda gördüğü reaktif dünyaya (Angular) kadar iki kişilik bir ekip olarak nasıl uyumla geliştirileceğini bizzat yaşayarak öğrendik.
+            </p>
+            <p>
+              Full-stack geliştirme yolculuğumuzda harika bir temel olan bu projeyi başarıyla tamamlamış olmanın heyecanını yaşıyoruz! 
+            </p>
+          </article>
+        </main>
+
+        <!-- Right: Köşe yazıları auto-scroll -->
+        <aside class="side-column">
+          <h4 class="side-title"> Köşe Yazıları</h4>
+          @if (columnPosts().length > 0) {
+            <div class="scroll-viewport" #columnViewport (mouseenter)="setPaused('column', true)" (mouseleave)="setPaused('column', false)">
+              <div class="scroll-track">
+                @for (post of columnPosts(); track post.id) {
+                  <a [routerLink]="['/post', post.id]" class="mini-card mini-card-column">
+                    <span class="mini-author-avatar">
+                      <span class="mini-author-avatar-circle">
+                        @if (authService.getAvatarUrl(getAuthorProfile(post.authorId)?.profilePictureUrl); as avatarUrl) {
+                          <img [src]="avatarUrl" [alt]="getAuthorProfile(post.authorId)?.username || ''" />
+                        } @else {
+                          <span>{{ (getAuthorProfile(post.authorId)?.username || '?').charAt(0).toUpperCase() }}</span>
+                        }
+                      </span>
+                      @if (getAuthorProfile(post.authorId)?.username; as authorName) {
+                        <span class="mini-author-name">{{ authorName }}</span>
+                      }
+                    </span>
+                    @if (isNew(post.createdAt)) {
+                      <span class="mini-new-badge">✨ Yeni</span>
+                    }
+                    <span class="mini-quote-icon">❝</span>
+                    <span class="mini-title">{{ post.title }}</span>
+                    <span class="mini-excerpt">{{ excerptPreviewLong(post.content) }}</span>
+                    <span class="mini-read-circle">Oku</span>
+                  </a>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="side-empty">Henüz köşe yazısı yok.</p>
+          }
+        </aside>
+      </div>
+    </div>
+  

@@ -1,0 +1,535 @@
+
+    <div class="admin-tab-seamless-container">
+      <div class="admin-main-card">
+        <!-- Header Actions -->
+      <div class="page-header" style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+        <div class="header-actions">
+          <a routerLink="/admin/author-approvals" class="btn btn-secondary btn-sm" style="display: none;">
+            Yazar Başvuruları
+          </a>
+          <button class="btn btn-primary btn-sm" (click)="loadUsers()" [disabled]="isLoading()">
+             Yenile
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content Card -->
+      <div class="table-card">
+        <!-- Filter Toolbar -->
+        <div class="posts-filter-bar" style="margin-bottom: 20px;">
+          <div class="pills-row">
+            <button class="filter-pill" [class.active]="selectedRoleFilter() === 'ALL' && selectedStatusFilter() === 'ALL'" (click)="selectedRoleFilter.set('ALL'); selectedStatusFilter.set('ALL')">
+              Tümü ({{ users().length }})
+            </button>
+            <button class="filter-pill" [class.active]="selectedRoleFilter() === 'Admin'" (click)="selectedRoleFilter.set('Admin'); selectedStatusFilter.set('ALL')">
+              Yöneticiler ({{ adminCount() }})
+            </button>
+            <button class="filter-pill" [class.active]="selectedRoleFilter() === 'Author'" (click)="selectedRoleFilter.set('Author'); selectedStatusFilter.set('ALL')">
+               Yazarlar ({{ authorCount() }})
+            </button>
+            <button class="filter-pill" [class.active]="selectedRoleFilter() === 'User'" (click)="selectedRoleFilter.set('User'); selectedStatusFilter.set('ALL')">
+              📖 Okurlar ({{ readerCount() }})
+            </button>
+            <button class="filter-pill" [class.active]="selectedStatusFilter() === 'BANNED'" (click)="selectedStatusFilter.set('BANNED'); selectedRoleFilter.set('ALL')">
+               Yasaklı ({{ bannedCount() }})
+            </button>
+          </div>
+
+          <div class="post-search-box" style="display:flex; gap:8px;">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="onSearch()"
+              placeholder="Kullanıcı adı veya e-posta ara..."
+              style="min-width: 240px;"
+            />
+            <button class="btn btn-primary btn-sm" (click)="onSearch()">Ara</button>
+            @if (searchQuery()) {
+              <button class="btn btn-secondary btn-sm" (click)="clearSearch()">✖</button>
+            }
+          </div>
+        </div>
+
+        <!-- Main Users Table / List -->
+        @if (isLoading()) {
+          <div class="loading-container">
+            <div class="spinner-pulse"></div>
+            <p>Kullanıcı verileri yükleniyor...</p>
+          </div>
+        } @else if (filteredUsers().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3>Kriterlere Uygun Kullanıcı Bulunamadı</h3>
+            <p>Arama filtrenizi temizleyerek tekrar deneyebilirsiniz.</p>
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="users-table">
+              <thead>
+                <tr>
+                  <th>Kullanıcı</th>
+                  <th>Rol</th>
+                  <th>E-Posta Onayı</th>
+                  <th>Hesap Durumu</th>
+                  <th>Kayıt Tarihi</th>
+                  <th class="text-center" style="white-space: nowrap;">İçerikler</th>
+                  <th class="text-center" style="white-space: nowrap;">Mesaj</th>
+                  <th class="text-center" style="white-space: nowrap;">Yasaklama</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (u of filteredUsers(); track u.id) {
+                  <tr [class.ban-row]="u.isBanned" [class.deactivated-row]="u.isDeactivated">
+                    <td>
+                      <div class="user-cell">
+                        <div class="user-mini-avatar">
+                          @if (u.profilePictureUrl) {
+                            <img [src]="authService.getAvatarUrl(u.profilePictureUrl)" alt="avatar" />
+                          } @else {
+                            <span>{{ u.username.charAt(0).toUpperCase() }}</span>
+                          }
+                        </div>
+                        <div class="user-text">
+                          <span class="u-name">{{ u.username }}</span>
+                          <span class="u-email">{{ u.email }}</span>
+                          @if (u.university) {
+                            <span class="u-univ"> {{ u.university }}</span>
+                          }
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="'badge-' + u.role.toLowerCase()">
+                        {{ u.role === 'Admin' ? 'Yönetici' : (u.role === 'Author' ? 'Yazar' : 'Okur') }}
+                      </span>
+                    </td>
+                    <td>
+                      @if (u.isEmailConfirmed) {
+                        <i class="fa-solid fa-envelope text-success" title="E-Posta Onaylı" style="font-size: 1.2rem;"></i>
+                      } @else {
+                        <i class="fa-regular fa-envelope text-warning" title="E-Posta Onayı Bekliyor" style="font-size: 1.2rem;"></i>
+                      }
+                    </td>
+                    <td>
+                      @if (u.isBanned) {
+                        <div class="ban-info-pill" [title]="u.banReason || 'Sebep belirtilmedi'">
+                          <i class="fa-solid fa-ban text-danger" title="Hesap Yasaklı" style="font-size: 1.2rem;"></i>
+                          <span class="ban-duration-text">
+                            {{ u.bannedUntil ? (u.bannedUntil | date:'dd.MM.yy HH:mm') : 'Süresiz' }}
+                          </span>
+                        </div>
+                      } @else if (u.isDeactivated) {
+                        <i class="fa-regular fa-snowflake text-warning" title="Hesap Dondurulmuş" style="font-size: 1.2rem;"></i>
+                      } @else {
+                        <i class="fa-solid fa-circle-check text-success" title="Hesap Aktif" style="font-size: 1.2rem;"></i>
+                      }
+                    </td>
+                    <td>
+                      <span class="text-muted text-sm">{{ u.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                    </td>
+                    <td class="text-center">
+                      <button
+                        class="btn btn-neutral btn-xs"
+                        (click)="viewUserPosts(u)"
+                        title="Yazıları İncele"
+                        style="padding: 4px 8px;"
+                      >
+                        <i class="fa-solid fa-file-lines" style="font-size: 1.1rem;"></i>
+                      </button>
+                    </td>
+
+                    <td class="text-center">
+                      <button
+                        class="btn btn-neutral btn-xs"
+                        (click)="openMessageModal(u)"
+                        title="Özel Bildirim Gönder"
+                        style="padding: 4px 8px;"
+                      >
+                        <i class="fa-regular fa-bell" style="font-size: 1.1rem;"></i>
+                      </button>
+                    </td>
+
+                    <td class="text-center">
+                      @if (u.role !== 'Admin') {
+                        @if (u.isBanned) {
+                          <button
+                            class="btn btn-neutral btn-xs"
+                            (click)="unbanUser(u)"
+                            title="Yasağı Kaldır"
+                            style="padding: 4px 8px;"
+                          >
+                            <i class="fa-solid fa-unlock" style="font-size: 1.1rem;"></i>
+                          </button>
+                        } @else {
+                          <button
+                            class="btn btn-neutral btn-xs"
+                            (click)="openBanModal(u)"
+                            title="Kullanıcıyı Yasakla"
+                            style="padding: 4px 8px;"
+                          >
+                            <i class="fa-solid fa-ban" style="font-size: 1.1rem;"></i>
+                          </button>
+                        }
+                      } @else {
+                        <span class="text-muted" style="font-size: 0.85rem;" title="Yöneticiler banlanamaz">-</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Pagination Controls -->
+          @if (paginatedData(); as data) {
+            <div class="pagination-controls" style="display: flex; justify-content: space-between; align-items: center; padding: 16px;">
+              <div>
+                Toplam <strong>{{ data.totalCount }}</strong> kayıt (Sayfa {{ data.currentPage }} / {{ data.totalPages }})
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-secondary btn-sm" [disabled]="!data.hasPreviousPage" (click)="changePage(data.currentPage - 1)">Önceki</button>
+                <button class="btn btn-secondary btn-sm" [disabled]="!data.hasNextPage" (click)="changePage(data.currentPage + 1)">Sonraki</button>
+              </div>
+            </div>
+          }
+        }
+      </div> <!-- End table-card -->
+    </div> <!-- Kapanış tag'i admin-main-card -->
+
+      <!-- ============================================== -->
+      <!-- MODAL 1: KULLANICININ YAZILARI & SİLME MODALI -->
+      <!-- ============================================== -->
+      @if (selectedUserForPosts()) {
+        <div class="modal-backdrop" (click)="closePostsModal()">
+          <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <div class="modal-title-wrap">
+                <span class="modal-icon"></span>
+                <div>
+                  <h3 class="modal-title">{{ selectedUserForPosts()?.username }} Kullanıcısının Yazıları</h3>
+                  <p class="modal-subtitle">{{ selectedUserForPosts()?.email }} • Toplam {{ userPosts().length }} içerik</p>
+                </div>
+              </div>
+              <button class="modal-close-btn" (click)="closePostsModal()"></button>
+            </div>
+
+            <div class="modal-body">
+              @if (isLoadingPosts()) {
+                <div class="loading-center">
+                  <div class="spinner-pulse"></div>
+                  <p>Yazılar getiriliyor...</p>
+                </div>
+              } @else if (userPosts().length === 0) {
+                <div class="empty-state-modal">
+                  <div class="empty-icon"></div>
+                  <h4>Henüz Yayınlanmış veya Taslak Yazısı Yok</h4>
+                  <p>Bu kullanıcı henüz herhangi bir blog veya köşe yazısı oluşturmamış.</p>
+                </div>
+              } @else {
+                <div class="posts-list-modal">
+                  @for (post of userPosts(); track post.id) {
+                    <div class="post-item-modal card">
+                      <div class="post-thumb">
+                        @if (post.photoUrl) {
+                          <img [src]="blogService.getPhotoUrl(post.photoUrl)" [alt]="post.title" />
+                        } @else {
+                          <div class="thumb-placeholder">{{ post.type === 'Koseyazisi' ? '' : '' }}</div>
+                        }
+                      </div>
+                      <div class="post-details">
+                        <div class="post-tags-row">
+                          <span class="badge" [class.badge-primary]="post.type === 'Blog'" [class.badge-author]="post.type === 'Koseyazisi'">
+                            {{ post.type === 'Koseyazisi' ? ' Köşe Yazısı' : ' Blog' }}
+                          </span>
+                          <span class="badge badge-success">
+                            Yayında
+                          </span>
+                          <span class="post-date-tag">{{ post.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                        </div>
+                        <h4 class="post-title">{{ post.title }}</h4>
+                        <p class="post-preview-text">{{ getExcerpt(post.content) }}</p>
+                      </div>
+                      <div class="post-admin-actions">
+                        <a [routerLink]="['/post', post.id]" target="_blank" class="btn btn-secondary btn-xs" title="Yeni sekmede aç">
+                           İncele
+                        </a>
+                        <button
+                          class="btn btn-danger btn-xs"
+                          (click)="openDeletePostModal(post)"
+                          title="Yazıyı sebep belirterek yayından kaldır ve sil"
+                        >
+                           Kaldır & Sil
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="modal-footer">
+              <button class="btn btn-secondary" (click)="closePostsModal()">Kapat</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ============================================== -->
+      <!-- MODAL 2: YAZI SİLME SEBEBİ & BİLDİRİM MODALI   -->
+      <!-- ============================================== -->
+      @if (selectedPostForDeletion()) {
+        <div class="modal-backdrop" (click)="closeDeletePostModal()">
+          <div class="modal-card" (click)="$event.stopPropagation()">
+            <div class="modal-header modal-header-danger">
+              <div class="modal-title-wrap">
+                <span class="modal-icon"></span>
+                <div>
+                  <h3 class="modal-title">Yazıyı Kaldır & Sil</h3>
+                  <p class="modal-subtitle">"{{ selectedPostForDeletion()?.title }}"</p>
+                </div>
+              </div>
+              <button class="modal-close-btn" (click)="closeDeletePostModal()"></button>
+            </div>
+
+            <form (ngSubmit)="confirmDeletePost()">
+              <div class="modal-body">
+                <div class="alert-box-warning">
+                   Bu yazıyı sildiğinizde sistemden kalıcı olarak silinecek, yazara hem <strong>sistem içi bildirim</strong> hem de <strong>e-posta uyarısı</strong> otomatik gönderilecektir.
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="del-reason">Silinme / Kaldırılma Sebebi (Zorunlu) *</label>
+                  <textarea
+                    id="del-reason"
+                    class="form-control"
+                    rows="4"
+                    [(ngModel)]="deletePostReason"
+                    name="deletePostReason"
+                    placeholder="Örn: Topluluk kurallarına ve telif haklarına aykırı içerik tespit edilmiştir..."
+                    required
+                  ></textarea>
+                </div>
+
+                <div class="form-check">
+                  <label class="check-container">
+                    <input type="checkbox" [(ngModel)]="sendDeletePostEmail" name="sendDeletePostEmail" />
+                    <span class="check-text">Kullanıcıya e-posta uyarısı gönder</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="closeDeletePostModal()" [disabled]="isDeletingPost()">
+                  İptal
+                </button>
+                <button type="submit" class="btn btn-danger" [disabled]="isDeletingPost() || !deletePostReason.trim()">
+                  @if (isDeletingPost()) {
+                    <span>Siliniyor...</span>
+                  } @else {
+                    <span> Yazıyı Kaldır ve Bildir</span>
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- ============================================== -->
+      <!-- MODAL 3: KULLANICI BANLAMA (SÜRELİ / SÜRESİZ)   -->
+      <!-- ============================================== -->
+      @if (selectedUserForBan()) {
+        <div class="modal-backdrop" (click)="closeBanModal()">
+          <div class="modal-card" (click)="$event.stopPropagation()">
+            <div class="modal-header modal-header-danger">
+              <div class="modal-title-wrap">
+                <span class="modal-icon"></span>
+                <div>
+                  <h3 class="modal-title">Kullanıcıyı Yasakla (Banla)</h3>
+                  <p class="modal-subtitle">{{ selectedUserForBan()?.username }} ({{ selectedUserForBan()?.email }})</p>
+                </div>
+              </div>
+              <button class="modal-close-btn" (click)="closeBanModal()"></button>
+            </div>
+
+            <form (ngSubmit)="confirmBanUser()">
+              <div class="modal-body">
+                <div class="alert-box-danger">
+                   Yasaklanan kullanıcı hesabına giriş yaptığında ana sayfa veya diğer sayfaları göremez; yalnızca hesabının yasaklandığına dair gerekçeyi görür ve sadece hesabını silme hakkına sahip olur.
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Yasaklama Süresi</label>
+                  <div class="duration-options">
+                    <button
+                      type="button"
+                      class="dur-btn"
+                      [class.active]="banDurationType() === 'PERMANENT'"
+                      (click)="banDurationType.set('PERMANENT')"
+                    >
+                      ♾️ Süresiz (Kalıcı)
+                    </button>
+                    <button
+                      type="button"
+                      class="dur-btn"
+                      [class.active]="banDurationType() === '1H'"
+                      (click)="banDurationType.set('1H')"
+                    >
+                      ⏱️ 1 Saat
+                    </button>
+                    <button
+                      type="button"
+                      class="dur-btn"
+                      [class.active]="banDurationType() === '1D'"
+                      (click)="banDurationType.set('1D')"
+                    >
+                      📅 1 Gün
+                    </button>
+                    <button
+                      type="button"
+                      class="dur-btn"
+                      [class.active]="banDurationType() === '7D'"
+                      (click)="banDurationType.set('7D')"
+                    >
+                      📅 7 Gün
+                    </button>
+                    <button
+                      type="button"
+                      class="dur-btn"
+                      [class.active]="banDurationType() === '30D'"
+                      (click)="banDurationType.set('30D')"
+                    >
+                      🗓️ 30 Gün
+                    </button>
+                    <button
+                      type="button"
+                      class="dur-btn"
+                      [class.active]="banDurationType() === 'CUSTOM'"
+                      (click)="banDurationType.set('CUSTOM')"
+                    >
+                       Özel (Dakika)
+                    </button>
+                  </div>
+
+                  @if (banDurationType() === 'CUSTOM') {
+                    <div class="custom-duration-input mt-2">
+                      <label class="form-label-sub">Süre (Dakika cinsinden):</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="customBanMinutes"
+                        name="customBanMinutes"
+                        min="1"
+                        placeholder="Örn: 120"
+                      />
+                    </div>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="ban-reason-input">Yasaklama Sebebi (Kullanıcıya sadece mail olarak iletilir) *</label>
+                  <textarea
+                    id="ban-reason-input"
+                    class="form-control"
+                    rows="4"
+                    [(ngModel)]="banReason"
+                    name="banReason"
+                    placeholder="Örn: Platform kurallarına uygun olmayan davranışlar ve spam paylaşımlar nedeniyle..."
+                    required
+                  ></textarea>
+                  @if (banReasonError()) {
+                    <div class="mt-1" style="font-size: 13px; color: #ef4444 !important; font-weight: 600;">⚠️ Bu alan boş bırakılamaz. Lütfen bir sebep girin.</div>
+                  }
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="closeBanModal()" [disabled]="isSubmittingBan()">
+                  İptal
+                </button>
+                <button type="submit" class="btn btn-danger" [disabled]="isSubmittingBan()">
+                  @if (isSubmittingBan()) {
+                    <span>Yasaklanıyor...</span>
+                  } @else {
+                    <span> Kullanıcıyı Yasakla & E-Posta Gönder</span>
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+
+      <!-- ============================================== -->
+      <!-- MODAL 4: ÖZEL BİLDİRİM / MESAJ GÖNDERME         -->
+      <!-- ============================================== -->
+      @if (selectedUserForMessage()) {
+        <div class="modal-backdrop" (click)="closeMessageModal()">
+          <div class="modal-card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <div class="modal-title-wrap">
+                <span class="modal-icon"></span>
+                <div>
+                  <h3 class="modal-title">Kullanıcıya Özel Bildirim Gönder</h3>
+                  <p class="modal-subtitle">{{ selectedUserForMessage()?.username }} ({{ selectedUserForMessage()?.email }})</p>
+                </div>
+              </div>
+              <button class="modal-close-btn" (click)="closeMessageModal()"></button>
+            </div>
+
+            <form (ngSubmit)="confirmSendMessage()">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label class="form-label">Bildirim Türü</label>
+                  <select class="form-control" [(ngModel)]="messageType" name="messageType">
+                    <option value="Warning">Uyarı Bildirimi</option>
+                    <option value="Info">Bilgilendirme</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="msg-title">Başlık *</label>
+                  <input
+                    id="msg-title"
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="messageTitle"
+                    name="messageTitle"
+                    placeholder="Örn: Profil Bilgileriniz Hakkında Uyarı"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="msg-body">Mesaj İçeriği *</label>
+                  <textarea
+                    id="msg-body"
+                    class="form-control"
+                    rows="4"
+                    [(ngModel)]="messageBody"
+                    name="messageBody"
+                    placeholder="Kullanıcıya iletmek istediğiniz detaylı açıklama..."
+                    required
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="closeMessageModal()" [disabled]="isSendingMessage()">
+                  İptal
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="isSendingMessage() || !messageTitle.trim() || !messageBody.trim()">
+                  @if (isSendingMessage()) {
+                    <span>Gönderiliyor...</span>
+                  } @else {
+                    <span> Bildirimi Gönder</span>
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      }
+    </div>
+  
