@@ -210,6 +210,11 @@
       position: relative;
       z-index: 1;
       padding-top: 70px !important; /* Exactly matches old layout (120px cover - 50px overlap = 70px) */
+      pointer-events: none; /* Tıklamaların padding boşluğundan arkadaki cover'a geçmesini sağlar */
+    }
+
+    .profile-info-section > * {
+      pointer-events: auto; /* İçerikteki buton ve inputların tıklanabilir olmasını sağlar */
     }
 
     @media (max-width: 600px) {
