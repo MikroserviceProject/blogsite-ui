@@ -7,5 +7,7 @@ export const routes: Routes = [
   ...blogRoutes,
   ...authRoutes,
   ...socialRoutes,
+  { path: 'architecture', loadComponent: () => import('./features/architecture-schema/architecture-schema.component').then(m => m.ArchitectureSchemaComponent) },
+
   { path: '**', redirectTo: '' }
 ];
