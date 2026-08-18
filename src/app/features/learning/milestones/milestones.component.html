@@ -1,0 +1,46 @@
+<div class="milestones-section">
+  <div class="milestones-header">
+    <h2 class="milestones-title">Bilgisayar ve Yazılım Tarihçesi</h2>
+  </div>
+
+  <div class="milestones-timeline" #timeline>
+    <!-- Düz satır çizgileri ve satırları birbirine bağlayan yarım daireler. -->
+    <svg class="milestones-connector-overlay">
+      @for (d of linePaths; track $index) {
+        <path [attr.d]="d" fill="none" />
+      }
+      @for (d of connectorPaths; track $index) {
+        <path [attr.d]="d" fill="none" />
+      }
+    </svg>
+
+    <!-- Işığın geçtiği yerde arkada kalan sarı iz (başta tamamen gizli, açılış animasyonuyla çizilir). -->
+    <svg class="milestones-connector-overlay milestones-connector-overlay-lit">
+      @for (d of linePaths; track $index) {
+        <path [attr.d]="d" fill="none" #litLineEl />
+      }
+      @for (d of connectorPaths; track $index) {
+        <path [attr.d]="d" fill="none" #litPathEl />
+      }
+    </svg>
+
+    <!-- Açılış animasyonunda çizgi üzerinde gezinen ışık. -->
+    <div class="timeline-spark" #spark [class.visible]="sparkVisible"></div>
+
+    @for (row of rows; track $index) {
+      <div class="milestone-row" [class.reverse]="$index % 2 !== 0">
+        @for (item of row; track item.index) {
+          <div class="milestone-node" [class.pending]="item.index >= revealedCount">
+            <span class="milestone-year" [style.color]="item.color">{{ item.year }}</span>
+            <span class="milestone-dot" #dotEl
+                  [class.grow]="growingIndex === item.index"
+                  [style.background]="item.color"
+                  [style.border-color]="item.color"></span>
+            <span class="milestone-label" [class.grow]="growingIndex === item.index">{{ item.label }}</span>
+            <span class="milestone-desc">{{ item.description }}</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

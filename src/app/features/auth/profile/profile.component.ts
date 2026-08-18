@@ -11,6 +11,7 @@ import { parseAuthError } from '../../../core/utils/auth-error-parser';
 
 import { UsersManagementComponent } from '../../admin/users-management/users-management.component';
 import { AuthorApprovalsComponent } from '../../admin/author-approvals/author-approvals.component';
+import { SocialService, PublicUser } from '../../../core/services/social/social.service';
 
 interface PasswordRules {
   hasMinLength: boolean;
@@ -31,11 +32,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
   authService = inject(AuthService);
   blogService = inject(BlogService);
   toastService = inject(ToastService);
+  socialService = inject(SocialService);
   router = inject(Router);
   route = inject(ActivatedRoute);
 
   // Active Tab: 'PROFILE', 'POSTS', 'NOTIFICATIONS', 'SETTINGS'
   activeTab = signal<string>('PROFILE');
+
+  // --- Profile Stats ---
+  stats = { followersCount: 0, followingCount: 0 };
 
   // --- Profile Edit State ---
   isEditing = signal<boolean>(false);
@@ -139,7 +144,26 @@ export class ProfileComponent implements OnInit, OnDestroy {
   selectedNotification = signal<UserNotification | null>(null);
   expandNotifId: string | null = null;
 
+  // --- Follow Modal State ---
+  showFollowModal = signal<boolean>(false);
+  followModalTitle = signal<string>('');
+  followModalUsers = signal<PublicUser[]>([]);
+  isLoadingFollowData = signal<boolean>(false);
+
+  onAvatarError(event: Event) {
+    const imgElement = event.target as HTMLImageElement;
+    imgElement.style.display = 'none';
+    imgElement.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="%23888" d="M224 256c70.7 0 128-57.3 128-128S294.7 0 224 0 96 57.3 96 128s57.3 128 128 128zm89.6 32h-16.7c-22.2 10.2-46.9 16-72.9 16s-50.6-5.8-72.9-16h-16.7C60.2 288 0 348.2 0 422.4V464c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48v-41.6c0-74.2-60.2-134.4-134.4-134.4z"/></svg>';
+    imgElement.style.padding = '20px';
+    imgElement.style.backgroundColor = 'var(--bg-hover)';
+  }
+
   ngOnInit() {
+    // Profil sekmesi için yetki kontrolü - Yazar veya Admin ise default POSTS
+    if (this.authService.isAuthor() || this.authService.isAdmin()) {
+      this.activeTab.set('POSTS');
+    }
+
     this.route.queryParams.subscribe(params => {
       if (params['tab']) {
         this.switchTab(params['tab']);
@@ -155,6 +179,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.loadUserData();
   }
 
+  shouldCollapseHero(): boolean {
+    // Only expand hero for POSTS if they have POSTS access, or PROFILE if they are normal user.
+    if (this.authService.isAuthor() || this.authService.isAdmin()) {
+      return this.activeTab() !== 'POSTS';
+    }
+    return this.activeTab() !== 'PROFILE';
+  }
+
   ngOnDestroy() {
     document.body.style.overflow = '';
   }
@@ -168,6 +200,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
             this.loadMyPosts();
           }
           this.loadNotifications();
+          this.loadStats();
+        }
+      }
+    });
+  }
+
+  loadStats() {
+    const user = this.authService.currentUser();
+    if (!user) return;
+    this.socialService.getUserStats(user.id).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.stats = res.data;
         }
       }
     });
@@ -498,6 +543,38 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  isUploadingCover = signal<boolean>(false);
+
+  onCoverFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    if (file.size > 10 * 1024 * 1024) {
+      this.toastService.error('Boyut Hatası', 'Kapak resmi 10 MB\'dan küçük olmalıdır.');
+      return;
+    }
+
+    this.isUploadingCover.set(true);
+    this.authService.uploadCover(file).subscribe({
+      next: (res) => {
+        this.isUploadingCover.set(false);
+        if (res.success) {
+          this.toastService.success('Kapak Güncellendi ', 'Yeni kapak fotoğrafınız başarıyla kaydedildi.');
+        } else {
+          this.toastService.error('Hata', res.message);
+        }
+        input.value = '';
+      },
+      error: (err) => {
+        this.isUploadingCover.set(false);
+        const parsed = parseAuthError(err);
+        this.toastService.error('Yükleme Başarısız', parsed.generalMessage);
+        input.value = '';
+      }
+    });
+  }
+
   removeAvatar() {
     const currentUser = this.authService.currentUser();
     if (!currentUser) return;
@@ -706,5 +783,67 @@ export class ProfileComponent implements OnInit, OnDestroy {
   logout() {
     this.authService.logout();
     this.toastService.info('Oturum Kapatıldı', 'Güvenli bir şekilde çıkış yaptınız.');
+  }
+
+  // --- Follow Modal Logic ---
+  openFollowersModal() {
+    const user = this.authService.currentUser();
+    if (!user) return;
+    
+    this.followModalTitle.set('Takipçiler');
+    this.showFollowModal.set(true);
+    this.isLoadingFollowData.set(true);
+    this.followModalUsers.set([]);
+
+    this.socialService.getFollowersIds(user.id).subscribe({
+      next: (res) => {
+        if (res.success && res.data && res.data.length > 0) {
+          this.loadProfilesByIds(res.data);
+        } else {
+          this.isLoadingFollowData.set(false);
+        }
+      },
+      error: () => this.isLoadingFollowData.set(false)
+    });
+  }
+
+  openFollowingModal() {
+    const user = this.authService.currentUser();
+    if (!user) return;
+    
+    this.followModalTitle.set('Takip Edilenler');
+    this.showFollowModal.set(true);
+    this.isLoadingFollowData.set(true);
+    this.followModalUsers.set([]);
+
+    this.socialService.getFollowingIds(user.id).subscribe({
+      next: (res) => {
+        if (res.success && res.data && res.data.length > 0) {
+          this.loadProfilesByIds(res.data);
+        } else {
+          this.isLoadingFollowData.set(false);
+        }
+      },
+      error: () => this.isLoadingFollowData.set(false)
+    });
+  }
+
+  private loadProfilesByIds(userIds: string[]) {
+    this.socialService.getBulkProfiles(userIds).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.followModalUsers.set(res.data);
+        }
+        this.isLoadingFollowData.set(false);
+      },
+      error: () => {
+        this.isLoadingFollowData.set(false);
+      }
+    });
+  }
+
+  closeFollowModal() {
+    this.showFollowModal.set(false);
+    this.followModalUsers.set([]);
   }
 }

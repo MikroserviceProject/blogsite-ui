@@ -1,0 +1,58 @@
+<div class="world-map-section">
+  <div class="world-map-header">
+    <h2 class="map-title">Diller Nerede Doğdu?</h2>
+  </div>
+
+  <div class="category-filters">
+    @for (cat of categories; track cat) {
+      <button
+        type="button"
+        class="category-pill"
+        [class.active]="selectedCategory() === cat"
+        (click)="selectCategory(cat)"
+      >
+        {{ categoryLabels[cat] }}
+      </button>
+    }
+  </div>
+
+  <div class="world-map" #mapEl>
+    <img src="assets/images/world-map.svg" alt="Dünya Haritası" class="world-map-bg" />
+
+    @if (hasEnteredView()) {
+    @for (layout of pointLayouts; track layout.point.id; let i = $index) {
+      <div
+        class="map-dot"
+        [style.left.%]="layout.point.left"
+        [style.top.%]="layout.point.top"
+        [style.background]="layout.point.color"
+        [style.animation-delay.ms]="i * 500"
+      ></div>
+
+      <div
+        class="map-line"
+        [style.left.%]="layout.point.left"
+        [style.top.%]="layout.point.top"
+        [style.width.px]="layout.lineLength"
+        [style.background]="layout.point.color"
+        [style.--line-angle.deg]="layout.lineAngleDeg"
+        [style.animation-delay.ms]="i * 500 + 120"
+      ></div>
+
+      <div
+        class="map-card"
+        [style.left.%]="layout.point.left"
+        [style.top.%]="layout.point.top"
+        [style.transform]="'translate(calc(-50% + ' + layout.dx + 'px), calc(-50% + ' + layout.dy + 'px))'"
+        [style.animation-delay.ms]="i * 500 + 620"
+      >
+        <span class="map-card-header">
+          <span class="map-card-name" [style.color]="layout.point.color">{{ layout.point.name }}</span>
+          <span class="map-card-year">{{ layout.point.yearLabel }}</span>
+        </span>
+        <span class="map-card-summary">{{ layout.point.summary }}</span>
+      </div>
+    }
+    }
+  </div>
+</div>

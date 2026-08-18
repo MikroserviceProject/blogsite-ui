@@ -1,0 +1,180 @@
+.milestones-section {
+  margin: 0 0 40px 0;
+  /* @media viewport genişliğine bakar, ama bu bölüm dar bir panelde/önizlemede
+     her zaman dar görünebilir — o yüzden gerçek konteyner genişliğine tepki veren
+     bir container query kullanılıyor (aşağıda @container). Aksi halde satır sarınca
+     bağlantı eğrisi yanlış konumda, havada asılı kalıyordu. */
+  container-type: inline-size;
+}
+
+.milestones-header {
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.milestones-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0;
+}
+
+.milestones-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  row-gap: 42px;
+}
+
+/* Satırları birbirine bağlayan yarım daireler, düz çizgiyle aynı kalınlıkta — gerçek nokta konumları TS'te
+   getBoundingClientRect() ile ölçülüp buraya SVG path olarak çiziliyor, bu yüzden
+   her zaman tam noktadan başlayıp tam noktada bitiyor (metnin etrafından dışa taşarak). */
+.milestones-connector-overlay {
+  /* Noktaların (z-index: 1, beyaz halka gölgesiyle) arkasında kalmalı ki eğri
+     noktanın altına gizlensin; üstte olursa noktadan dışarı taşan küçük bir
+     çizgi parçası gibi görünüyordu. */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: visible;
+}
+
+/* Açılış animasyonunda ışığın konumu TS'te left/top ile burada tutulur (bkz.
+   animateSpark) — sarı iz'in nereye kadar çizileceğini belirlemek için pozisyon
+   hâlâ gerekli, ama yuvarlak/parlayan görseli kaldırıldı; görünen tek şey artık
+   arkada bıraktığı iz (.milestone-line-lit / .milestones-connector-overlay-lit). */
+.timeline-spark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.milestones-connector-overlay path {
+  stroke: var(--border);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* Işığın satırlar arası eğride bıraktığı sarı iz — başta tamamen gizli
+   (stroke-dasharray/offset TS'te ayarlanır), ışık geçtikçe kademeli çizilir.
+   Altındaki gri eğriyle birebir aynı path ve kalınlığı kullanır ki (bulanık
+   bir filter olmadan) kenarlarda gri taşmasın/görünmesin. */
+.milestones-connector-overlay-lit path {
+  stroke: #fbbf24;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* 2 satır "S" gibi zikzak akar: çift satırlar soldan sağa, tek satırlar sağdan sola
+   (dil seçim şeridindeki aynı teknik). */
+.milestone-row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.milestone-row.reverse {
+  flex-direction: row-reverse;
+}
+
+.milestone-node {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 150px;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 0.7s ease;
+}
+
+/* Açılış animasyonunda henüz ışığın ulaşmadığı öğeler tamamen gri olmak yerine
+   sadece soluklaşır — kendi rengini az da olsa koruyup silik görünür. */
+.milestone-node.pending {
+  opacity: 0.4;
+}
+
+.milestone-year {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  transform-origin: center;
+}
+
+.milestone-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  background: var(--bg-surface);
+  box-shadow: 0 0 0 3px var(--bg-surface);
+  margin-bottom: 8px;
+  transition: background-color 0.5s ease, border-color 0.5s ease;
+  transform-origin: center;
+}
+
+.milestone-label {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  transform-origin: center;
+}
+
+/* Yıl ve açıklama sabit boyutta kalır; başlık (label) ve nokta, ışık sırası
+   kendilerine geldiğinde kısaca büyüyüp yerine döner. */
+.milestone-label.grow {
+  animation: milestoneGrow 0.65s ease;
+}
+
+.milestone-dot.grow {
+  animation: milestoneDotGrow 0.65s ease;
+}
+
+@keyframes milestoneGrow {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+@keyframes milestoneDotGrow {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.7); }
+  100% { transform: scale(1); }
+}
+
+.milestone-desc {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin-top: 5px;
+  transform-origin: center;
+}
+
+@container (max-width: 900px) {
+  .milestone-row,
+  .milestone-row.reverse {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .milestones-connector-overlay,
+  .timeline-spark {
+    display: none;
+  }
+}

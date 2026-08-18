@@ -1,5 +1,5 @@
     <div class="container profile-page">
-      <div class="profile-container">
+      <div class="profile-container" [class.posts-active-layout]="activeTab() === 'POSTS'">
         
         <!-- ==================================================== -->
         <!-- DURUM 1: BANLANMIŞ (YASAKLANMIŞ) HESAP EKRANI       -->
@@ -63,69 +63,118 @@
           <!-- DURUM 2: AKTİF HESAP EKRANI (STANDART PROFİL)        -->
           <!-- ==================================================== -->
 
-          <!-- Profile Top Hero Banner -->
-          <div class="profile-header card">
-            <!-- Avatar Section with Upload Overlay -->
-            <div class="avatar-upload-wrapper">
-              <div class="profile-avatar-large" (click)="fileInput.click()" title="Profil resmini değiştirmek için tıklayın">
-                @if (authService.currentUser()?.profilePictureUrl) {
-                  <img 
-                    [src]="authService.getAvatarUrl(authService.currentUser()?.profilePictureUrl)" 
-                    alt="Profil Resmi" 
-                    class="avatar-img-element"
-                  />
+          <!-- Profile Top Hero Banner (Instagram-like) -->
+          <div class="profile-header card" [class.is-collapsed]="shouldCollapseHero()" [class.has-cover]="!!authService.currentUser()?.coverPictureUrl" style="padding: 0; overflow: hidden; position: relative;">
+            <div class="profile-cover" 
+                 [style.backgroundImage]="authService.currentUser()?.coverPictureUrl ? 'url(' + authService.getAvatarUrl(authService.currentUser()?.coverPictureUrl) + ')' : (shouldCollapseHero() ? 'none' : 'linear-gradient(135deg, var(--accent-light, #1e3a8a), var(--accent-color, #3b82f6))')"
+                 style="position: relative; background-size: cover; background-position: center; cursor: pointer; transition: opacity 0.2s;"
+                 (click)="coverInput.click()"
+                 onmouseover="this.style.opacity='0.8'"
+                 onmouseout="this.style.opacity='1'"
+                 title="Kapak fotoğrafını değiştirmek için tıklayın">
+              
+              <div style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+                @if (isUploadingCover()) {
+                  <span class="spinner-small"></span> Yükleniyor...
                 } @else {
-                  <span>{{ authService.currentUser()?.username?.charAt(0)?.toUpperCase() || 'U' }}</span>
+                  <i class="fa-solid fa-camera"></i> Kapak
                 }
-                <div class="avatar-overlay">
-                  @if (isUploadingAvatar()) {
-                    <span class="spinner-small"></span>
-                  } @else {
-                    <span>📷</span>
-                  }
-                </div>
               </div>
-              <input 
-                #fileInput 
-                type="file" 
-                (change)="onFileSelected($event)" 
-                accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" 
-                style="display: none;" 
-              />
-              <div class="avatar-quick-actions">
+            </div>
+            
+            <input 
+              #coverInput 
+              type="file" 
+              (change)="onCoverFileSelected($event)" 
+              accept="image/*" 
+              style="display: none;" 
+            />
+            
+            <div class="profile-info-section" style="padding: 0 24px 24px 24px; margin-top: 0; display: flex; flex-direction: column; align-items: center;">
+              
+              <!-- Avatar Section with Upload Overlay -->
+              <div class="avatar-upload-wrapper" style="position: relative; margin-bottom: 16px;">
+                <div class="profile-avatar-large" style="width: 100px; height: 100px; border: 4px solid var(--card-bg); border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" (click)="fileInput.click()" title="Profil resmini değiştirmek için tıklayın">
+                  @if (authService.currentUser()?.profilePictureUrl) {
+                    <img 
+                      [src]="authService.getAvatarUrl(authService.currentUser()?.profilePictureUrl)" 
+                      alt="Profil Resmi" 
+                      class="avatar-img-element"
+                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;"
+                      (error)="onAvatarError($event)"
+                    />
+                  } @else {
+                    <span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 3rem; background: var(--bg-hover); color: var(--text-muted); border-radius: 50%;">
+                      <i class="fa-solid fa-user"></i>
+                    </span>
+                  }
+                  <div class="avatar-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer;">
+                    @if (isUploadingAvatar()) {
+                      <span class="spinner-small"></span>
+                    } @else {
+                      <span style="color: white; font-size: 1.5rem;">📷</span>
+                    }
+                  </div>
+                </div>
+                <input 
+                  #fileInput 
+                  type="file" 
+                  (change)="onFileSelected($event)" 
+                  accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" 
+                  style="display: none;" 
+                />
+              </div>
+
+              <!-- Quick action links for avatar below -->
+              <div class="avatar-quick-actions" style="margin-bottom: 20px; font-size: 13px;">
                 <button type="button" class="btn-link-action" (click)="fileInput.click()" [disabled]="isUploadingAvatar()">
                   📷 Fotoğraf Seç
                 </button>
                 @if (authService.currentUser()?.profilePictureUrl) {
-                  <span class="action-sep">•</span>
+                  <span class="action-sep" style="margin: 0 8px; color: var(--text-muted);">•</span>
                   <button type="button" class="btn-link-action text-danger" (click)="removeAvatar()" [disabled]="isUploadingAvatar()">
                      Kaldır
                   </button>
                 }
               </div>
-            </div>
 
-            <div class="profile-main-info">
-              <div class="profile-title-row">
-                <h1 class="profile-name">{{ authService.currentUser()?.username }}</h1>
-                <span class="badge" [ngClass]="'badge-' + (authService.userRole()?.toLowerCase() || 'user')">
-                  {{ authService.roleDisplayName() }}
-                </span>
-                @if (authService.currentUser()?.isEmailConfirmed) {
-                  <span class="badge badge-success">✓ E-Posta Onaylı</span>
-                } @else {
-                  <span class="badge badge-warning"> E-Posta Onay Bekliyor</span>
-                }
+              <div class="profile-details" style="text-align: center; width: 100%;">
+                <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <h1 class="profile-name" style="margin: 0; font-size: 1.5rem; font-weight: 700;">&#64;{{ authService.currentUser()?.username }}</h1>
+                  @if (authService.currentUser()?.isEmailConfirmed) {
+                    <i class="fa-solid fa-circle-check text-primary" title="E-Posta Onaylı"></i>
+                  }
+                </div>
+                
+                <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 16px;">
+                  <span class="badge" [ngClass]="'badge-' + (authService.userRole()?.toLowerCase() || 'user')">
+                    {{ authService.roleDisplayName() }}
+                  </span>
+                </div>
+
+                <p class="profile-bio text-muted" style="margin-bottom: 24px;">Kayıt tarihi: {{ authService.currentUser()?.createdAt | date:'MMMM yyyy' }}</p>
+                
+                <div class="profile-stats" style="display: flex; justify-content: center; gap: 40px; margin-bottom: 24px; padding: 20px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                  <div class="stat-item" style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: opacity 0.2s;" (click)="openFollowersModal()" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
+                    <span class="stat-value" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">{{ stats.followersCount }}</span>
+                    <span class="stat-label" style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Takipçi</span>
+                  </div>
+                  <div class="stat-item" style="display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: opacity 0.2s;" (click)="openFollowingModal()" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
+                    <span class="stat-value" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">{{ stats.followingCount }}</span>
+                    <span class="stat-label" style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Takip Edilen</span>
+                  </div>
+                  <div class="stat-item" style="display: flex; flex-direction: column; align-items: center;">
+                    <span class="stat-value" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">{{ authService.isAuthor() || authService.isAdmin() ? myPosts().length : 0 }}</span>
+                    <span class="stat-label" style="font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Gönderi</span>
+                  </div>
+                </div>
+
+                <div class="profile-actions">
+                  <button class="btn btn-danger btn-sm" (click)="logout()">
+                    <span>🚪</span> Çıkış Yap
+                  </button>
+                </div>
               </div>
-              <p class="profile-email">{{ authService.currentUser()?.email }}</p>
-              <p class="profile-meta">
-                Kayıt Tarihi: {{ authService.currentUser()?.createdAt | date:'d MMMM y, HH:mm' }}
-              </p>
-            </div>
-            <div class="profile-actions">
-              <button class="btn btn-danger btn-sm" (click)="logout()">
-                <span>🚪</span> Çıkış Yap
-              </button>
             </div>
           </div>
 
@@ -158,14 +207,6 @@
 
           <!-- PROFILE NAVIGATION TABS -->
           <div class="profile-nav-tabs">
-            <button
-              class="tab-btn"
-              [class.active]="activeTab() === 'PROFILE'"
-              (click)="activeTab.set('PROFILE')"
-            >
-              Profil & Güvenlik
-            </button>
-
             @if (authService.isAuthor() || authService.isAdmin()) {
               <button
                 class="tab-btn"
@@ -178,6 +219,14 @@
                 }
               </button>
             }
+
+            <button
+              class="tab-btn"
+              [class.active]="activeTab() === 'PROFILE'"
+              (click)="activeTab.set('PROFILE')"
+            >
+              Profil & Güvenlik
+            </button>
 
             <button
               class="tab-btn"
@@ -237,7 +286,7 @@
           @if (activeTab() === 'PROFILE') {
             <!-- Yazar Bilgileri Kartı (Eğer Rol Yazar İse) -->
             @if (authService.isAuthor()) {
-              <div class="card author-details-card">
+              <div class="author-details-card card">
                 <div class="card-header-flex">
                   <div>
                     <h2 class="card-section-title"> Yazar ve Akademik Bilgiler</h2>
@@ -273,7 +322,7 @@
 
             <!-- Yazar Başvurusu Kartı (Eğer Rol User İse) -->
             @if (authService.userRole() === 'User') {
-              <div class="card author-details-card mb-4">
+              <div class="author-details-card card mb-4">
                 <div class="card-header-flex">
                   <div>
                     <h2 class="card-section-title"> Yazar Olmak İçin Başvurun</h2>
@@ -362,7 +411,7 @@
             }
 
             <!-- Profil Bilgileri & Düzenleme Kartı -->
-            <div class="card profile-info-card">
+            <div class="profile-info-card card">
               <div class="card-header-flex">
                 <div>
                   <h2 class="card-section-title"> Profil Bilgileri</h2>
@@ -471,7 +520,7 @@
             </div>
 
             <!-- Şifre Değiştirme Kartı -->
-            <div class="card password-change-card">
+            <div class="password-change-card card">
               <div class="card-header-flex">
                 <div>
                   <h2 class="card-section-title"> Şifre Değiştir</h2>
@@ -590,7 +639,7 @@
           <!-- TAB 2: YAZAR YAZILARI & KÖŞE YAZILARI YÖNETİMİ       -->
           <!-- ==================================================== -->
           @if (activeTab() === 'POSTS') {
-            <div class="card posts-management-card">
+            <div class="posts-management-card card">
               <div class="card-header-flex">
                 <div>
                   <h2 class="card-section-title"> Yayınlarım & Yazılarım</h2>
@@ -695,7 +744,7 @@
           <!-- TAB 3: BİLDİRİMLERİM                                 -->
           <!-- ==================================================== -->
           @if (activeTab() === 'NOTIFICATIONS') {
-            <div class="card notifications-card">
+            <div class="notifications-card card">
               <div class="card-header-flex">
                 <div>
                   <h2 class="card-section-title"> Bildirimler & Uyarılar</h2>
@@ -787,7 +836,7 @@
           <!-- TAB 4: DESTEK & ŞİKAYET BİLDİRİMİ                    -->
           <!-- ==================================================== -->
           @if (activeTab() === 'SUPPORT' && !authService.isAdmin()) {
-            <div class="card mb-4">
+            <div class="support-card card mb-4">
               <div class="card-header-flex">
                 <div>
                   <h2 class="card-section-title"> İstek ve Şikayet Bildirimi</h2>
@@ -830,7 +879,7 @@
           <!-- TAB 5: HESAP DONDURMA                                -->
           <!-- ==================================================== -->
           @if (activeTab() === 'FREEZE') {
-            <div class="danger-zone-card mb-4 card">
+            <div class="danger-zone-card card mb-4">
               <div class="card-header-flex">
                 <div>
                   <h2 class="card-section-title text-warning"> Hesap Dondurma</h2>
@@ -1123,6 +1172,49 @@
               <button class="btn btn-secondary" (click)="closeAccountDeletionModal()">
                 Kapat
               </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- MODAL: TAKİPÇİLER VE TAKİP EDİLENLER MODALI -->
+      <!-- ==================================================== -->
+      @if (showFollowModal()) {
+        <div class="modal-backdrop" (click)="closeFollowModal()" style="display: flex; align-items: center; justify-content: center; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999;">
+          <div class="modal-card" (click)="$event.stopPropagation()" style="background: var(--bg-card, #fff); border-radius: 12px; width: 100%; max-width: 400px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-color, #eee);">
+              <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; text-align: center; flex: 1; color: var(--text-primary, #333);">{{ followModalTitle() }}</h3>
+              <button (click)="closeFollowModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted, #888);">&times;</button>
+            </div>
+            
+            <div class="modal-body" style="padding: 0; overflow-y: auto; flex: 1;">
+              @if (isLoadingFollowData()) {
+                <div style="padding: 24px; text-align: center; color: var(--text-muted, #888);">
+                  Yükleniyor...
+                </div>
+              } @else if (followModalUsers().length === 0) {
+                <div style="padding: 24px; text-align: center; color: var(--text-muted, #888);">
+                  Henüz kimse yok.
+                </div>
+              } @else {
+                <div style="display: flex; flex-direction: column;">
+                  @for (user of followModalUsers(); track user.id) {
+                    <div [routerLink]="['/profile', user.username]" (click)="closeFollowModal()" style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-hover, #f5f5f5)'" onmouseout="this.style.background='transparent'">
+                      <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-hover, #eee); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        @if (user.profilePictureUrl) {
+                          <img [src]="authService.getAvatarUrl(user.profilePictureUrl)" style="width: 100%; height: 100%; object-fit: cover;" (error)="onAvatarError($event)" />
+                        } @else {
+                          <span style="font-size: 1.2rem; color: var(--text-muted, #888);"><i class="fa-solid fa-user"></i></span>
+                        }
+                      </div>
+                      <div style="display: flex; flex-direction: column;">
+                        <span style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary, #333);">{{ user.username }}</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted, #888);">{{ user.role === 'Author' ? 'Yazar' : (user.role === 'Admin' ? 'Yönetici' : 'Okur') }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
             </div>
           </div>
         </div>

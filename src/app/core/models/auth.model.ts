@@ -28,6 +28,7 @@ export interface User {
   email: string;
   role: 'Admin' | 'Author' | 'User';
   profilePictureUrl?: string;
+  coverPictureUrl?: string;
   university?: string;
   cvUrl?: string;
   authorApprovalStatus?: 'Pending' | 'Approved' | 'Rejected';

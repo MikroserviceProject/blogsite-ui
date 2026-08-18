@@ -25,10 +25,12 @@ export class AppComponent {
   authService = inject(AuthService);
 
   // 0: Normal, 1: Peri Tozu (Çapraz Pembe), 2: Peri Dünyası (Orman)
-  fairyModeState = 0;
-  
+  fairyModeState = 0; // 0: Kapalı, 1: Peri Tozu, 2: Peri Dünyası
+  spiderModeState = 0; // 0: Kapalı, 1: Spiderman Modu
   fairyTrailListener: any;
+  spiderTrailListener: any;
   fairyIdleInterval: any;
+  spiderIdleInterval: any;
   mouseX = 0;
   mouseY = 0;
   
@@ -92,6 +94,11 @@ export class AppComponent {
 
   // 🧚‍♀️ Peri Modu Döngüsü
   toggleFairyMode() {
+    // Önce örümcek modunu kapat
+    if (this.spiderModeState !== 0) {
+      this.spiderModeState = 0;
+      this.cleanUpSpiderMode();
+    }
     this.fairyModeState = (this.fairyModeState + 1) % 3;
     
     document.documentElement.classList.remove('fairy-mode', 'fairy-world-mode');
@@ -215,5 +222,145 @@ export class AppComponent {
       clearInterval(this.fairyIdleInterval);
       this.fairyIdleInterval = null;
     }
+  }
+
+  // --- 🕷️ SPIDERMAN / 🔥 ANGER MODU KODLARI ---
+
+  getSpiderTitle(): string {
+    if (this.spiderModeState === 0) return 'Spiderman Modunu Aç 🕷️';
+    if (this.spiderModeState === 1) return 'Anger Moduna Geç 🔥';
+    return 'Temayı Kapat';
+  }
+
+  toggleSpiderMode() {
+    // Önce peri modunu kapat
+    if (this.fairyModeState !== 0) {
+      this.fairyModeState = 0;
+      this.deactivateFairyMagic();
+      document.documentElement.classList.remove('fairy-mode', 'fairy-world-mode');
+    }
+
+    // 3 aşamalı döngü: 0 → 1 → 2 → 0
+    this.spiderModeState = (this.spiderModeState + 1) % 3;
+    
+    // Önceki modları temizle
+    document.documentElement.classList.remove('spider-mode', 'anger-mode');
+    this.cleanUpTrails();
+    
+    if (this.spiderModeState === 1) {
+      // 🕷️ Spiderman Modu
+      document.documentElement.classList.add('spider-mode');
+      this.startSpiderTrail();
+    } else if (this.spiderModeState === 2) {
+      // 🔥 Anger Modu
+      document.documentElement.classList.add('anger-mode');
+      this.startAngerTrail();
+    }
+    // 0 = Kapalı (temizleme zaten yapıldı)
+  }
+
+  startSpiderTrail() {
+    if (!this.spiderTrailListener) {
+      let lastTime = 0;
+      
+      this.spiderTrailListener = (e: MouseEvent) => {
+        const now = Date.now();
+        if (now - lastTime < 40) return;
+        lastTime = now;
+        
+        this.createSpiderParticle(e.clientX, e.clientY, false);
+      };
+      
+      document.addEventListener('mousemove', this.spiderTrailListener);
+      
+      this.spiderIdleInterval = setInterval(() => {
+        if (this.mouseX === 0 && this.mouseY === 0) return;
+        if (Math.random() > 0.6) {
+          this.createSpiderParticle(this.mouseX, this.mouseY, true);
+        }
+      }, 300);
+    }
+  }
+
+  createSpiderParticle(x: number, y: number, isTiny: boolean) {
+    const particle = document.createElement('div');
+    particle.className = isTiny ? 'spider-web tiny' : 'spider-web';
+    
+    const offsetX = isTiny ? (Math.random() * 20 - 10) : 0;
+    const offsetY = isTiny ? (Math.random() * 20 - 10) : 0;
+    
+    particle.style.left = (x + offsetX) + 'px';
+    particle.style.top = (y + offsetY) + 'px';
+    
+    const emojis = ['🕸️', '🕷️', '🕸️'];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    particle.innerHTML = randomEmoji;
+    
+    document.body.appendChild(particle);
+    
+    setTimeout(() => {
+      particle.remove();
+    }, isTiny ? 2500 : 1800);
+  }
+
+  // 🔥 Anger Trail
+  startAngerTrail() {
+    if (!this.spiderTrailListener) {
+      let lastTime = 0;
+      
+      this.spiderTrailListener = (e: MouseEvent) => {
+        const now = Date.now();
+        if (now - lastTime < 50) return;
+        lastTime = now;
+        
+        this.createAngerParticle(e.clientX, e.clientY, false);
+      };
+      
+      document.addEventListener('mousemove', this.spiderTrailListener);
+      
+      this.spiderIdleInterval = setInterval(() => {
+        if (this.mouseX === 0 && this.mouseY === 0) return;
+        if (Math.random() > 0.5) {
+          this.createAngerParticle(this.mouseX, this.mouseY, true);
+        }
+      }, 250);
+    }
+  }
+
+  createAngerParticle(x: number, y: number, isTiny: boolean) {
+    const particle = document.createElement('div');
+    particle.className = isTiny ? 'anger-particle tiny' : 'anger-particle';
+    
+    const offsetX = isTiny ? (Math.random() * 20 - 10) : 0;
+    const offsetY = isTiny ? (Math.random() * 20 - 10) : 0;
+    
+    particle.style.left = (x + offsetX) + 'px';
+    particle.style.top = (y + offsetY) + 'px';
+    
+    const emojis = ['🔥', '💢', '🔥', '💥'];
+    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+    particle.innerHTML = randomEmoji;
+    
+    document.body.appendChild(particle);
+    
+    setTimeout(() => {
+      particle.remove();
+    }, isTiny ? 2000 : 1400);
+  }
+
+  cleanUpTrails() {
+    if (this.spiderTrailListener) {
+      document.removeEventListener('mousemove', this.spiderTrailListener);
+      this.spiderTrailListener = null;
+    }
+    if (this.spiderIdleInterval) {
+      clearInterval(this.spiderIdleInterval);
+      this.spiderIdleInterval = null;
+    }
+  }
+
+  cleanUpSpiderMode() {
+    document.documentElement.classList.remove('spider-mode', 'anger-mode');
+    this.cleanUpTrails();
   }
 }
