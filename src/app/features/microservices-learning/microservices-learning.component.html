@@ -6,6 +6,7 @@
       <h2>Mikroservis Öğrenme Merkezi 🚀</h2>
       <p>Bu interaktif şemada, genel bir mikroservis mimarisinde isteklerin (request) servisler, veritabanları ve mesaj kuyrukları arasında nasıl gezindiğini adım adım göreceksiniz. Belirli bir sektöre bağlı kalmadan, herhangi bir sistemde (giriş yapma, profil düzenleme, fotoğraf yükleme gibi) olayların nasıl aktığını inceleyebilirsiniz.</p>
       <ul>
+        <li><b>Genel Mimari:</b> Sistemin en geniş halini, temel servislerin ve veritabanlarının nasıl birbirine bağlandığını kuşbakışı inceleyebilirsiniz.</li>
         <li><b>Giriş Yap:</b> İsteğin alınması, SQL'den kullanıcının doğrulanması, Token'ın Redis'te önbelleğe alınması ve asenkron loglama için olayın RabbitMQ'ya iletilmesi.</li>
         <li><b>Profil Düzenle:</b> İlgili servise yönlendirme, önbellek temizliği, MongoDB'ye yazma ve asenkron bilgi mesajı fırlatılması.</li>
         <li><b>Fotoğraf Yükle:</b> Metadata'nın MongoDB'ye yazılıp, fotoğraf boyutlandırma işleminin RabbitMQ ile arka plana atılması (Asenkron).</li>
