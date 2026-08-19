@@ -1315,7 +1315,7 @@
 
 /* YENİ STİLLER (Öğrenme Merkezi) */
 .welcome-overlay {
-  position: absolute;
+  position: fixed; /* absolute yerine fixed yaptık ki devasa sayfanın ortasına değil, ekranda gördüğümüz kısmın ortasına gelsin */
   top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(8px);
