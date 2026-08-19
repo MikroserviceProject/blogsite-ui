@@ -441,10 +441,10 @@
 /* Aktif akış varsa CSS Grid Devreye Girer */
 .schema-board.has-active-flow {
   display: grid;
-  /* Daha geniş ve ferah bir yerleşim (Kullanıcının ekran görüntüsündeki gibi) */
-  grid-template-columns: 320px 400px 320px; 
+  /* Ekrana tam sığması için daha orantılı ve responsive bir yerleşim */
+  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr) minmax(280px, 1fr); 
   grid-template-rows: auto auto auto;
-  gap: 75px 100px; /* Dikey boşluğu (120px -> 75px) küçülttük ki alttaki kutular azıcık yukarı çıksın */
+  gap: 40px 60px; /* Dikey ve yatay boşluklar ekrana sığması için optimum seviyeye çekildi */
   /* 
     Gateway (Orta Üst)
     İstemci (Sol Orta) -> Microservice (Tam Orta) -> DB'ler (Sağ Taraf, Row 2-3)
@@ -504,20 +504,20 @@
   z-index: 10; 
 }
 
-/* Oklu Sayfada Kolonların Orijinal Boyutunu Koru ve Genişlet */
+/* Oklu Sayfada Kolonların Boyutlarını Ekrana Sığdır */
 .schema-board.has-active-flow .layer-column {
-  min-width: 320px;
-  max-width: 400px; /* Ekran görüntüsündeki gibi geniş kutular */
+  min-width: 280px;
+  max-width: 350px; /* Kutular çok taşıp scroll bar çıkarmasın diye sınırlandı */
   flex: 1;
 }
 
-/* Kutu içindeki Node'ların yüksekliklerini de geniş yapalım */
+/* Kutu içindeki Node'ların yüksekliklerini optimize et */
 .schema-board.has-active-flow .schema-box {
-  min-height: 120px; /* Kutular daha etli ve yüksek dursun */
-  padding: 24px 20px;
+  min-height: 80px; 
+  padding: 16px 16px;
 }
 .schema-board.has-active-flow #layer-services .schema-box {
-  min-height: 180px; /* Mikroservis kutusu fotodaki gibi ekstra devasa olsun */
+  min-height: 140px; /* Mikroservis kutusu yine de biraz daha gösterişli olsun */
 }
 
 .layer-column.horizontal-layer {
