@@ -14,24 +14,6 @@
     </div>
   </div>
 
-  <!-- YENİ: Console (Komut Satırı) -->
-  <div class="learning-console">
-    <div class="console-header">Mimari Komut Terminali</div>
-    <div class="console-body">
-      <div class="console-history" *ngFor="let msg of consoleHistory()">
-        <span [class.prompt-user]="msg.type === 'user'" [class.prompt-system]="msg.type === 'system'" class="prompt-prefix">
-          {{ msg.type === 'user' ? '>' : 'C:\\Microservices>' }}
-        </span>
-        <span class="history-text" [class.system-text]="msg.type === 'system'">{{ msg.text }}</span>
-      </div>
-      <div class="console-input-row" *ngIf="activePrompt()">
-        <span class="prompt-prefix">{{ activePrompt()?.prefix }}</span>
-        <input type="text" [(ngModel)]="consoleInput" (keyup.enter)="executeCommand(consoleInput)" [placeholder]="activePrompt()?.placeholder" autofocus />
-        <button (click)="executeCommand(consoleInput)">Gönder</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Üst Araç Çubuğu (Görünüm Değiştirici) -->
   <div class="schema-toolbar" *ngIf="activeFlowId()">
     <button class="toggle-view-btn" (click)="toggleInactiveNodes()">
@@ -187,6 +169,25 @@
 
     </div>
   </div>
+
+  <!-- YENİ: Console (Komut Satırı) - En Alta Taşındı -->
+  <div class="learning-console">
+    <div class="console-header">Mimari Komut Terminali</div>
+    <div class="console-body">
+      <div class="console-history" *ngFor="let msg of consoleHistory()">
+        <span [class.prompt-user]="msg.type === 'user'" [class.prompt-system]="msg.type === 'system'" class="prompt-prefix">
+          {{ msg.type === 'user' ? '>' : 'C:\\Microservices>' }}
+        </span>
+        <span class="history-text" [class.system-text]="msg.type === 'system'">{{ msg.text }}</span>
+      </div>
+      <div class="console-input-row" *ngIf="activePrompt()">
+        <span class="prompt-prefix">{{ activePrompt()?.prefix }}</span>
+        <input type="text" [(ngModel)]="consoleInput" (keyup.enter)="executeCommand(consoleInput)" [placeholder]="activePrompt()?.placeholder" autofocus />
+        <button (click)="executeCommand(consoleInput)">Gönder</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <ng-template #nodeTemplate let-node>
