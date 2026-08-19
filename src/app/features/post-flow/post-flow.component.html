@@ -1,0 +1,293 @@
+<div class="post-flow-page container">
+
+  <div class="pf-header">
+    <h2>Arka Planda Ne Oluyor?</h2>
+  </div>
+
+  <div class="pf-layout">
+
+    <div class="pf-stage">
+
+      <!-- Arka planda çalışan katmanlar: kutu = sınıf, ok = çağrılan komut -->
+      <div class="flow-rail">
+
+        <div class="flow-caption" [class.is-empty]="!currentNodeExplain()">
+          @if (currentNodeExplain(); as active) {
+            <span class="flow-caption-explain">{{ active.explain }}</span>
+            @if (active.technical) {
+              <span class="flow-caption-technical">{{ active.technical }}</span>
+            }
+          }
+        </div>
+
+        <div class="snake-grid" #snakeGrid>
+          @for (label of groupLabels; track label; let gi = $index) {
+            <div
+              class="snake-band"
+              [class.snake-band-1]="gi === 0"
+              [class.snake-band-2]="gi === 1"
+              [class.snake-band-3]="gi === 2"
+              [style.grid-row]="gi + 1"
+              style="grid-column: 1 / -1;">
+              <span class="snake-band-label">{{ label }}</span>
+            </div>
+          }
+
+          <svg class="snake-svg">
+            <defs>
+              <marker id="pf-arrowhead" markerWidth="6" markerHeight="6" refX="4.5" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#8b5cf6" />
+              </marker>
+              <marker id="pf-arrowhead-muted" markerWidth="6" markerHeight="6" refX="4.5" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#8b5cf6" fill-opacity="0.35" />
+              </marker>
+            </defs>
+            @for (arrow of arrows(); track arrow.fromIndex) {
+              <path
+                [attr.d]="arrow.d"
+                [class.is-active]="isConnectorActive(arrow.fromIndex)"
+                [attr.marker-end]="isConnectorActive(arrow.fromIndex) ? 'url(#pf-arrowhead)' : 'url(#pf-arrowhead-muted)'" />
+            }
+          </svg>
+
+          @for (node of activeFlow().nodes; track node.id; let i = $index) {
+            <div
+              #snakeBox
+              class="snake-box"
+              [class.is-active]="isNodeActive(i)"
+              [class.is-done]="isNodeDone(i)"
+              [style.grid-row]="gridPos(i).row"
+              [style.grid-column]="gridPos(i).col">
+              <span class="snake-box-name">{{ node.label }}</span>
+              <span class="snake-box-role">{{ node.role }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Sanal Ekran (gerçek örnek içerikli, basitleştirilmiş arayüz taslağı) -->
+      <div class="device-col">
+        <div class="pf-controls">
+          @if (!introStarted()) {
+            <button class="pf-start-btn" (click)="startIntro()">▶ Başla</button>
+          }
+          @if (playing()) {
+            <button class="pf-pause-btn" (click)="togglePause()">
+              {{ paused() ? '▶ Devam Et' : '⏸ Durdur' }}
+            </button>
+          }
+          <button class="pf-reset-btn" (click)="reset()">↺ Sıfırla</button>
+
+          <div class="op-picker">
+            <button class="op-picker-trigger" (click)="toggleMenu()" [class.is-open]="menuOpen()">
+              İşlem Seç
+              <span class="op-picker-chevron">▾</span>
+            </button>
+
+            @if (menuOpen()) {
+              <div class="op-picker-menu">
+                @for (flow of flows; track flow.id; let idx = $index) {
+                  <button
+                    class="op-picker-item"
+                    [class.is-active]="activeFlowId() === flow.id"
+                    [disabled]="playing()"
+                    (click)="selectFlow(flow.id)">
+                    <span class="op-picker-badge">{{ idx + 1 }}</span>
+                    <span>{{ flowShortName(flow.name) }}</span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="device-frame">
+        <div class="device-topbar">
+          <span class="device-title">Ekran Önizleme</span>
+          <span class="device-op-label">{{ activeFlow().opLabel }}</span>
+          @if (activeFlow().showReason) {
+            <span class="admin-badge">🛡 Admin</span>
+          }
+        </div>
+
+        <div class="device-body">
+
+          @if (activeFlow().navItem) {
+            <div class="mini-navbar">
+              @for (item of navItems; track item) {
+                <span class="mini-nav-item-wrap">
+                  <span
+                    class="mini-nav-item"
+                    [class.is-target]="item === activeFlow().navItem"
+                    [class.is-clicked]="step() === 0 && introStarted() && item === activeFlow().navItem"
+                    [class.is-cursor]="item === activeFlow().navItem && step() === 0"
+                    (click)="onNavItemClick(item)">
+                    {{ item }}
+                  </span>
+                  @if (step() === 0 && introStarted() && item === activeFlow().navItem) {
+                    <span class="nav-tooltip">Bana bas 👆</span>
+                  }
+                </span>
+              }
+            </div>
+          }
+
+          @if (activeFlow().navItem && step() === 0) {
+            <div class="home-silhouette">
+              <div class="home-hero">
+                <span class="home-hero-title">Lumina'ya Hoş Geldiniz 👋</span>
+              </div>
+              <div class="home-hero-row">
+                <div class="home-hero-chip"></div>
+                <div class="home-hero-chip"></div>
+                <div class="home-hero-chip"></div>
+              </div>
+            </div>
+          }
+
+          @switch (activeFlow().screenType) {
+
+            @case ('form') {
+              <div class="field">
+                <span class="field-label">Başlık</span>
+                <div class="field-value" [class.is-filled]="step() >= 1 || !!activeFlow().prefilled">
+                  <span class="field-value-text">{{ activeFlow().screenTitle }}</span>
+                </div>
+              </div>
+              <div class="field">
+                <span class="field-label">İçerik</span>
+                <div class="field-value field-value-body" [class.is-filled]="step() >= 1 || !!activeFlow().prefilled">
+                  <span class="field-value-text">{{ activeFlow().screenBody }}</span>
+                </div>
+              </div>
+
+              <span class="mini-nav-item-wrap">
+                <button
+                  class="skeleton-publish-btn"
+                  [class.is-pressed]="step() >= 1"
+                  [class.is-clickable]="step() === 0 && introStarted()"
+                  [disabled]="step() !== 0"
+                  (click)="triggerStart()">
+                  @if (step() < totalSteps()) {
+                    <span>{{ activeFlow().prefilled ? 'Kaydet' : 'Yayınla' }}</span>
+                  } @else {
+                    <span>✓ {{ activeFlow().prefilled ? 'Kaydedildi' : 'Yayınlandı' }}</span>
+                  }
+                </button>
+                @if (step() === 0 && introStarted()) {
+                  <span class="nav-tooltip">Bana bas 👆</span>
+                }
+              </span>
+            }
+
+            @case ('list') {
+              @if (!activeFlow().navItem) {
+                <div class="list-topbar" [class.is-active]="step() >= 1">
+                  <span>Bloglar</span>
+                  @if (activeFlow().tagChip) {
+                    <span class="mini-nav-item-wrap">
+                      <span
+                        class="tag-chip"
+                        [class.is-clicked]="step() === 0 && introStarted()"
+                        (click)="triggerStart()">
+                        {{ activeFlow().tagChip }}
+                      </span>
+                      @if (step() === 0 && introStarted()) {
+                        <span class="nav-tooltip">Bana bas 👆</span>
+                      }
+                    </span>
+                  }
+                </div>
+              }
+
+              @if (!activeFlow().navItem || step() >= 1) {
+                @for (item of activeFlow().listItems; track item.title) {
+                  <div class="list-card" [class.is-loaded]="step() === totalSteps()">
+                    <div class="list-card-thumb"></div>
+                    <div class="list-card-lines">
+                      <span class="list-card-title">{{ item.title }}</span>
+                      <span class="list-card-subtitle">{{ item.subtitle }}</span>
+                    </div>
+                  </div>
+                }
+              }
+            }
+
+            @case ('detail') {
+              @if (step() === 0) {
+                <span class="mini-nav-item-wrap">
+                  <button class="skeleton-publish-btn" [class.is-clickable]="introStarted()" (click)="triggerStart()">
+                    <span>🔎 Yazıyı Aç</span>
+                  </button>
+                  @if (introStarted()) {
+                    <span class="nav-tooltip">Bana bas 👆</span>
+                  }
+                </span>
+              }
+              <h3 class="detail-title" [class.is-active]="step() >= 1">{{ activeFlow().screenTitle }}</h3>
+              <div class="detail-meta" [class.is-active]="step() >= 1">{{ activeFlow().screenSubtitle }}</div>
+              <p class="detail-para" [class.is-active]="step() === totalSteps()">{{ activeFlow().screenBody }}</p>
+            }
+
+            @case ('delete') {
+              <div class="list-card delete-card is-loaded" [class.is-gone]="step() === totalSteps()">
+                <div class="list-card-thumb"></div>
+                <div class="list-card-lines">
+                  <span class="list-card-title">{{ activeFlow().screenTitle }}</span>
+                  <span class="list-card-subtitle">{{ activeFlow().screenSubtitle }}</span>
+                </div>
+              </div>
+
+              @if (activeFlow().showReason) {
+                <div class="field">
+                  <span class="field-label">Gerekçe</span>
+                  <div class="field-value" [class.is-filled]="step() >= 1">
+                    <span class="field-value-text">{{ activeFlow().screenExtra }}</span>
+                  </div>
+                </div>
+              }
+
+              <span class="mini-nav-item-wrap">
+                <button
+                  class="skeleton-publish-btn delete-btn"
+                  [class.is-pressed]="step() >= 1"
+                  [class.is-clickable]="step() === 0 && introStarted()"
+                  [disabled]="step() !== 0"
+                  (click)="triggerStart()">
+                  @if (step() < totalSteps()) {
+                    <span>Sil</span>
+                  } @else {
+                    <span>✓ Silindi</span>
+                  }
+                </button>
+                @if (step() === 0 && introStarted()) {
+                  <span class="nav-tooltip">Bana bas 👆</span>
+                }
+              </span>
+            }
+
+          }
+
+          @if (step() === 1) {
+            <div class="step-caption">{{ activeFlow().introExplain }}</div>
+          }
+
+          @if (step() >= 2 && step() < totalSteps()) {
+            <div class="sending-indicator">
+              <span class="spinner"></span>
+              {{ activeFlow().screenType === 'list' || activeFlow().screenType === 'detail' ? 'Yükleniyor…' : 'Gönderiliyor…' }}
+            </div>
+          }
+
+          @if (step() === totalSteps()) {
+            <div class="success-note">{{ activeFlow().successExplain }}</div>
+          }
+        </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+</div>

@@ -8,6 +8,9 @@ export const routes: Routes = [
   ...authRoutes,
   ...socialRoutes,
   { path: 'architecture', loadComponent: () => import('./features/architecture-schema/architecture-schema.component').then(m => m.ArchitectureSchemaComponent) },
+  { path: 'post-architecture', loadComponent: () => import('./features/post-architecture/post-architecture.component').then(m => m.PostArchitectureComponent) },
+  { path: 'post-2', loadComponent: () => import('./features/post-flow/post-flow.component').then(m => m.PostFlowComponent) },
+  { path: 'aut', loadComponent: () => import('./features/auth-flow/auth-flow.component').then(m => m.AuthFlowComponent) },
 
   { path: '**', redirectTo: '' }
 ];

@@ -1,0 +1,295 @@
+<div class="architecture-container">
+
+  <!-- Üst Araç Çubuğu: Akış Seçici (bazı akışlar bir ekrana tıklamakla değil, buradan seçilir) -->
+  <div class="header-section">
+    <div class="flow-selector-container">
+      <label>Akış:</label>
+      <select (change)="onFlowChange($event)">
+        <option value="">-- Tüm Mimariyi Göster --</option>
+        @for (flow of flows; track flow.id) {
+          <option [value]="flow.id" [selected]="activeFlowId() === flow.id">{{ flow.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Görünüm Değiştirici -->
+  <div class="schema-toolbar" *ngIf="activeFlowId()">
+    <button class="toggle-view-btn" (click)="toggleInactiveNodes()">
+      <span class="icon">{{ showInactiveNodes() ? '👁' : '👁‍🗨' }}</span>
+      {{ showInactiveNodes() ? 'Tüm Mimariyi Gizle' : 'Tüm Mimariyi Göster' }}
+    </button>
+    <button class="reset-layout-btn" (click)="resetNodePositions()" *ngIf="hasAnyNodeMoved()">
+      <span class="icon">🔄</span> Düzeni Sıfırla
+    </button>
+  </div>
+
+  <!-- Sağ Alt Panel (Flow Legend - Akış Detayları) -->
+  <div class="flow-legend-panel"
+       *ngIf="activeFlowId()"
+       [class.minimized-panel]="isPanelMinimized()"
+       [style.left.px]="hasMoved ? panelLeft : null"
+       [style.top.px]="hasMoved ? panelTop : null"
+       [style.right]="hasMoved ? 'auto' : null"
+       [style.bottom]="hasMoved ? 'auto' : null">
+
+    <div class="legend-header" (mousedown)="onPanelMouseDown($event)">
+      <div class="drag-handle" title="Paneli Sürükle">⣿</div>
+      <h3 [class.minimized-title]="isPanelMinimized()">{{ activeFlowData()?.name }}</h3>
+      <div class="panel-actions">
+        <button class="minimize-btn" (click)="togglePanelMinimize($event)" title="Küçült/Büyüt">
+          {{ isPanelMinimized() ? '▲' : '▼' }}
+        </button>
+        <button class="close-btn" (click)="selectFlow(null)" title="Kapat">✕</button>
+      </div>
+    </div>
+
+    <div class="legend-body" *ngIf="!isPanelMinimized()">
+      <div class="legend-step" *ngFor="let step of activeFlowData()?.steps; let i = index">
+        <div class="step-badge">{{ i + 1 }}</div>
+        <div class="step-content">
+          <div class="step-title">{{ step.label }}</div>
+          <div class="step-desc" *ngIf="step.subLabel">{{ step.subLabel }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MİMARİ BOARD -->
+  <div class="board-wrapper" [class.has-active-flow]="activeFlowId() !== null" (click)="onBoardClick($event)">
+
+    <div class="schema-board" #boardWrapper [class.has-active-flow]="activeFlowId() !== null">
+
+      <svg class="schema-svg-overlay">
+
+        <defs>
+          <marker id="arrowhead" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+            <polygon points="0 0, 4 2, 0 4" fill="#cbd5e1" />
+          </marker>
+
+          <marker id="arrowhead-active" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#3b82f6" />
+          </marker>
+
+          <marker id="arrowhead-pink" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#f43f5e" />
+          </marker>
+          <marker id="arrowhead-blue" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#3b82f6" />
+          </marker>
+          <marker id="arrowhead-purple" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#8b5cf6" />
+          </marker>
+          <marker id="arrowhead-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#10b981" />
+          </marker>
+
+          <marker id="arrowhead-return" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#10b981" />
+          </marker>
+        </defs>
+
+        @for (gLine of groupSvgLines(); track $index) {
+          <path [attr.d]="gLine.path" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linejoin="round" />
+        }
+
+        <g *ngFor="let line of svgLines()" class="svg-line-group"
+           [class.default-bg-line]="line.isDefaultBackground"
+           [class.active-line]="line.active && !isAnimationFinished() && !line.isDefaultBackground"
+           [class.return-line]="line.isReturn && !line.isDefaultBackground"
+           [class.finished-line]="isAnimationFinished() && !line.isDefaultBackground"
+           [style.opacity]="line.isDefaultBackground ? '0.2' : '1'">
+
+          <path class="static-path"
+            [attr.d]="line.pathD"
+            [attr.marker-end]="'url(#arrowhead)'"
+          />
+
+          <path class="animated-path"
+            [attr.d]="line.pathD"
+            [style.stroke]="line.active && !line.isReturn && !line.isDefaultBackground ? line.lineColor : ''"
+            [attr.marker-end]="line.isDefaultBackground ? '' : (line.active ? (line.isReturn ? 'url(#arrowhead-return)' : 'url(#' + line.markerEnd + ')') : '')"
+          />
+
+        </g>
+      </svg>
+
+      @for (line of svgLines(); track line.id) {
+          <div class="html-line-label"
+               [style.left.px]="line.labelX - 12"
+               [style.top.px]="line.labelY - 12"
+               [class.active-label]="line.active && !isAnimationFinished()"
+               [class.default-label]="line.isDefaultBackground"
+               [class.return-label]="line.isReturn">
+             <div class="label-badge"
+                  [style.background-color]="line.active && !line.isReturn && !line.isDefaultBackground ? line.lineColor : ''">
+               {{ line.stepIndex }}
+             </div>
+          </div>
+      }
+
+      @for (layer of layers; track layer.id) {
+        <ng-container *ngTemplateOutlet="layerColTemplate; context: { $implicit: layer }"></ng-container>
+      }
+
+      <ng-template #layerColTemplate let-layer>
+        <div class="layer-column" [class.two-columns-container]="layer.isTwoColumn" [class.horizontal-layer]="layer.direction === 'horizontal' && activeFlowId() !== null">
+          <div class="layer-header">
+            {{ layer.title }}
+          </div>
+          <div class="layer-body" [class.two-columns]="layer.isTwoColumn">
+
+            @if (layer.isTwoColumn) {
+
+              <div class="layer-col-left">
+                @for (node of layer.leftNodes; track node.id) {
+                  <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: node }"></ng-container>
+                }
+              </div>
+
+              <div class="layer-col-right">
+                @for (node of layer.rightNodes; track node.id) {
+                  <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: node }"></ng-container>
+                }
+              </div>
+
+            } @else {
+
+              @for (node of layer.nodes; track node.id) {
+                <ng-container *ngTemplateOutlet="nodeTemplate; context: { $implicit: node }"></ng-container>
+              }
+
+            }
+
+          </div>
+        </div>
+      </ng-template>
+
+    </div>
+  </div>
+</div>
+
+<ng-template #nodeTemplate let-node>
+  <div
+    [id]="node.id"
+    class="schema-box"
+    [ngClass]="'node-type-' + node.type"
+    [class.highlighted]="isNodeHighlighted(node.id)"
+    [class.out-of-flow]="!isNodeInFlow(node.id) && showInactiveNodes()"
+    [class.hidden-node]="!isNodeInFlow(node.id) && !showInactiveNodes()"
+    [class.is-group]="node.isGroup"
+    [style.transform]="getNodeTransform(node.id)"
+    [style.transition]="draggingNodeId === node.id ? 'none' : 'transform 0.1s ease'"
+    [style.z-index]="draggingNodeId === node.id ? '999' : ''"
+    [style.cursor]="'move'"
+    (mousedown)="onNodeDragStart($event, node.id)"
+    (click)="onBoxClick(node, $event)">
+
+    <div class="box-content-wrapper">
+      <div class="box-title-area">
+        <span class="box-name">{{ node.name }}</span>
+        @if (node.subName) {
+          <span class="box-sub">{{ node.subName }}</span>
+        }
+      </div>
+
+      <div class="box-actions">
+        @if (node.isGroup) {
+          <span class="group-icon" (click)="toggleGroup(node, $event)">
+            {{ node.expanded ? '▼' : '▶' }}
+          </span>
+        }
+        <button class="info-btn" title="Detayları Gör" (click)="openNodeDetails(node.id); $event.stopPropagation()">⋮</button>
+      </div>
+    </div>
+
+    <div class="box-desc" *ngIf="node.desc">{{ node.desc }}</div>
+  </div>
+
+  @if (node.isGroup && node.expanded && node.children) {
+    <div class="group-children-container">
+      @for (child of node.children; track child.id) {
+
+        <div
+          [id]="child.id"
+          class="schema-box child-box"
+          [ngClass]="'node-type-' + child.type"
+          [class.highlighted]="isNodeHighlighted(child.id)"
+          [class.out-of-flow]="!isNodeInFlow(child.id) && showInactiveNodes()"
+          [class.hidden-node]="!isNodeInFlow(child.id) && !showInactiveNodes()"
+          [style.transform]="getNodeTransform(child.id)"
+          [style.transition]="draggingNodeId === child.id ? 'none' : 'transform 0.1s ease'"
+          [style.z-index]="draggingNodeId === child.id ? '999' : ''"
+          [style.cursor]="'move'"
+          (mousedown)="onNodeDragStart($event, child.id)"
+          (click)="onBoxClick(child, $event)">
+
+          <div class="box-content-wrapper">
+            <div class="box-title-area">
+              <span class="box-name">{{ child.name }}</span>
+              @if (child.subName) {
+                <span class="box-sub">{{ child.subName }}</span>
+              }
+            </div>
+            <button class="info-btn" title="Detayları Gör" (click)="openNodeDetails(child.id); $event.stopPropagation()">⋮</button>
+          </div>
+
+          <div class="box-desc" *ngIf="child.desc">{{ child.desc }}</div>
+        </div>
+
+      }
+    </div>
+  }
+</ng-template>
+
+<!-- NODE DETAILS DRAWER (SIDE PANEL) -->
+@if (selectedNode()) {
+  <div class="node-details-backdrop" (click)="closeNodeDetails()"></div>
+  <div class="node-details-drawer slide-in-right">
+    <div class="drawer-header">
+      <div class="drawer-title">
+        <span class="icon">📄</span>
+        <h3>{{ selectedNode()?.title }}</h3>
+      </div>
+      <button class="close-btn" (click)="closeNodeDetails()">✕</button>
+    </div>
+
+    <div class="drawer-content">
+      <p class="node-desc">{{ selectedNode()?.description }}</p>
+
+      @if (selectedNode()?.methods?.length) {
+        <div class="details-section">
+          <h4>İşlemler (Metodlar)</h4>
+          <ul class="method-list">
+            @for (method of selectedNode()?.methods; track method.name) {
+              <li>
+                <span class="method-name">{{ method.name }}</span>
+                <span class="method-desc">{{ method.desc }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (selectedNode()?.properties?.length) {
+        <div class="details-section">
+          <h4>Özellikler (Properties)</h4>
+          <div class="prop-table">
+            <div class="prop-row header">
+              <div>Adı</div>
+              <div>Tipi</div>
+              <div>Açıklama</div>
+            </div>
+            @for (prop of selectedNode()?.properties; track prop.name) {
+              <div class="prop-row">
+                <div class="prop-name">{{ prop.name }}</div>
+                <div class="prop-type">{{ prop.type }}</div>
+                <div class="prop-desc">{{ prop.desc }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
