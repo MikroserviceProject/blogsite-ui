@@ -141,8 +141,11 @@ export class MicroservicesLearningComponent implements OnDestroy, AfterViewCheck
       } else if (lowerCmd === 'fotoğraf yükle' || lowerCmd === 'fotograf-yukle' || lowerCmd === 'fotograf yukle') {
         this.pendingFlow = 'fotograf-yukle';
         this.activePrompt.set({ step: 'input1', prefix: 'Dosya Adı (.jpg):', placeholder: 'Örn: tatil_fotom.jpg' });
+      } else if (lowerCmd === 'genel mimari' || lowerCmd === 'genel-mimari') {
+        this.pendingFlow = 'genel-mimari';
+        this.activePrompt.set({ step: 'input1', prefix: 'Devam etmek için Enter\'a basın:', placeholder: 'Sadece izleyin...' });
       } else {
-        this.consoleHistory.update(h => [...h, { type: 'system', text: 'Geçersiz komut. Kullanabileceğiniz komutlar: "giriş yap", "profil düzenle", "fotoğraf yükle"' }]);
+        this.consoleHistory.update(h => [...h, { type: 'system', text: 'Geçersiz komut. Kullanabileceğiniz komutlar: "genel mimari", "giriş yap", "profil düzenle", "fotoğraf yükle"' }]);
       }
     } else if (prompt?.step === 'input1') {
       this.consoleHistory.update(h => [...h, { type: 'system', text: 'İsteğiniz sunucuya (API Gateway) iletiliyor...' }]);
