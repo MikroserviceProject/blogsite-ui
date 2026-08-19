@@ -1352,10 +1352,8 @@
 .start-btn:hover { background: #2563eb; }
 
 .learning-console {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  margin: 40px auto 80px auto; /* Üstten ve alttan boşluk bırakıp ortalar */
   width: 80%;
   max-width: 800px;
   background: #0f172a;
