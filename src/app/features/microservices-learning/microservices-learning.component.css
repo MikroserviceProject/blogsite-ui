@@ -438,41 +438,45 @@
   padding: 60px 20px 300px 20px; /* Yanlardaki boşlukları kıstık ki daha çok alan kalsın */
 }
 
-/* Oklu Sayfa (Kullanıcının İstediği Özel Dizilim) */
+/* Aktif akış varsa CSS Grid Devreye Girer */
 .schema-board.has-active-flow {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  /* 3 sütunlu ferah bir yerleşim */
+  grid-template-columns: 350px 350px 350px; 
   grid-template-rows: auto auto auto;
-  gap: 100px 50px; /* Satır ve Sütun aralıkları */
-  max-width: 1400px; 
-  padding: 60px 20px 300px 20px; 
+  gap: 80px 60px;
+  /* 
+    İstemci (Sol Üst) -> Gateway (Orta Üst) -> Queue (Sağ Üst)
+    Microservice (Tam Orta)
+    DB'ler (Alt)
+  */
+  grid-template-areas:
+    "client     gateway    queue"
+    ".          microservice ."
+    "db         db         db";
+  align-items: start;
 }
 
-/* Grid Yerleşimleri */
+/* Grid Yerleşimleri (grid-template-areas ile eşleşecek) */
 .schema-board.has-active-flow #layer-client {
-  grid-column: 1 / 2;
-  grid-row: 2 / 3;
-  align-self: center;
+  grid-area: client;
+  justify-self: center;
 }
 .schema-board.has-active-flow #layer-gateway {
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
+  grid-area: gateway;
   justify-self: center;
 }
 .schema-board.has-active-flow #layer-services {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
+  grid-area: microservice;
   justify-self: center;
-  align-self: center;
 }
 .schema-board.has-active-flow #layer-broker {
-  grid-column: 3 / 4;
-  grid-row: 1 / 2;
+  grid-area: queue;
   justify-self: center;
 }
 .schema-board.has-active-flow #layer-data {
-  grid-column: 1 / 4;
-  grid-row: 3 / 4;
+  grid-area: db;
+  justify-self: center;
 }
 /* Akış dışı (pasif) kutular sönük ve gri olsun */
 .schema-box.out-of-flow {
