@@ -155,8 +155,13 @@ export class MicroservicesLearningComponent implements OnDestroy, AfterViewCheck
         this.selectFlow(this.pendingFlow);
         this.pendingFlow = null;
         
-        // Komut gönderildiğinde, mimariyi izleyebilmesi için ekranı yumuşakça en başa (yukarı) kaydır
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Komut gönderildiğinde, mimariyi izleyebilmesi için tam olarak şema tahtasına kaydır
+        setTimeout(() => {
+          const board = document.querySelector('.board-wrapper');
+          if (board) {
+            board.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
       }
     }
     
