@@ -73,69 +73,7 @@
   }
 }
 
-/* 🧚‍♀️ Peri Modu Butonu (Sol Ortada Sabit) */
-.fairy-toggle-btn {
-  position: fixed;
-  top: 50%;
-  left: 10px;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 99999;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
 
-.fairy-toggle-btn:hover {
-  background: rgba(244, 114, 182, 0.3);
-  border-color: #f472b6;
-  transform: translateY(-50%) scale(1.15);
-  box-shadow: 0 6px 16px rgba(244, 114, 182, 0.4);
-}
-
-.fairy-toggle-btn:active {
-  transform: translateY(-50%) scale(0.9);
-}
-
-/* 🕷️ Spider Modu Butonu (Sol Ortada Sabit, Perinin Altında) */
-.spider-toggle-btn {
-  position: fixed;
-  top: calc(50% + 55px);
-  left: 10px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 99999;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.spider-toggle-btn:hover {
-  background: rgba(220, 38, 38, 0.3);
-  border-color: #ef4444;
-  transform: scale(1.1) rotate(15deg);
-}
-
-.spider-toggle-btn:active {
-  transform: scale(0.9);
-}
 
 /* 🎵 Müzik Açma/Kapama Butonu */
 .fairy-music-btn {

@@ -8,6 +8,7 @@ export const routes: Routes = [
   ...authRoutes,
   ...socialRoutes,
   { path: 'architecture', loadComponent: () => import('./features/architecture-schema/architecture-schema.component').then(m => m.ArchitectureSchemaComponent) },
+  { path: 'learning', loadComponent: () => import('./features/microservices-learning/microservices-learning.component').then(m => m.MicroservicesLearningComponent) },
 
   { path: '**', redirectTo: '' }
 ];

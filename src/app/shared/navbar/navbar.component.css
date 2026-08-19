@@ -188,6 +188,47 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      width: 100%;
+      max-width: 1400px; /* Daha geniş alan */
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .navbar-brand-section {
+      display: flex;
+      align-items: center;
+      gap: 16px; /* Butonlarla logo arası boşluğu biraz açtık */
+    }
+
+    .nav-mode-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+    }
+
+    .nav-mode-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
+
+    :host-context(.light-theme) .nav-mode-btn {
+      background: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: #0f172a;
+    }
+
+    :host-context(.light-theme) .nav-mode-btn:hover {
+      background: rgba(0, 0, 0, 0.1);
     }
 
     .navbar-logo {
@@ -205,7 +246,7 @@
 
     .brand-name {
       font-family: var(--font-heading);
-      font-size: 20px;
+      font-size: 24px; /* Hafif büyütüldü */
       font-weight: 800;
       color: #ffffff;
       letter-spacing: -0.5px;
@@ -218,7 +259,7 @@
     .navbar-nav {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 16px; /* Sıkışıklığı önlemek için daraltıldı */
     }
 
     @media (max-width: 768px) {

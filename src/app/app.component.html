@@ -9,17 +9,12 @@
   </div>
 } @else {
 
-  <app-navbar></app-navbar>
-  
-  <!-- 🧚‍♀️ Peri Modu Gizli Butonu (Silebilirsiniz) -->
-  <button class="fairy-toggle-btn" (click)="toggleFairyMode()" [title]="getFairyTitle()">
-    {{ getFairyIcon() }}
-  </button>
-
-  <!-- 🕷️ Spiderman Modu Butonu (Peri butonunun altında) -->
-  <button class="spider-toggle-btn" (click)="toggleSpiderMode()" [title]="getSpiderTitle()">
-    🕷️
-  </button>
+  <app-navbar 
+    [fairyModeState]="fairyModeState" 
+    [spiderModeState]="spiderModeState"
+    (toggleFairy)="toggleFairyMode()"
+    (toggleSpider)="toggleSpiderMode()">
+  </app-navbar>
 
   @if (fairyModeState > 0) {
     <!-- 🎵 Müzik Aç/Kapat Butonu -->

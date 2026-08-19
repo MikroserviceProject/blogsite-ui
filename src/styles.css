@@ -9,6 +9,7 @@
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Background Colors - Premium Mesh Gradient Dark */
+  --bg-primary: #0f172a; /* Mimari Şema Arka Planı */
   --bg-main: #030712; /* Çok koyu gri/siyah (Onyx) */
   --bg-card: #0d1b3e; /* Şık Koyu Lacivert / Gece Mavisi (Kullanıcının seçimi) */
   --bg-card-hover: rgba(31, 41, 55, 0.85);
@@ -65,6 +66,7 @@
 
 /* 🌤️ Aydınlık Tema - klasik beyaz görünüm */
 :root.light-theme {
+  --bg-primary: #ffffff;
   --bg-main: #f3f4f6; /* Daha yumuşak, göz yormayan gri-beyaz */
   --bg-card: #f9fafb; /* Kırık beyaz */
   --bg-card-hover: #f3f4f6;

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, effect, HostListener, ElementRef } from '@angular/core';
+import { Component, inject, signal, computed, effect, HostListener, ElementRef, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,12 @@ import { SocialService, PublicUser } from '../../core/services/social/social.ser
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent {
+  @Input() fairyModeState: number = 0;
+  @Input() spiderModeState: number = 0;
+  
+  @Output() toggleFairy = new EventEmitter<void>();
+  @Output() toggleSpider = new EventEmitter<void>();
+
   authService = inject(AuthService);
   themeService = inject(ThemeService);
   socialService = inject(SocialService);
@@ -208,5 +214,9 @@ export class NavbarComponent {
   logout() {
     this.closeDropdown();
     this.authService.logout();
+  }
+
+  isArchitectureSchemaPage(): boolean {
+    return this.router.url.includes('/architecture-schema');
   }
 }
