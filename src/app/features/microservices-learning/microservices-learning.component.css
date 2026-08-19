@@ -444,7 +444,7 @@
   /* Daha geniş ve ferah bir yerleşim (Kullanıcının ekran görüntüsündeki gibi) */
   grid-template-columns: 320px 400px 320px; 
   grid-template-rows: auto auto auto;
-  gap: 120px 100px;
+  gap: 75px 100px; /* Dikey boşluğu (120px -> 75px) küçülttük ki alttaki kutular azıcık yukarı çıksın */
   /* 
     Gateway (Orta Üst)
     İstemci (Sol Orta) -> Microservice (Tam Orta) -> DB'ler (Sağ Taraf, Row 2-3)
