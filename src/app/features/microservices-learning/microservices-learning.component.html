@@ -150,6 +150,7 @@
 
       <ng-template #layerColTemplate let-layer>
         <div class="layer-column" 
+             [id]="layer.id"
              [style.order]="getLayerOrder(layer.id)"
              [class.two-columns-container]="layer.isTwoColumn" 
              [class.horizontal-layer]="layer.direction === 'horizontal' && activeFlowId() !== null">
