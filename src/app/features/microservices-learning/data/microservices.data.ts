@@ -32,12 +32,9 @@ export const MICROSERVICES_LAYERS: Layer[] = [
   {
     id: 'layer-data',
     title: '5. VERİTABANLARI & ÖNBELLEK',
-    isTwoColumn: true,
-    leftNodes: [
+    nodes: [
       { id: 'db-sql', name: 'İlişkisel Veritabanı', type: 'db', desc: 'Örn: PostgreSQL, SQL Server' },
-      { id: 'db-nosql', name: 'Döküman Veritabanı', type: 'db', desc: 'Örn: MongoDB' }
-    ],
-    rightNodes: [
+      { id: 'db-nosql', name: 'Döküman Veritabanı', type: 'db', desc: 'Örn: MongoDB' },
       { id: 'cache-redis', name: 'Önbellek (Cache)', type: 'db', desc: 'Örn: Redis (Hızlı okuma/yazma)' }
     ]
   }
