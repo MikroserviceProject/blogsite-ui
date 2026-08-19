@@ -446,15 +446,14 @@
   grid-template-rows: auto auto auto;
   gap: 80px 60px;
   /* 
-    İstemci (Sol Üst) -> Gateway (Orta Üst) -> Queue (Sağ Üst)
-    Microservice (Tam Orta)
-    DB'ler (Alt)
+    İstemci (Sol Üst)     -> Gateway (Orta Üst)       -> Veritabanları (Sağ Taraf)
+    Queue (Sol Alt)       -> Microservice (Tam Orta)  -> (Boş)
   */
   grid-template-areas:
-    "client     gateway    queue"
-    ".          microservice ."
-    "db         db         db";
-  align-items: start;
+    "client     gateway       db"
+    "queue      microservice  db"
+    ".          .             db";
+  align-items: center;
 }
 
 /* Grid Yerleşimleri (grid-template-areas ile eşleşecek) */
