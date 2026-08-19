@@ -4,7 +4,8 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
-  padding-bottom: 150px; /* Konsolun en altta kesilmemesi için ekstra boşluk */
+  display: flex;
+  flex-direction: column;
   background: var(--bg-primary, #ffffff);
   color: var(--text-primary, #1e293b);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -1352,69 +1353,109 @@
 }
 .start-btn:hover { background: #2563eb; }
 
+/* ==================================================
+   Terminal / Konsol Tasarımı (Light & Dark Theme)
+   ================================================== */
 .learning-console {
-  position: fixed; /* Akış yokken ekranın altında sabit kalsın (scrolldan bağımsız görünsün) */
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  max-width: 800px;
-  background: #0f172a;
-  border-radius: 8px;
-  border: 1px solid #334155;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  z-index: 1000;
+  width: 100%;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
   overflow: hidden;
   font-family: monospace;
+  margin-top: 60px; /* Mimari ile arasına mesafe */
+}
+:host-context(.dark-theme) .learning-console,
+.dark-theme .learning-console {
+  background: #0f172a;
+  border-top: 1px solid #334155;
 }
 
-/* Bir komut çalıştırıldığında konsolun konumu aynı kalacak, ancak diagrama padding eklenecek */
-.schema-board {
-  padding-bottom: 350px !important; /* Konsolun altında boşluk kalması için */
-}
 .console-header {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  gap: 16px;
+}
+/* VS Code benzeri sekmeler */
+.console-header span { cursor: pointer; }
+.console-header span.active { color: #2563eb; border-bottom: 1px solid #2563eb; padding-bottom: 7px; }
+
+:host-context(.dark-theme) .console-header,
+.dark-theme .console-header {
   background: #1e293b;
   color: #94a3b8;
-  padding: 8px 16px;
-  font-size: 14px;
   border-bottom: 1px solid #334155;
 }
+:host-context(.dark-theme) .console-header span.active,
+.dark-theme .console-header span.active { color: #f8fafc; border-bottom-color: #f8fafc; }
+
 .console-body {
-  padding: 16px;
-  color: #10b981;
-  max-height: 300px;
+  padding: 16px 24px;
+  color: #334155;
+  max-height: 400px;
   overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.5;
 }
+:host-context(.dark-theme) .console-body,
+.dark-theme .console-body {
+  color: #10b981;
+}
+
 .console-history { margin-bottom: 8px; }
 .history-text { white-space: pre-wrap; display: inline-block; vertical-align: top; }
-.system-text { color: #94a3b8; }
-.prompt-prefix { color: #f59e0b; margin-right: 8px; font-weight: bold; }
+
+.system-text { color: #64748b; }
+:host-context(.dark-theme) .system-text,
+.dark-theme .system-text { color: #94a3b8; }
+
+.prompt-prefix { color: #2563eb; margin-right: 8px; font-weight: bold; }
+:host-context(.dark-theme) .prompt-prefix,
+.dark-theme .prompt-prefix { color: #f59e0b; }
 
 .console-input-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px;
-  border-top: 1px solid #334155;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #f8fafc;
+}
+:host-context(.dark-theme) .console-input-row,
+.dark-theme .console-input-row {
   background: #0f172a;
 }
-.console-input-row input { color: #3b82f6; font-weight: bold; }
+
 .console-input-row input {
   flex: 1;
   background: transparent;
   border: none;
-  color: #f8fafc;
+  color: #0f172a;
   font-family: monospace;
-  font-size: 16px;
+  font-size: 14px;
   outline: none;
 }
+:host-context(.dark-theme) .console-input-row input,
+.dark-theme .console-input-row input {
+  color: #f8fafc;
+}
+
 .console-input-row button {
-  background: #3b82f6;
+  background: #2563eb;
   color: white;
   border: none;
-  padding: 6px 12px;
+  padding: 6px 16px;
   border-radius: 4px;
   cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
 }
+.console-input-row button:hover { background: #1d4ed8; }
 .console-input-row button:hover { background: #2563eb; }
 
