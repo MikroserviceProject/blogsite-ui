@@ -1386,6 +1386,8 @@
 .console-body {
   padding: 16px;
   color: #10b981;
+  max-height: 300px;
+  overflow-y: auto;
 }
 .console-history { margin-bottom: 8px; }
 .history-text { white-space: pre-wrap; display: inline-block; vertical-align: top; }

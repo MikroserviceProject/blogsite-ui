@@ -99,6 +99,9 @@ export class MicroservicesLearningComponent implements OnDestroy, AfterViewCheck
   dragStartX = 0;
   dragStartY = 0;
 
+  // YENİ: Token Animasyonu İçin Veri
+  currentDataToken: string = '';
+
   positionTrackerInterval: any;
   private lastElementPositions = new Map<string, string>();
 
@@ -124,58 +127,96 @@ export class MicroservicesLearningComponent implements OnDestroy, AfterViewCheck
   }
 
   executeCommand(command: string) {
-    if (!command.trim()) return;
-    
-    this.consoleHistory.update(h => [...h, { type: 'user', text: command }]);
     const cmd = command.trim();
     const prompt = this.activePrompt();
+    
+    // Eğer main adımındaysa ve boş komut girildiyse işlem yapma
+    if (prompt?.step === 'main' && !cmd) return;
+
+    if (cmd) {
+      this.consoleHistory.update(h => [...h, { type: 'user', text: cmd }]);
+    } else {
+      this.consoleHistory.update(h => [...h, { type: 'user', text: '<Enter>' }]);
+    }
 
     if (prompt?.step === 'main') {
       const lowerCmd = cmd.toLowerCase();
-      if (lowerCmd === 'giriş yap' || lowerCmd === 'giris-yap' || lowerCmd === 'giris yap') {
-        this.pendingFlow = 'giris-yap';
-        this.activePrompt.set({ step: 'input1', prefix: 'Kullanıcı Adınız (E-posta):', placeholder: 'Örn: ali@example.com' });
-      } else if (lowerCmd === 'profil düzenle' || lowerCmd === 'profil-duzenle' || lowerCmd === 'profil duzenle') {
-        this.pendingFlow = 'profil-duzenle';
-        this.activePrompt.set({ step: 'input1', prefix: 'Yeni Ad Soyad:', placeholder: 'Örn: Ali Yılmaz' });
-      } else if (lowerCmd === 'fotoğraf yükle' || lowerCmd === 'fotograf-yukle' || lowerCmd === 'fotograf yukle') {
-        this.pendingFlow = 'fotograf-yukle';
-        this.activePrompt.set({ step: 'input1', prefix: 'Dosya Adı (.jpg):', placeholder: 'Örn: tatil_fotom.jpg' });
+      
+      if (lowerCmd.startsWith('giriş yap') || lowerCmd.startsWith('giris yap') || lowerCmd.startsWith('giris-yap')) {
+        // "giriş yap Saliha Çiçek" şeklinde tek satırda yazılmış olabilir
+        const param = cmd.replace(/^giri[sş][ -]yap/i, '').trim();
+        if (param) {
+          this.executeFlowWithParam('giris-yap', param);
+        } else {
+          this.pendingFlow = 'giris-yap';
+          this.activePrompt.set({ step: 'input1', prefix: 'Kullanıcı Adınız:', placeholder: 'Örn: Saliha Çiçek' });
+        }
+      } else if (lowerCmd.startsWith('profil düzenle') || lowerCmd.startsWith('profil duzenle') || lowerCmd.startsWith('profil-duzenle')) {
+        const param = cmd.replace(/^profil[ -]d[uü]zenle/i, '').trim();
+        if (param) {
+          this.executeFlowWithParam('profil-duzenle', param);
+        } else {
+          this.pendingFlow = 'profil-duzenle';
+          this.activePrompt.set({ step: 'input1', prefix: 'Yeni Ad Soyad:', placeholder: 'Örn: Ali Yılmaz' });
+        }
+      } else if (lowerCmd.startsWith('fotoğraf yükle') || lowerCmd.startsWith('fotograf yukle') || lowerCmd.startsWith('fotograf-yukle')) {
+        const param = cmd.replace(/^foto[gğ]raf[ -]y[uü]kle/i, '').trim();
+        if (param) {
+          this.executeFlowWithParam('fotograf-yukle', param);
+        } else {
+          this.pendingFlow = 'fotograf-yukle';
+          this.activePrompt.set({ step: 'input1', prefix: 'Dosya Adı (.jpg):', placeholder: 'Örn: Saliha.jpg' });
+        }
       } else if (lowerCmd === 'genel mimari' || lowerCmd === 'genel-mimari') {
-        this.pendingFlow = 'genel-mimari';
-        this.activePrompt.set({ step: 'input1', prefix: 'Devam etmek için Enter\'a basın:', placeholder: 'Sadece izleyin...' });
+        // Genel mimaride ekstra parametreye gerek yok, direkt çalıştır.
+        this.executeFlowWithParam('genel-mimari', '');
+      } else if (lowerCmd === 'clear' || lowerCmd === 'temizle' || lowerCmd === 'reset') {
+        this.resetConsole();
+        return; // İşlemi kes
       } else {
-        this.consoleHistory.update(h => [...h, { type: 'system', text: 'Geçersiz komut. Kullanabileceğiniz komutlar: "genel mimari", "giriş yap", "profil düzenle", "fotoğraf yükle"' }]);
+        this.consoleHistory.update(h => [...h, { type: 'system', text: 'Geçersiz komut. Kullanabileceğiniz komutlar: "genel mimari", "giriş yap", "profil düzenle", "fotoğraf yükle", "temizle"' }]);
       }
     } else if (prompt?.step === 'input1') {
-      this.consoleHistory.update(h => [...h, { type: 'system', text: 'İsteğiniz sunucuya (API Gateway) iletiliyor...' }]);
-      this.activePrompt.set(null); // Input kutusunu gizle
-      
-      if (this.pendingFlow) {
-        this.selectFlow(this.pendingFlow);
-        this.pendingFlow = null;
-        
-        // Komut gönderildiğinde, mimariyi izleyebilmesi için tam olarak şema tahtasına kaydır
-        setTimeout(() => {
-          const board = document.querySelector('.board-wrapper');
-          if (board) {
-            board.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 100);
-      }
+      const finalParam = cmd || (this.pendingFlow === 'fotograf-yukle' ? 'ornek.jpg' : 'Saliha Çiçek');
+      this.executeFlowWithParam(this.pendingFlow!, finalParam);
     }
     
     this.consoleInput = '';
   }
 
+  // YENİ: Hem input ile hem de direkt parametreli çalıştırma
+  executeFlowWithParam(flowId: string, param: string) {
+    if (param) {
+      this.consoleHistory.update(h => [...h, { type: 'system', text: `İsteğiniz sunucuya iletiliyor... [Veri: ${param}]` }]);
+    } else {
+      this.consoleHistory.update(h => [...h, { type: 'system', text: 'İsteğiniz sunucuya (API Gateway) iletiliyor...' }]);
+    }
+    
+    this.activePrompt.set(null); // Input kutusunu gizle
+    this.currentDataToken = param; // Token verisini kaydet
+    
+    this.selectFlow(flowId);
+    this.pendingFlow = null;
+    
+    // Mimariyi izleyebilmesi için tam olarak şema tahtasına kaydır
+    setTimeout(() => {
+      const board = document.querySelector('.board-wrapper');
+      if (board) {
+        board.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  }
+
   // Animasyon bitince veya flow seçimi değişince terminali sıfırlamak için eklendi:
   resetConsole() {
     this.consoleHistory.set([
-      { type: 'system', text: 'Sistem hazır.\n\nKullanabileceğiniz İşlemler (Komutlar):\n- genel mimari\n- giriş yap\n- profil düzenle\n- fotoğraf yükle\n\nLütfen bir komut giriniz (örn: "genel mimari")' }
+      { type: 'system', text: 'Sistem hazır.\n\nKullanabileceğiniz İşlemler (Komutlar):\n- genel mimari\n- giriş yap\n- profil düzenle\n- fotoğraf yükle\n- temizle\n\nLütfen bir komut giriniz (örn: "genel mimari")' }
     ]);
     this.activePrompt.set({ step: 'main', prefix: '>', placeholder: 'Komut yazın...' });
     this.pendingFlow = null;
     this.consoleInput = '';
+    this.activeFlowId.set(null); // Akışı da sıfırla
+    this.currentDataToken = '';
   }
 
   startPositionTracker() {
@@ -597,14 +638,86 @@ export class MicroservicesLearningComponent implements OnDestroy, AfterViewCheck
 
   @HostListener('document:mouseup')
   onPanelMouseUp() {
+    if (this.draggingNodeId) {
+      this.resolveCollisions(this.draggingNodeId);
+    }
+    
     this.isDragging = false;
     this.draggingNodeId = null;
+    
+    // Çizgileri yeniden hesapla
+    setTimeout(() => {
+      this.calculateSvgLines();
+    }, 10);
     
     // Tıklama (click) eventi mouseup'tan hemen sonra tetiklenir. 
     // click event'inin hasNodeMoved durumunu doğru okuyabilmesi için sıfırlamayı kısa bir süre geciktiriyoruz.
     setTimeout(() => {
       this.hasNodeMoved = false;
     }, 50);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    // ESC tuşuna basıldığında konsolu ve akışı sıfırla
+    this.resetConsole();
+    this.consoleHistory.update(h => [...h, { type: 'system', text: '>>> SİSTEM SIFIRLANDI (ESC) <<<' }]);
+  }
+
+  // YENİ: Çarpışma (Collision) Çözümleme - Blokların üst üste binmesini engeller
+  resolveCollisions(movedNodeId: string) {
+    const movedEl = document.getElementById(movedNodeId);
+    if (!movedEl) return;
+    
+    const movedRect = movedEl.getBoundingClientRect();
+    const margin = 30; // 30px güvenlik mesafesi
+
+    // Tüm kutuları bul (sadece mimari ekranda olanlar)
+    const boxes = document.querySelectorAll('.architecture-container .schema-box');
+    
+    let collisionDetected = false;
+
+    boxes.forEach((el) => {
+      const targetId = el.id;
+      if (!targetId || targetId === movedNodeId) return;
+      
+      const targetRect = el.getBoundingClientRect();
+      
+      // Çarpışma var mı?
+      const isOverlapping = !(
+        movedRect.right + margin < targetRect.left || 
+        movedRect.left - margin > targetRect.right || 
+        movedRect.bottom + margin < targetRect.top || 
+        movedRect.top - margin > targetRect.bottom
+      );
+      
+      if (isOverlapping) {
+        collisionDetected = true;
+        
+        let pushDistance = 0;
+        // Eğer sürüklenen kutu hedefin merkezinden daha yukarıdaysa, hedefi aşağı it.
+        const movedCenterY = movedRect.top + (movedRect.height / 2);
+        const targetCenterY = targetRect.top + (targetRect.height / 2);
+
+        if (movedCenterY < targetCenterY) {
+           pushDistance = (movedRect.bottom + margin) - targetRect.top;
+        } else {
+           pushDistance = (movedRect.top - margin) - targetRect.bottom; // negatif (yukarı iter)
+        }
+        
+        // Hedef kutuyu it (offset güncelle)
+        const targetOffset = this.nodeOffsets.get(targetId) || { x: 0, y: 0 };
+        this.nodeOffsets.set(targetId, {
+          x: targetOffset.x,
+          y: targetOffset.y + pushDistance
+        });
+      }
+    });
+
+    if (collisionDetected) {
+      // Çarpışma çözüldüğü için yeni koordinatlarla tekrar SVG'yi hesapla
+      setTimeout(() => this.calculateSvgLines(), 50);
+    }
   }
 
   // YENİ: Kutuları sürüklemek için
@@ -1066,6 +1179,28 @@ export class MicroservicesLearningComponent implements OnDestroy, AfterViewCheck
         });
       }
     });
+
+    // YENİ: Etiket (Label) Çakışmalarını Önleme Algoritması
+    // Etiketlerin üst üste binmemesi için Y ekseninde itme uygular
+    for (let i = 0; i < newLines.length; i++) {
+      for (let j = i + 1; j < newLines.length; j++) {
+        const lineA = newLines[i];
+        const lineB = newLines[j];
+        
+        const dx = Math.abs(lineA.labelX - lineB.labelX);
+        const dy = Math.abs(lineA.labelY - lineB.labelY);
+        
+        // Genişlik ~150px, Yükseklik ~40px kabul edelim
+        if (dx < 150 && dy < 40) {
+          // Çakışma var, lineB'yi itelim. Eğer A, B'nin üstündeyse B'yi aşağı it, değilse yukarı it.
+          if (lineA.labelY <= lineB.labelY) {
+            lineB.labelY += (40 - dy) + 5;
+          } else {
+            lineB.labelY -= (40 - dy) + 5;
+          }
+        }
+      }
+    }
 
     this.svgLines.set(newLines);
 
