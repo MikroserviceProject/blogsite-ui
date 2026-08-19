@@ -3,7 +3,8 @@
 .architecture-container {
   position: relative;
   width: 100%;
-  min-height: 100vh; /* YENİ: height veya max-height kaldırıldı, sayfanın aşağı doğru uzamasına izin veriliyor */
+  min-height: 100vh;
+  padding-bottom: 150px; /* Konsolun en altta kesilmemesi için ekstra boşluk */
   background: var(--bg-primary, #ffffff);
   color: var(--text-primary, #1e293b);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -1367,14 +1368,9 @@
   font-family: monospace;
 }
 
-/* Bir komut çalıştırıldığında (akış başladığında) konsol sayfanın en altına insin */
-.learning-console.is-flow-active {
-  position: relative;
-  bottom: auto;
-  left: auto;
-  transform: none;
-  margin: 40px auto 80px auto;
-  z-index: 10;
+/* Bir komut çalıştırıldığında konsolun konumu aynı kalacak, ancak diagrama padding eklenecek */
+.schema-board {
+  padding-bottom: 350px !important; /* Konsolun altında boşluk kalması için */
 }
 .console-header {
   background: #1e293b;
@@ -1391,12 +1387,18 @@
 }
 .console-history { margin-bottom: 8px; }
 .history-text { white-space: pre-wrap; display: inline-block; vertical-align: top; }
+.system-text { color: #94a3b8; }
+.prompt-prefix { color: #f59e0b; margin-right: 8px; font-weight: bold; }
+
 .console-input-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid #334155;
+  background: #0f172a;
 }
-.console-input-row span { color: #3b82f6; font-weight: bold; }
+.console-input-row input { color: #3b82f6; font-weight: bold; }
 .console-input-row input {
   flex: 1;
   background: transparent;

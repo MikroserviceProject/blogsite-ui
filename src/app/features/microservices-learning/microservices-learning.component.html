@@ -191,18 +191,18 @@
   <!-- YENİ: Console (Komut Satırı) - Dinamik Yapı -->
   <div class="learning-console" *ngIf="!showWelcome()" [class.is-flow-active]="activeFlowId() !== null">
     <div class="console-header">Mimari Komut Terminali</div>
-    <div class="console-body">
+    <div class="console-body" #consoleBody>
       <div class="console-history" *ngFor="let msg of consoleHistory()">
         <span [class.prompt-user]="msg.type === 'user'" [class.prompt-system]="msg.type === 'system'" class="prompt-prefix">
           {{ msg.type === 'user' ? '>' : 'C:\\Microservices>' }}
         </span>
         <span class="history-text" [class.system-text]="msg.type === 'system'">{{ msg.text }}</span>
       </div>
-      <div class="console-input-row" *ngIf="activePrompt()">
-        <span class="prompt-prefix">{{ activePrompt()?.prefix }}</span>
-        <input type="text" [(ngModel)]="consoleInput" (keyup.enter)="executeCommand(consoleInput)" [placeholder]="activePrompt()?.placeholder" autofocus />
-        <button (click)="executeCommand(consoleInput)">Gönder</button>
-      </div>
+    </div>
+    <div class="console-input-row" *ngIf="activePrompt()">
+      <span class="prompt-prefix">{{ activePrompt()?.prefix }}</span>
+      <input type="text" [(ngModel)]="consoleInput" (keyup.enter)="executeCommand(consoleInput)" [placeholder]="activePrompt()?.placeholder" autofocus />
+      <button (click)="executeCommand(consoleInput)">Gönder</button>
     </div>
   </div>
 
