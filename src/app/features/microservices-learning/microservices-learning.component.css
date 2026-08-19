@@ -1352,17 +1352,29 @@
 .start-btn:hover { background: #2563eb; }
 
 .learning-console {
-  position: relative;
-  margin: 40px auto 80px auto; /* Üstten ve alttan boşluk bırakıp ortalar */
+  position: fixed; /* Akış yokken ekranın altında sabit kalsın (scrolldan bağımsız görünsün) */
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 80%;
   max-width: 800px;
   background: #0f172a;
   border-radius: 8px;
   border: 1px solid #334155;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-  z-index: 100;
+  z-index: 1000;
   overflow: hidden;
   font-family: monospace;
+}
+
+/* Bir komut çalıştırıldığında (akış başladığında) konsol sayfanın en altına insin */
+.learning-console.is-flow-active {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  margin: 40px auto 80px auto;
+  z-index: 10;
 }
 .console-header {
   background: #1e293b;

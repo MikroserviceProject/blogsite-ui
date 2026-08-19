@@ -170,8 +170,8 @@
     </div>
   </div>
 
-  <!-- YENİ: Console (Komut Satırı) - En Alta Taşındı -->
-  <div class="learning-console">
+  <!-- YENİ: Console (Komut Satırı) - Dinamik Yapı -->
+  <div class="learning-console" [class.is-flow-active]="activeFlowId() !== null">
     <div class="console-header">Mimari Komut Terminali</div>
     <div class="console-body">
       <div class="console-history" *ngFor="let msg of consoleHistory()">
