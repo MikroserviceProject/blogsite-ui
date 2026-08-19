@@ -441,18 +441,19 @@
 /* Aktif akış varsa CSS Grid Devreye Girer */
 .schema-board.has-active-flow {
   display: grid;
-  /* 3 sütunlu ferah bir yerleşim */
-  grid-template-columns: 350px 350px 350px; 
+  /* Daha geniş ve ferah bir yerleşim (Kullanıcının ekran görüntüsündeki gibi) */
+  grid-template-columns: 320px 400px 320px; 
   grid-template-rows: auto auto auto;
-  gap: 80px 60px;
+  gap: 120px 100px;
   /* 
-    İstemci (Sol Üst)     -> Gateway (Orta Üst)       -> Veritabanları (Sağ Taraf)
-    Queue (Sol Alt)       -> Microservice (Tam Orta)  -> (Boş)
+    Gateway (Orta Üst)
+    İstemci (Sol Orta) -> Microservice (Tam Orta) -> DB'ler (Sağ Taraf, Row 2-3)
+    Queue (Sol Alt)
   */
   grid-template-areas:
-    "client     gateway       db"
-    "queue      microservice  db"
-    ".          .             db";
+    ".          gateway       ."
+    "client     microservice  db"
+    "queue      .             db";
   align-items: center;
 }
 
@@ -476,6 +477,13 @@
 .schema-board.has-active-flow #layer-data {
   grid-area: db;
   justify-self: center;
+  align-self: stretch; /* Dikeyde row 2 ve 3'ü tamamen kaplasın */
+}
+
+/* DB katmanındaki kutuların arasını ekran görüntüsündeki gibi devasa açmak için */
+.schema-board.has-active-flow #layer-data .layer-body {
+  justify-content: space-between;
+  height: 100%;
 }
 /* Akış dışı (pasif) kutular sönük ve gri olsun */
 .schema-box.out-of-flow {
@@ -496,16 +504,20 @@
   z-index: 10; 
 }
 
-/* Oklu Sayfada Kolonların Orijinal Boyutunu Koru */
+/* Oklu Sayfada Kolonların Orijinal Boyutunu Koru ve Genişlet */
 .schema-board.has-active-flow .layer-column {
-  min-width: 200px;
+  min-width: 320px;
+  max-width: 400px; /* Ekran görüntüsündeki gibi geniş kutular */
   flex: 1;
 }
 
-.layer-column.two-columns-container {
-  max-width: 500px !important; 
-  min-width: 450px !important;
-  flex: 2; 
+/* Kutu içindeki Node'ların yüksekliklerini de geniş yapalım */
+.schema-board.has-active-flow .schema-box {
+  min-height: 120px; /* Kutular daha etli ve yüksek dursun */
+  padding: 24px 20px;
+}
+.schema-board.has-active-flow #layer-services .schema-box {
+  min-height: 180px; /* Mikroservis kutusu fotodaki gibi ekstra devasa olsun */
 }
 
 .layer-column.horizontal-layer {
