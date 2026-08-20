@@ -1,8 +1,8 @@
 import { Component, OnDestroy, AfterViewChecked, HostListener, signal, ElementRef, ViewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NODE_DETAILS, NodeDetail } from './node-details.data';
-import { AUTH_LAYERS, AUTH_FLOWS } from './data/auth-architecture.data';
-import { FOLLOWER_LAYERS, FOLLOWER_FLOWS } from './data/follower-architecture.data';
+import { FormsModule } from '@angular/forms';
+import { NODE_DETAILS, NodeDetail } from '../architecture-schema/node-details.data';
+import { MICROSERVICES_LAYERS, MICROSERVICES_FLOWS } from './data/microservices.data';
 
 export interface ChildNode {
   id: string;
@@ -62,20 +62,29 @@ export interface SvgLine {
 }
 
 @Component({
-  selector: 'app-architecture-schema',
+  selector: 'app-microservices-learning',
   standalone: true,
-  imports: [CommonModule],
-  templateUrl: './architecture-schema.component.html',
-  styleUrl: './architecture-schema.component.css'
+  imports: [CommonModule, FormsModule],
+  templateUrl: './microservices-learning.component.html',
+  styleUrl: './microservices-learning.component.css'
 })
-export class ArchitectureSchemaComponent implements OnDestroy, AfterViewChecked {
+export class MicroservicesLearningComponent implements OnDestroy, AfterViewChecked {
   
   showInactiveNodes = signal(false);
-  activeTab = signal<'auth' | 'follower'>('auth');
+  consoleInput = '';
+  consoleHistory = signal<{ type: 'system' | 'user', text: string }[]>([
+    { type: 'system', text: 'Sistem hazır.\n\nKullanabileceğiniz İşlemler (Komutlar):\n- genel mimari\n- giriş yap\n- profil düzenle\n- fotoğraf yükle\n\nLütfen bir komut giriniz (örn: "genel mimari")' }
+  ]);
+  activePrompt = signal<{ step: string, prefix: string, placeholder: string } | null>({ step: 'main', prefix: '>', placeholder: 'Komut yazın...' });
+  pendingFlow: string | null = null;
+
+  showWelcome = signal(true);
+  welcomeMessage = 'Mikroservis Öğrenme Merkezine Hoşgeldiniz!';
+  
   activeFlowId = signal<string | null>(null);
 
-  layers = computed(() => this.activeTab() === 'auth' ? AUTH_LAYERS : FOLLOWER_LAYERS);
-  flows = computed(() => this.activeTab() === 'auth' ? AUTH_FLOWS : FOLLOWER_FLOWS);
+  layers = computed(() => MICROSERVICES_LAYERS);
+  flows = computed(() => MICROSERVICES_FLOWS);
   activeFlowData = computed(() => this.flows().find(f => f.id === this.activeFlowId()) || null);
 
   @ViewChild('boardWrapper') boardWrapper!: ElementRef;
@@ -110,11 +119,52 @@ export class ArchitectureSchemaComponent implements OnDestroy, AfterViewChecked 
     this.stopAnimation();
   }
 
-  setTab(tab: 'auth' | 'follower') {
-    this.activeTab.set(tab);
-    this.activeFlowId.set(null);
-    this.svgLines.set([]);
-    this.lastElementPositions.clear();
+  startLearning() {
+    this.showWelcome.set(false);
+  }
+
+  executeCommand(command: string) {
+    if (!command.trim()) return;
+    
+    this.consoleHistory.update(h => [...h, { type: 'user', text: command }]);
+    const cmd = command.trim();
+    const prompt = this.activePrompt();
+
+    if (prompt?.step === 'main') {
+      const lowerCmd = cmd.toLowerCase();
+      if (lowerCmd === 'giriş yap' || lowerCmd === 'giris-yap' || lowerCmd === 'giris yap') {
+        this.pendingFlow = 'giris-yap';
+        this.activePrompt.set({ step: 'input1', prefix: 'Kullanıcı Adınız (E-posta):', placeholder: 'Örn: ali@example.com' });
+      } else if (lowerCmd === 'profil düzenle' || lowerCmd === 'profil-duzenle' || lowerCmd === 'profil duzenle') {
+        this.pendingFlow = 'profil-duzenle';
+        this.activePrompt.set({ step: 'input1', prefix: 'Yeni Ad Soyad:', placeholder: 'Örn: Ali Yılmaz' });
+      } else if (lowerCmd === 'fotoğraf yükle' || lowerCmd === 'fotograf-yukle' || lowerCmd === 'fotograf yukle') {
+        this.pendingFlow = 'fotograf-yukle';
+        this.activePrompt.set({ step: 'input1', prefix: 'Dosya Adı (.jpg):', placeholder: 'Örn: tatil_fotom.jpg' });
+      } else {
+        this.consoleHistory.update(h => [...h, { type: 'system', text: 'Geçersiz komut. Kullanabileceğiniz komutlar: "giriş yap", "profil düzenle", "fotoğraf yükle"' }]);
+      }
+    } else if (prompt?.step === 'input1') {
+      this.consoleHistory.update(h => [...h, { type: 'system', text: 'İsteğiniz sunucuya (API Gateway) iletiliyor...' }]);
+      this.activePrompt.set(null); // Input kutusunu gizle
+      
+      if (this.pendingFlow) {
+        this.selectFlow(this.pendingFlow);
+        this.pendingFlow = null;
+      }
+    }
+    
+    this.consoleInput = '';
+  }
+
+  // Animasyon bitince veya flow seçimi değişince terminali sıfırlamak için eklendi:
+  resetConsole() {
+    this.consoleHistory.set([
+      { type: 'system', text: 'Sistem hazır.\n\nKullanabileceğiniz İşlemler (Komutlar):\n- genel mimari\n- giriş yap\n- profil düzenle\n- fotoğraf yükle\n\nLütfen bir komut giriniz (örn: "genel mimari")' }
+    ]);
+    this.activePrompt.set({ step: 'main', prefix: '>', placeholder: 'Komut yazın...' });
+    this.pendingFlow = null;
+    this.consoleInput = '';
   }
 
   startPositionTracker() {
@@ -192,26 +242,7 @@ export class ArchitectureSchemaComponent implements OnDestroy, AfterViewChecked 
   onBoxClick(node: any, event?: MouseEvent) {
     if (this.hasNodeMoved) return;
     
-    let targetFlowId: string | null = null;
-    switch (node.id) {
-      case 'login-comp': targetFlowId = 'login'; break;
-      case 'register-comp': targetFlowId = 'register'; break;
-      case 'profile-comp': targetFlowId = 'update-profile'; break;
-      case 'users-management-comp': targetFlowId = 'ban-user'; break;
-      case 'forgot-password-comp': targetFlowId = 'forgot-password'; break;
-      case 'reset-password-comp': targetFlowId = 'reset-password'; break;
-      case 'confirm-email-comp': targetFlowId = 'confirm-email'; break;
-      case 'author-approvals-comp': targetFlowId = 'approve-author'; break;
-      
-      // Follower Servisi
-      case 'follow-btn-comp': targetFlowId = 'follow-user'; break;
-      case 'followers-comp': targetFlowId = 'get-followers'; break;
-      case 'following-comp': targetFlowId = 'get-following'; break;
-    }
-
-    if (targetFlowId) {
-      this.selectFlow(targetFlowId);
-    }
+    // In learning center, clicks on boxes do nothing for flows, everything is via console
   }
 
   onBoardClick(event: MouseEvent) {
@@ -364,13 +395,30 @@ export class ArchitectureSchemaComponent implements OnDestroy, AfterViewChecked 
   }
 
   startAnimation() {
+    this.stopAnimation();
     this.currentStepIndex.set(0); 
     this.isAnimationFinished.set(false);
     this.calculateSvgLines(); 
-
-    // Artık setInterval yok, tüm oklar anında aktif ve animasyonlu akacak.
-    // İlk kutuya focuslanalım.
     this.scrollToCurrentStep();
+
+    const flow = this.activeFlowData();
+    if (!flow) return;
+
+    this.animationTimer = setInterval(() => {
+      let nextIndex = this.currentStepIndex() + 1;
+      if (nextIndex >= flow.steps.length) {
+        this.stopAnimation();
+        this.isAnimationFinished.set(true);
+        this.consoleHistory.update(h => [...h, { type: 'system', text: 'İşlem başarıyla tamamlandı!' }]);
+        setTimeout(() => {
+          this.resetConsole();
+        }, 3000);
+      } else {
+        this.currentStepIndex.set(nextIndex);
+        this.scrollToCurrentStep();
+      }
+      this.calculateSvgLines();
+    }, 2500); // Her adım 2.5 saniye ekranda kalsın
   }
 
   onAnimationEnd(stepIndex: number) {
@@ -674,11 +722,52 @@ export class ArchitectureSchemaComponent implements OnDestroy, AfterViewChecked 
     this.selectedNode.set(null);
   }
 
-  calculateSvgLines() {
+  // YENİ: Oklar için benzersiz renk paleti
+  private getLineColor(stepIndex: number): string {
+    const colors = [
+      '#3b82f6', // Mavi
+      '#ef4444', // Kırmızı
+      '#10b981', // Yeşil
+      '#f97316', // Turuncu
+      '#8b5cf6', // Mor
+      '#06b6d4', // Camgöbeği
+      '#ec4899', // Pembe
+      '#eab308', // Sarı
+      '#6366f1', // İndigo
+      '#14b8a6'  // Turkuaz
+    ];
+    return colors[stepIndex % colors.length];
+  }
+
+  private calculateSvgLines() {
+    if (!this.boardWrapper?.nativeElement) return;
+    
+    // Aktif akışa ait svgLines nesnelerini oluştur (Eskiden hep 10 taneydi, şimdi dinamik)
+    const activeFlow = this.activeFlowData();
+    const numberOfSteps = activeFlow ? activeFlow.steps.length : 10;
+    
+    // Eski ok sayısıyla eşleşmiyorsa okları yeniden oluştur (Eğer 8 adımsa 8 ok oluştur vs.)
+    if (this.svgLines().length !== numberOfSteps) {
+      this.svgLines.set(Array.from({length: numberOfSteps}, (_, i) => ({
+        id: String(i + 1),
+        x1: 0, y1: 0, x2: 0, y2: 0, midX: 0,
+        pathD: '',
+        stepIndex: i + 1,
+        active: false,
+        label: '',
+        isReturn: false,
+        labelX: 0,
+        labelY: 0,
+        lineColor: this.getLineColor(i),
+        markerEnd: `arrowhead-${this.getLineColor(i).replace('#', '')}`,
+        isDefaultBackground: false
+      })));
+    }
+    
     if (!this.boardWrapper) return;
     const wrapper = this.boardWrapper.nativeElement;
     const wrapperRect = wrapper.getBoundingClientRect();
-    
+
     const getOffset = (el: HTMLElement) => {
       const rect = el.getBoundingClientRect();
       return {
@@ -693,287 +782,122 @@ export class ArchitectureSchemaComponent implements OnDestroy, AfterViewChecked 
       };
     };
 
-    const activeFlow = this.activeFlowData();
-    if (!activeFlow) { this.svgLines.set([]); return; }
-    
-    // 1. TÜM görünür kutuların (obstacle) konumlarını topla
-    const allBoxes: {id: string, top: number, bottom: number, left: number, right: number}[] = [];
     const allBoxEls = wrapper.querySelectorAll('.schema-box:not(.hidden-node)');
-    allBoxEls.forEach((el: Element) => {
-      const htmlEl = el as HTMLElement;
-      const off = getOffset(htmlEl);
-      allBoxes.push({
-        id: htmlEl.id || '',
-        top: off.top - 5,
-        bottom: off.bottom + 5,
-        left: off.left - 5,
-        right: off.right + 5
-      });
-    });
+    // Aynı anda tek bir adım gösterildiği için kutuların ekstra yüksekliğe ihtiyacı yok
+    allBoxEls.forEach((el: Element) => { (el as HTMLElement).style.minHeight = ''; });
 
-    // 2. Global sınırlar
+    if (!activeFlow) { this.svgLines.set([]); this.groupSvgLines.set([]); return; }
+
+    // Global sınırlar (koridor yönlendirmesi kutuların üzerinden/altından dolaşsın diye)
     let globalTop = 99999;
     let globalBottom = 0;
-    let globalLeft = 99999;
-    let globalRight = 0;
-    
-    allBoxes.forEach(box => {
-      if (box.top < globalTop) globalTop = box.top;
-      if (box.bottom > globalBottom) globalBottom = box.bottom;
-      if (box.left < globalLeft) globalLeft = box.left;
-      if (box.right > globalRight) globalRight = box.right;
-    });
 
-    // 3. Kenar Kullanım Sayımlarını Belirle (Okların üst üste binmesini engeller)
-    const edgeTotal = new Map<string, number>(); // key: 'nodeId-left' or 'nodeId-right'
-    const stepEdges = new Map<number, { fromEdge: 'left'|'right', toEdge: 'left'|'right' }>();
-
-    activeFlow.steps.forEach((step, i) => {
-      const elFrom = document.getElementById(step.fromNodeId);
-      const elTo = document.getElementById(step.toNodeId);
-      if (!elFrom || !elTo) return;
-
-      const from = getOffset(elFrom);
-      const to = getOffset(elTo);
-      const dx = to.centerX - from.centerX;
-      const dy = to.centerY - from.centerY;
-      
-      const isSameColumn = Math.abs(dx) < 200;
-      const isAdjacent = Math.abs(dx) >= 200 && Math.abs(dx) < 500;
-      const isReturn = step.isReturn || false;
-      const goingRight = dx > 0;
-
-      let fromEdge: 'left' | 'right' = 'right';
-      let toEdge: 'left' | 'right' = 'left';
-
-      if (isSameColumn) {
-        if (isReturn) {
-          fromEdge = 'left';
-          toEdge = 'left';
-        } else {
-          fromEdge = 'right';
-          toEdge = 'right';
-        }
-      } else if (isAdjacent && Math.abs(dy) < 150) {
-        fromEdge = goingRight ? 'right' : 'left';
-        toEdge = goingRight ? 'left' : 'right';
-      } else {
-        fromEdge = goingRight ? 'right' : 'left';
-        toEdge = goingRight ? 'left' : 'right';
-      }
-
-      stepEdges.set(i, { fromEdge, toEdge });
-
-      const fromKey = `${step.fromNodeId}-${fromEdge}`;
-      const toKey = `${step.toNodeId}-${toEdge}`;
-      
-      edgeTotal.set(fromKey, (edgeTotal.get(fromKey) || 0) + 1);
-      edgeTotal.set(toKey, (edgeTotal.get(toKey) || 0) + 1);
-    });
-
-    // 4. Kutu Boylarını (min-height) Kenardaki Gerçek Ok Sayısına Göre Büyüt
-    // Bu sayede oklar hiçbir zaman kutunun dışına (havaya) taşmaz!
     allBoxEls.forEach((el: Element) => {
-      const htmlEl = el as HTMLElement;
-      const id = htmlEl.id;
-      if (id) {
-        const leftTotal = edgeTotal.get(`${id}-left`) || 0;
-        const rightTotal = edgeTotal.get(`${id}-right`) || 0;
-        const maxConns = Math.max(leftTotal, rightTotal);
-        // Her bağlantı 36px mesafe gerektirir
-        const reqHeight = Math.max(60, maxConns * 36 + 20); 
-        htmlEl.style.minHeight = `${reqHeight}px`;
-      }
+      const off = getOffset(el as HTMLElement);
+      if (off.top - 5 < globalTop) globalTop = off.top - 5;
+      if (off.bottom + 5 > globalBottom) globalBottom = off.bottom + 5;
     });
-
-    // 5. Boylar olası bir şekilde büyüdüğü için koordinatları TAZELİYORUZ
-    allBoxes.length = 0;
-    allBoxEls.forEach((el: Element) => {
-      const htmlEl = el as HTMLElement;
-      const off = getOffset(htmlEl);
-      allBoxes.push({
-        id: htmlEl.id || '',
-        top: off.top - 5,
-        bottom: off.bottom + 5,
-        left: off.left - 5,
-        right: off.right + 5
-      });
-    });
-
-    // Global sınırları tekrar hesapla
-    globalTop = 99999;
-    globalBottom = 0;
-    globalLeft = 99999;
-    globalRight = 0;
-    
-    allBoxes.forEach(box => {
-      if (box.top < globalTop) globalTop = box.top;
-      if (box.bottom > globalBottom) globalBottom = box.bottom;
-      if (box.left < globalLeft) globalLeft = box.left;
-      if (box.right > globalRight) globalRight = box.right;
-    });
-
-    const edgeCurrent = new Map<string, number>();
-    const pairCount = new Map<string, number>();
 
     const newLines: SvgLine[] = [];
-    
-    // Global yatay koridor kullanım sayaçları (üst üste binmeyi engeller)
-    let topCorridorCount = 0;
-    let bottomCorridorCount = 0;
 
-    activeFlow.steps.forEach((step, i) => {
-      const edges = stepEdges.get(i);
-      if (!edges) return;
+    // Eğitsel akış: karmaşayı önlemek için HER ZAMAN sadece aktif adımın oku çizilir
+    const stepIdx = this.currentStepIndex();
+    const step = activeFlow.steps[stepIdx];
 
+    if (step) {
       const elFrom = document.getElementById(step.fromNodeId);
       const elTo = document.getElementById(step.toNodeId);
 
-      if (!elFrom || !elTo) return;
+      if (elFrom && elTo) {
+        const from = getOffset(elFrom);
+        const to = getOffset(elTo);
+        const dx = to.centerX - from.centerX;
+        const dy = to.centerY - from.centerY;
+        const sameBox = Math.abs(dx) < 10 && Math.abs(dy) < 10;
 
-      const from = getOffset(elFrom);
-      const to = getOffset(elTo);
+        if (!sameBox) {
+          const isReturn = step.isReturn || false;
+          const goingRight = dx > 0;
+          const isSameColumn = Math.abs(dx) < 200;
+          const isAdjacent = Math.abs(dx) >= 200 && Math.abs(dx) < 500;
 
-      const fromKey = `${step.fromNodeId}-${edges.fromEdge}`;
-      const toKey = `${step.toNodeId}-${edges.toEdge}`;
-      
-      const fromTotal = edgeTotal.get(fromKey) || 1;
-      const toTotal = edgeTotal.get(toKey) || 1;
+          let x1: number, y1: number, x2: number, y2: number;
+          let pathD: string;
+          let labelX: number, labelY: number;
 
-      const fromIdx = (edgeCurrent.get(fromKey) || 0) + 1;
-      const toIdx = (edgeCurrent.get(toKey) || 0) + 1;
-      
-      edgeCurrent.set(fromKey, fromIdx);
-      edgeCurrent.set(toKey, toIdx);
+          // ── ORTOGONAL (GUTTER) ROUTING ALGORİTMASI ──
+          // Kutu içinden geçmeleri %100 engellemek için sadece YAN kenarları kullanıyoruz.
+          if (isSameColumn) {
+            if (isReturn) {
+              // Sol taraftan bracket ([) çiz
+              x1 = from.left;
+              y1 = from.centerY;
+              x2 = to.left;
+              y2 = to.centerY;
+              const gutterX = Math.min(from.left, to.left) - 40;
+              pathD = `M ${x1} ${y1} L ${gutterX} ${y1} L ${gutterX} ${y2} L ${x2} ${y2}`;
+              labelX = gutterX;
+              labelY = (y1 + y2) / 2;
+            } else {
+              // Sağ taraftan bracket (]) çiz
+              x1 = from.right;
+              y1 = from.centerY;
+              x2 = to.right;
+              y2 = to.centerY;
+              const gutterX = Math.max(from.right, to.right) + 40;
+              pathD = `M ${x1} ${y1} L ${gutterX} ${y1} L ${gutterX} ${y2} L ${x2} ${y2}`;
+              labelX = gutterX;
+              labelY = (y1 + y2) / 2;
+            }
+          } else if (isAdjacent && Math.abs(dy) < 150) {
+            // Basit yatay çizgi
+            x1 = goingRight ? from.right : from.left;
+            y1 = from.centerY;
+            x2 = goingRight ? to.left : to.right;
+            y2 = to.centerY;
+            const midX = x1 + (x2 - x1) / 2;
+            pathD = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+            labelX = midX;
+            labelY = (y1 + y2) / 2;
+          } else {
+            // Uzak Kolonlar veya Çapraz/Wrap bağlantılar (Global Koridor — diğer kutuların üzerinden/altından dolaşır, aralarından geçmez)
+            x1 = goingRight ? from.right : from.left;
+            y1 = from.centerY;
+            const gutter1X = goingRight ? x1 + 30 : x1 - 30;
 
-      const pairKey = `${step.fromNodeId}>${step.toNodeId}`;
-      const pairIdx = (pairCount.get(pairKey) || 0);
-      pairCount.set(pairKey, pairIdx + 1);
+            x2 = goingRight ? to.left : to.right;
+            y2 = to.centerY;
+            const gutter2X = goingRight ? x2 - 30 : x2 + 30;
 
-      // Jitter: aynı çiftten giden çoklu okları birbirinden ayır
-      const jitter = pairIdx * 20;
+            // Üstten mi alttan mı dolaşalım?
+            const midY = (y1 + y2) / 2;
+            const diagramMidY = (globalTop + globalBottom) / 2;
+            const corridorY = midY < diagramMidY ? globalTop - 40 : globalBottom + 40;
 
-      // Kutunun KENARINDAKİ bağlantı noktalarını SABİT aralıklarla dağıt (Yatay çizgilerin ve ok uçlarının üst üste binmesini tamamen engeller!)
-      const spacing = 36;
-      
-      const outTotalHeight = (fromTotal - 1) * spacing;
-      const outStartY = from.centerY - (outTotalHeight / 2);
-      const fixedY1 = outStartY + (fromIdx - 1) * spacing;
+            pathD = `M ${x1} ${y1} L ${gutter1X} ${y1} L ${gutter1X} ${corridorY} L ${gutter2X} ${corridorY} L ${gutter2X} ${y2} L ${x2} ${y2}`;
+            labelX = (gutter1X + gutter2X) / 2;
+            labelY = corridorY;
+          }
 
-      const inTotalHeight = (toTotal - 1) * spacing;
-      const inStartY = to.centerY - (inTotalHeight / 2);
-      const fixedY2 = inStartY + (toIdx - 1) * spacing;
+          const lineColor = this.getLineColor(stepIdx);
+          const markerEnd = `arrowhead-${lineColor.replace('#', '')}`;
 
-      const dx = to.centerX - from.centerX;
-      const dy = to.centerY - from.centerY;
-      const goingRight = dx > 0;
-
-      let x1: number, y1: number, x2: number, y2: number;
-      let pathD: string;
-      let labelX: number, labelY: number;
-
-      // Aynı kutu kontrolü
-      const sameBox = Math.abs(dx) < 10 && Math.abs(dy) < 10;
-      if (sameBox) return;
-
-      // ── ORTOGONAL (GUTTER) ROUTING ALGORİTMASI ──
-      // Kutu içinden geçmeleri %100 engellemek için sadece YAN kenarları kullanıyoruz.
-
-      const isSameColumn = Math.abs(dx) < 200;
-      const isAdjacent = Math.abs(dx) >= 200 && Math.abs(dx) < 500;
-      const isReturn = step.isReturn || false;
-
-      // 1. Aynı Kolon veya Alt Alta (dx küçük)
-      if (isSameColumn) {
-        if (isReturn) {
-          // Sol taraftan bracket ([) çiz
-          x1 = from.left;
-          y1 = fixedY1;
-          x2 = to.left;
-          y2 = fixedY2;
-          
-          const gutterX = Math.min(from.left, to.left) - 40 - (fromIdx * 20);
-          
-          pathD = `M ${x1} ${y1} L ${gutterX} ${y1} L ${gutterX} ${y2} L ${x2} ${y2}`;
-          labelX = gutterX;
-          labelY = (y1 + y2) / 2;
-        } else {
-          // Sağ taraftan bracket (]) çiz
-          x1 = from.right;
-          y1 = fixedY1;
-          x2 = to.right;
-          y2 = fixedY2;
-          
-          const gutterX = Math.max(from.right, to.right) + 40 + (fromIdx * 20);
-          
-          pathD = `M ${x1} ${y1} L ${gutterX} ${y1} L ${gutterX} ${y2} L ${x2} ${y2}`;
-          labelX = gutterX;
-          labelY = (y1 + y2) / 2;
+          newLines.push({
+            id: `${step.fromNodeId}-${step.toNodeId}-${stepIdx}`,
+            x1, y1, x2, y2, midX: labelX, labelX, labelY,
+            pathD,
+            label: step.label,
+            subLabel: step.subLabel,
+            active: !this.isAnimationFinished(),
+            isReturn,
+            isDefaultBackground: false,
+            stepIndex: stepIdx + 1,
+            lineColor,
+            markerEnd
+          });
         }
-
-      // 2. Yan Yana Kolonlar (Yatay Bağlantı)
-      } else if (isAdjacent && Math.abs(dy) < 150) {
-        // Basit yatay çizgi
-        x1 = goingRight ? from.right : from.left;
-        y1 = fixedY1;
-        x2 = goingRight ? to.left : to.right;
-        y2 = fixedY2;
-        
-        // midX'i fromIdx'e göre az miktarda kaydır ki çok bitişik kolonlarda ters yöne ok çıkmasın (overshoot engeli)
-        const midX = x1 + (x2 - x1) / 2 + (fromIdx * 6 * (goingRight ? 1 : -1));
-        pathD = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
-        labelX = midX;
-        labelY = (y1 + y2) / 2;
-
-      // 3. Uzak Kolonlar veya Çapraz/Wrap bağlantılar (Global Koridor)
-      } else {
-        // from'un çıkış yönü
-        x1 = goingRight ? from.right : from.left;
-        y1 = fixedY1;
-        // Dikey koridorları (gutter) fromIdx'e göre kaydır
-        const gutter1X = goingRight ? x1 + 30 + (fromIdx * 20) : x1 - 30 - (fromIdx * 20);
-
-        // to'nun giriş yönü
-        x2 = goingRight ? to.left : to.right;
-        y2 = fixedY2;
-        const gutter2X = goingRight ? x2 - 30 - (toIdx * 20) : x2 + 30 + (toIdx * 20);
-
-        // Üstten mi alttan mı dolaşalım?
-        const midY = (y1 + y2) / 2;
-        const diagramMidY = (globalTop + globalBottom) / 2;
-        
-        let corridorY;
-        if (midY < diagramMidY) {
-           topCorridorCount++;
-           corridorY = globalTop - 40 - (topCorridorCount * 24);
-        } else {
-           bottomCorridorCount++;
-           corridorY = globalBottom + 40 + (bottomCorridorCount * 24);
-        }
-
-        pathD = `M ${x1} ${y1} L ${gutter1X} ${y1} L ${gutter1X} ${corridorY} L ${gutter2X} ${corridorY} L ${gutter2X} ${y2} L ${x2} ${y2}`;
-        
-        labelX = (gutter1X + gutter2X) / 2;
-        labelY = corridorY;
       }
-
-      let lineColor = step.isReturn ? '#10b981' : '#3b82f6';
-      let markerEnd = step.isReturn ? 'arrowhead-return' : 'arrowhead-active';
-
-      newLines.push({
-        id: `${step.fromNodeId}-${step.toNodeId}-${i}`, 
-        x1, y1, x2, y2, midX: labelX, labelX, labelY,
-        pathD,
-        label: step.label,
-        subLabel: step.subLabel,
-        active: true,
-        isReturn: step.isReturn || false,
-        isDefaultBackground: false,
-        stepIndex: i + 1,
-        lineColor,
-        markerEnd
-      });
-    });
+    }
 
     this.svgLines.set(newLines);
 
@@ -1005,3 +929,5 @@ export class ArchitectureSchemaComponent implements OnDestroy, AfterViewChecked 
     this.groupSvgLines.set(newGroupLines);
   }
 }
+ 
+ 

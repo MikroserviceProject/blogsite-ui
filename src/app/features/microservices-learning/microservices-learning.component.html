@@ -1,11 +1,38 @@
 <div class="architecture-container">
 
-  <!-- YENİ: Mikroservis Sekmeleri (Tab Switcher) -->
-  <div class="architecture-tabs">
-    <button class="tab-btn" [class.active]="activeTab() === 'auth'" (click)="setTab('auth')">Auth Servisi (Kimlik/Yetki)</button>
-    <button class="tab-btn" [class.active]="activeTab() === 'follower'" (click)="setTab('follower')">Follower Servisi (Takip)</button>
+  <!-- YENİ: Hoşgeldin Ekranı (İlk Girişte Görünür) -->
+  <div class="welcome-overlay" *ngIf="showWelcome()">
+    <div class="welcome-modal">
+      <h2>Mikroservis Öğrenme Merkezi 🚀</h2>
+      <p>Bu interaktif şemada, genel bir mikroservis mimarisinde isteklerin (request) servisler, veritabanları ve mesaj kuyrukları arasında nasıl gezindiğini adım adım göreceksiniz. Belirli bir sektöre bağlı kalmadan, herhangi bir sistemde (giriş yapma, profil düzenleme, fotoğraf yükleme gibi) olayların nasıl aktığını inceleyebilirsiniz.</p>
+      <ul>
+        <li><b>Giriş Yap:</b> İsteğin alınması, SQL'den kullanıcının doğrulanması, Token'ın Redis'te önbelleğe alınması ve asenkron loglama için olayın RabbitMQ'ya iletilmesi.</li>
+        <li><b>Profil Düzenle:</b> İlgili servise yönlendirme, önbellek temizliği, MongoDB'ye yazma ve asenkron bilgi mesajı fırlatılması.</li>
+        <li><b>Fotoğraf Yükle:</b> Metadata'nın MongoDB'ye yazılıp, fotoğraf boyutlandırma işleminin RabbitMQ ile arka plana atılması (Asenkron).</li>
+      </ul>
+      <button class="start-btn" (click)="startLearning()">Öğrenmeye Başla</button>
+    </div>
   </div>
-  <!-- YENİ: Üst Araç Çubuğu (Görünüm Değiştirici) -->
+
+  <!-- YENİ: Console (Komut Satırı) -->
+  <div class="learning-console">
+    <div class="console-header">Mimari Komut Terminali</div>
+    <div class="console-body">
+      <div class="console-history" *ngFor="let msg of consoleHistory()">
+        <span [class.prompt-user]="msg.type === 'user'" [class.prompt-system]="msg.type === 'system'" class="prompt-prefix">
+          {{ msg.type === 'user' ? '>' : 'C:\\Microservices>' }}
+        </span>
+        <span class="history-text" [class.system-text]="msg.type === 'system'">{{ msg.text }}</span>
+      </div>
+      <div class="console-input-row" *ngIf="activePrompt()">
+        <span class="prompt-prefix">{{ activePrompt()?.prefix }}</span>
+        <input type="text" [(ngModel)]="consoleInput" (keyup.enter)="executeCommand(consoleInput)" [placeholder]="activePrompt()?.placeholder" autofocus />
+        <button (click)="executeCommand(consoleInput)">Gönder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Üst Araç Çubuğu (Görünüm Değiştirici) -->
   <div class="schema-toolbar" *ngIf="activeFlowId()">
     <button class="toggle-view-btn" (click)="toggleInactiveNodes()">
       <span class="icon">{{ showInactiveNodes() ? '👁' : '👁‍🗨' }}</span>
@@ -60,31 +87,16 @@
       <svg class="schema-svg-overlay">
         
         <defs>
-          <marker id="arrowhead" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
-            <polygon points="0 0, 4 2, 0 4" fill="#cbd5e1" />
+          <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#94a3b8" />
           </marker>
           
-          <marker id="arrowhead-active" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <polygon points="0 0, 6 3, 0 6" fill="#3b82f6" />
-          </marker>
-
-          <!-- YENİ: Renkli Ok Uçları -->
-          <marker id="arrowhead-pink" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <polygon points="0 0, 6 3, 0 6" fill="#f43f5e" />
-          </marker>
-          <marker id="arrowhead-blue" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <polygon points="0 0, 6 3, 0 6" fill="#3b82f6" />
-          </marker>
-          <marker id="arrowhead-purple" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <polygon points="0 0, 6 3, 0 6" fill="#8b5cf6" />
-          </marker>
-          <marker id="arrowhead-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <polygon points="0 0, 6 3, 0 6" fill="#10b981" />
-          </marker>
-
-          <marker id="arrowhead-return" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <polygon points="0 0, 6 3, 0 6" fill="#10b981" />
-          </marker>
+          <!-- YENİ: Oklar için dinamik renk paletine uygun uçlar (TS'teki renklerle eşleşmeli) -->
+          @for (color of ['3b82f6', 'ef4444', '10b981', 'f97316', '8b5cf6', '06b6d4', 'ec4899', 'eab308', '6366f1', '14b8a6']; track color) {
+            <marker [id]="'arrowhead-' + color" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <polygon points="0 0, 6 3, 0 6" [attr.fill]="'#' + color" />
+            </marker>
+          }
         </defs>
 
         <!-- YENİ: Grup Hiyerarşisi Çizgileri (Kutu sürüklendikçe uzar/kısalır) -->
@@ -105,11 +117,11 @@
             [attr.marker-end]="'url(#arrowhead)'"
           />
 
-          <!-- Hareketli (Renkli) Noktalar -->
+          <!-- Hareketli (Renkli) Noktalar veya Sabit Renkli Çizgi -->
           <path class="animated-path"
             [attr.d]="line.pathD"
-            [style.stroke]="line.active && !line.isReturn && !line.isDefaultBackground ? line.lineColor : ''"
-            [attr.marker-end]="line.isDefaultBackground ? '' : (line.active ? (line.isReturn ? 'url(#arrowhead-return)' : 'url(#' + line.markerEnd + ')') : '')"
+            [style.stroke]="!line.isDefaultBackground ? line.lineColor : ''"
+            [attr.marker-end]="line.isDefaultBackground ? '' : 'url(#' + line.markerEnd + ')'"
           />
 
         </g>
@@ -123,9 +135,11 @@
                [class.active-label]="line.active && !isAnimationFinished()" 
                [class.default-label]="line.isDefaultBackground"
                [class.return-label]="line.isReturn">
-             <div class="label-badge" 
-                  [style.background-color]="line.active && !line.isReturn && !line.isDefaultBackground ? line.lineColor : ''">
-               {{ line.stepIndex }}
+             <div class="text-label" 
+                  [style.color]="line.lineColor"
+                  [style.border-color]="line.lineColor"
+                  [class.text-active]="!line.isDefaultBackground">
+               {{ line.label }}
              </div>
           </div>
       }

@@ -1,12 +1,24 @@
 
     <header class="navbar-header">
       <div class="container navbar-container">
-        <!-- Logo -->
-        <a routerLink="/" class="navbar-logo">
-          <div class="logo-text">
-            <span class="brand-name">Lumina</span>
-          </div>
-        </a>
+        <!-- Logo and Easter Egg Modes -->
+        <div class="navbar-brand-section">
+          <!-- 🧚‍♀️ Peri Modu Gizli Butonu -->
+          <button class="nav-mode-btn" (click)="toggleFairy.emit()" title="Peri Modu">
+            {{ fairyModeState > 0 ? '🧚‍♀️' : '🧚‍♂️' }}
+          </button>
+          
+          <!-- 🕷️ Spiderman Modu Butonu -->
+          <button class="nav-mode-btn" (click)="toggleSpider.emit()" title="Spiderman Modu">
+            🕷️
+          </button>
+
+          <a routerLink="/" class="navbar-logo">
+            <div class="logo-text">
+              <span class="brand-name">Lumina</span>
+            </div>
+          </a>
+        </div>
 
         <!-- Desktop Navigation Links -->
         <nav class="navbar-nav">
@@ -227,7 +239,7 @@
     </header>
 
 <!-- Floating Action Button for Create Post -->
-@if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin())) {
+@if (!authService.isBanned() && (authService.isAuthor() || authService.isAdmin()) && !isArchitectureSchemaPage()) {
   @if (!authService.currentUser()?.isEmailConfirmed) {
     <button class="fab-create-post disabled" title="Lütfen e-posta adresinizi onaylayın" disabled>
       <i class="fa-solid fa-pen-to-square"></i>

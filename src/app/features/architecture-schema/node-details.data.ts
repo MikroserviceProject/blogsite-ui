@@ -492,5 +492,122 @@ export const NODE_DETAILS: Record<string, NodeDetail> = {
       { name: 'Users Table', type: 'Table', desc: 'Sistemdeki kullanıcılar.' },
       { name: 'Posts Table', type: 'Table', desc: 'Blog yazıları.' }
     ]
+  },
+  // --- FOLLOWER MICROSERVICE SPECIFIC NODES ---
+  'followers-comp': {
+    id: 'followers-comp',
+    title: 'FollowersComponent',
+    description: 'Kullanıcıyı takip eden kişilerin listelendiği arayüz.',
+    methods: [
+      { name: 'getFollowers()', desc: 'Takipçi listesini getirir.' },
+      { name: 'removeFollower()', desc: 'Kullanıcıyı takipçi listesinden çıkarır.' }
+    ]
+  },
+  'following-comp': {
+    id: 'following-comp',
+    title: 'FollowingComponent',
+    description: 'Kullanıcının takip ettiği kişilerin listelendiği arayüz.',
+    methods: [
+      { name: 'getFollowing()', desc: 'Takip edilenler listesini getirir.' },
+      { name: 'unfollow()', desc: 'Kullanıcıyı takipten çıkarır.' }
+    ]
+  },
+  'follow-btn-comp': {
+    id: 'follow-btn-comp',
+    title: 'FollowButtonComponent',
+    description: 'Profil sayfalarında yer alan "Takip Et" veya "Takipten Çık" işlemlerini tetikleyen buton bileşeni.',
+    methods: [
+      { name: 'followUser()', desc: 'Hedef kullanıcıyı takip etme isteği atar.' },
+      { name: 'unfollowUser()', desc: 'Takipten çıkma isteği atar.' }
+    ]
+  },
+  'follow-service-fe': {
+    id: 'follow-service-fe',
+    title: 'follow.service.ts',
+    description: 'Takip işlemleri için Backend ile haberleşen Frontend HTTP servisi.',
+    methods: [
+      { name: 'follow(userId)', desc: 'POST /follow isteği atar.' },
+      { name: 'getFollowers(userId)', desc: 'GET /followers isteği atar.' }
+    ]
+  },
+  'follow-ctrl': {
+    id: 'follow-ctrl',
+    title: 'FollowController.cs',
+    description: 'Takip işlemleri ile ilgili HTTP isteklerini karşılayan Endpoint sınıfı.',
+    methods: [
+      { name: 'FollowUser()', desc: 'Takip etme isteğini alır ve servise iletir.' },
+      { name: 'GetFollowers()', desc: 'Takipçi listesi talebini karşılar.' }
+    ]
+  },
+  'mw-auth': {
+    id: 'mw-auth',
+    title: 'AuthMiddleware.cs',
+    description: 'Gelen istekteki JWT Token\'ı kontrol eden ve isteği atan kişinin kimliğini doğrulayan katman.',
+    methods: [
+      { name: 'InvokeAsync()', desc: 'Header\'daki tokenı alıp çözer ve yetki kontrolü yapar.' }
+    ]
+  },
+  'follow-svc-be': {
+    id: 'follow-svc-be',
+    title: 'FollowService.cs',
+    description: 'Takip etme, takipten çıkma, takipçi sayma gibi temel iş kurallarının barındığı servis sınıfı.',
+    methods: [
+      { name: 'FollowUserAsync()', desc: 'Kullanıcının daha önceden takip edip etmediğini kontrol eder ve işlemi gerçekleştirir.' },
+      { name: 'GetFollowersAsync()', desc: 'Kullanıcının takipçilerini sayfalama ile getirir.' }
+    ]
+  },
+  'ent-follow': {
+    id: 'ent-follow',
+    title: 'UserFollow.cs (Entity)',
+    description: 'Hangi kullanıcının (FollowerId) hangi kullanıcıyı (FollowingId) takip ettiğini tutan veritabanı tablosu.',
+    properties: [
+      { name: 'FollowerId', type: 'Guid', desc: 'Takip eden kullanıcının IDsi' },
+      { name: 'FollowingId', type: 'Guid', desc: 'Takip edilen kullanıcının IDsi' },
+      { name: 'CreatedAt', type: 'DateTime', desc: 'Takip etme zamanı' }
+    ]
+  },
+  'dto-follow-req': {
+    id: 'dto-follow-req',
+    title: 'FollowRequestDto.cs',
+    description: 'Takip etme isteğinde Frontend\'den gelen verileri taşıyan DTO.',
+    properties: [
+      { name: 'TargetUserId', type: 'Guid', desc: 'Takip edilecek kullanıcının IDsi' }
+    ]
+  },
+  'dto-follow-res': {
+    id: 'dto-follow-res',
+    title: 'FollowResultDto.cs',
+    description: 'Takip işlemi sonucunda dönen DTO.',
+    properties: [
+      { name: 'Success', type: 'bool', desc: 'İşlem başarılı mı?' },
+      { name: 'Message', type: 'string', desc: 'Sonuç mesajı' }
+    ]
+  },
+  'dto-follower-list': {
+    id: 'dto-follower-list',
+    title: 'FollowerListDto.cs',
+    description: 'Takipçi listesi istendiğinde dönen DTO.',
+    properties: [
+      { name: 'Followers', type: 'List<PublicUserDto>', desc: 'Takipçilerin listesi' },
+      { name: 'TotalCount', type: 'int', desc: 'Toplam takipçi sayısı' }
+    ]
+  },
+  'cache-svc': {
+    id: 'cache-svc',
+    title: 'CacheService.cs (Redis)',
+    description: 'Sık erişilen takipçi listelerini ve sayılarını hızlı getirmek için kullanılan Redis önbellekleme servisi.',
+    methods: [
+      { name: 'GetAsync()', desc: 'Önbellekten veriyi getirir.' },
+      { name: 'SetAsync()', desc: 'Veriyi önbelleğe yazar.' },
+      { name: 'RemoveAsync()', desc: 'Önbelleği temizler.' }
+    ]
+  },
+  'notif-svc': {
+    id: 'notif-svc',
+    title: 'NotificationEventPublisher.cs',
+    description: 'Bir kullanıcı takip edildiğinde, hedef kullanıcıya bildirim gitmesi için RabbitMQ gibi mesaj kuyruklarına Event fırlatan servis.',
+    methods: [
+      { name: 'PublishUserFollowedEvent()', desc: 'Kuyruğa UserFollowed integration event\'i gönderir.' }
+    ]
   }
 };

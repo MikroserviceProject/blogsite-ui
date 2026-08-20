@@ -1,6 +1,5 @@
 import { Component, OnDestroy, AfterViewInit, HostListener, signal, computed, ElementRef, ViewChild, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 
 interface FlowNode {
   id: string;
@@ -38,7 +37,7 @@ interface DemoFlow {
 @Component({
   selector: 'app-post-flow',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './post-flow.component.html',
   styleUrl: './post-flow.component.css'
 })
