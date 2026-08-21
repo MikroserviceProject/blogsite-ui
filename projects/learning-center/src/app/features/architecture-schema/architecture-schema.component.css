@@ -3,9 +3,7 @@
 .architecture-container {
   position: relative;
   width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  min-height: 100vh; /* YENİ: height veya max-height kaldırıldı, sayfanın aşağı doğru uzamasına izin veriliyor */
   background: var(--bg-primary, #ffffff);
   color: var(--text-primary, #1e293b);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -301,13 +299,9 @@
 ================================================== */
 .board-wrapper {
   position: relative; 
-  padding: 20px 10px 50px 10px; /* Akış yokken üst boşluk küçültüldü */
+  padding: 120px 10px 50px 10px; /* Üstten çok daha fazla boşluk bırakıldı ki oklar kesilmesin */
   background: transparent;
   overflow: visible; /* SVG çizgilerinin kesilmemesi için */
-}
-
-.board-wrapper.has-active-flow {
-  padding-top: 120px; /* Oklar varken kesilmemesi için üstten geniş boşluk */
 }
 
 .schema-svg-overlay {
@@ -322,79 +316,9 @@
 }
 
 /* YENİ: Ortogonal L köşelerini yumuşatır */
-.animated-path {
-  fill: none;
-  stroke-width: 2.5;
-  stroke-linecap: round;
+.schema-svg-overlay path {
   stroke-linejoin: round;
-}
-
-/* YENİ: CSS Motion Path Animasyonu (HTML Div) */
-.html-master-token {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 100;
-  offset-anchor: top center;
-  animation: glideMotion 2.5s linear forwards;
-  pointer-events: none;
-}
-
-.token-circle-outer {
-  position: absolute;
-  top: -8px; /* Merkezleme için offset */
-  left: -8px; /* Merkezleme için offset */
-  width: 16px;
-  height: 16px;
-  background-color: #fcd34d;
-  border: 2px solid #f59e0b;
-  border-radius: 50%;
-  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.2));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.token-circle-inner {
-  width: 6px;
-  height: 6px;
-  background-color: #ffffff;
-  border-radius: 50%;
-}
-
-.token-line {
-  position: absolute;
-  top: 0;
-  left: 0px;
-  width: 2px;
-  height: 30px;
-  background-color: #f59e0b;
-  transform: translateX(-50%);
-}
-
-.token-box {
-  position: absolute;
-  top: 30px;
-  left: 0;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 26px;
-  background-color: #ffffff;
-  border: 1.5px solid #f59e0b;
-  border-radius: 6px;
-  filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.15));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #1e293b;
-  font-family: 'Inter', sans-serif;
-}
-
-@keyframes glideMotion {
-  0% { offset-distance: 0%; }
-  100% { offset-distance: 100%; }
+  stroke-linecap: round;
 }
 
 /* Zemin (Boru Hattı) Okları (Hep görünür) */
@@ -422,22 +346,39 @@
   transition: stroke 0.3s ease;
 }
 
-/* Aktif adımın oku: sabit, düz çizgi (artık nokta nokta hareket etmiyor) */
+/* Hareketli Noktalar / Akan Işık (Kullanıcının Fav'ı) */
 .animated-path {
   fill: none;
-  stroke-width: 3.5px;
+  stroke: transparent; 
+  stroke-width: 2.5px; 
+  stroke-dasharray: 6 10; 
   stroke-linecap: round;
   transition: all 0.5s ease;
 }
 
+/* Aktif Olan Ok (Üzerinden MAVİ nokta akan animasyon) */
 .active-line .animated-path {
+  stroke: #3b82f6; 
   stroke-width: 4px;
+  animation: marchingAnts 0.7s linear infinite; 
+}
+
+/* Dönüş (Response) Aktif Olan Ok (Yeşil) */
+.active-line.return-line .animated-path {
+  stroke: #10b981; 
+  stroke-width: 4px;
+  animation: marchingAnts 0.7s linear infinite;
+}
+
+@keyframes marchingAnts {
+  from { stroke-dashoffset: 16; }
+  to { stroke-dashoffset: 0; }
 }
 
 /* Geçmiş adımlarda hareketli noktalar kaybolur (sadece açık mavi zemin kalır) */
 .finished-line .animated-path {
-  stroke-dasharray: none;
-  animation: none;
+  stroke: transparent;
+  filter: none !important; 
 }
 
 /* YENİ: Çizgi Etiketi (Kutucuk) - SVG'nin dışında, kutuların ÜSTÜNDE duracak! */
@@ -451,41 +392,31 @@
   transition: opacity 0.3s ease;
 }
 
-/* YENİ: Ufak rozet tasarımı (Yazılar) */
-.text-label {
-  background: rgba(255, 255, 255, 0.95);
-  color: #64748b;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  white-space: nowrap;
-  transform: translate(-50%, -50%); /* Okun tam ortasına hizalamak için */
-}
-
-/* Aktif (renkli) Yazı */
-.text-active {
-  color: inherit; /* HTML'den inline olarak stroke rengini alıyor */
-  border-color: currentColor;
-  background: white;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+/* YENİ: Ufak rozet tasarımı (Yazılar yok) */
+.label-badge {
+  background: #2563eb;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
   font-weight: 700;
+  box-shadow: 0 0 0 3px var(--bg-primary, #ffffff);
 }
 
-/* Dönüş Okları İçin Yeşil Yazı */
-.return-label .text-label {
-  color: #10b981;
-  border-color: #10b981;
+/* Dönüş Okları İçin Yeşil Rozet */
+.return-label .label-badge {
+  background: #10b981;
 }
 
-/* Sönük Arka Plan (Harita) Yazısı */
-.default-label .text-label {
-  background: #f8fafc;
-  color: #cbd5e1;
-  border-color: #e2e8f0;
-  opacity: 0.7;
+/* Sönük Arka Plan (Harita) Rozeti */
+.default-label .label-badge {
+  background: #f1f5f9;
+  color: #94a3b8;
+  box-shadow: 0 0 0 1px #cbd5e1;
 }
 
 /* ==================================================
@@ -503,57 +434,15 @@
   margin: 0 auto;
   gap: 2vw; /* Ekran küçüldükçe boşluk da küçülsün */
   transition: all 0.5s ease;
-  padding: 20px 20px 40px 20px; /* Üst ve alt boşluklar daraltıldı */
+  padding: 60px 20px 300px 20px; /* Yanlardaki boşlukları kıstık ki daha çok alan kalsın */
 }
 
-/* Aktif akış varsa CSS Grid Devreye Girer */
+/* Oklu Sayfa (Kare Format 3+2) */
 .schema-board.has-active-flow {
-  padding-top: 60px; /* Oklar için üstten biraz daha boşluk bırak */
-  padding-bottom: 300px; /* Akış varken okların taşmaması için boşluk bırakılır */
-  display: grid;
-  /* Ekrana tam sığması için daha orantılı ve responsive bir yerleşim */
-  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr) minmax(280px, 1fr); 
-  grid-template-rows: auto auto auto;
-  gap: 40px 60px; /* Dikey ve yatay boşluklar ekrana sığması için optimum seviyeye çekildi */
-  /* 
-    Gateway (Orta Üst)
-    İstemci (Sol Orta) -> Microservice (Tam Orta) -> DB'ler (Sağ Taraf, Row 2-3)
-    Queue (Sol Alt)
-  */
-  grid-template-areas:
-    ".          gateway       ."
-    "client     microservice  db"
-    "queue      .             db";
-  align-items: center;
-}
-
-/* Grid Yerleşimleri (grid-template-areas ile eşleşecek) */
-.schema-board.has-active-flow #layer-client {
-  grid-area: client;
-  justify-self: center;
-}
-.schema-board.has-active-flow #layer-gateway {
-  grid-area: gateway;
-  justify-self: center;
-}
-.schema-board.has-active-flow #layer-services {
-  grid-area: microservice;
-  justify-self: center;
-}
-.schema-board.has-active-flow #layer-broker {
-  grid-area: queue;
-  justify-self: center;
-}
-.schema-board.has-active-flow #layer-data {
-  grid-area: db;
-  justify-self: center;
-  align-self: stretch; /* Dikeyde row 2 ve 3'ü tamamen kaplasın */
-}
-
-/* DB katmanındaki kutuların arasını ekran görüntüsündeki gibi devasa açmak için */
-.schema-board.has-active-flow #layer-data .layer-body {
-  justify-content: space-between;
-  height: 100%;
+  flex-wrap: wrap; /* Sadece oklu sayfada alt satıra (3+2) kırılsın */
+  gap: 100px; /* Oklar için ferah ferah boşluk */
+  max-width: 1350px; /* Kare formatını zorla */
+  padding: 60px 80px 300px 80px; /* Orijinal geniş boşluklar geri gelsin */
 }
 /* Akış dışı (pasif) kutular sönük ve gri olsun */
 .schema-box.out-of-flow {
@@ -574,20 +463,16 @@
   z-index: 10; 
 }
 
-/* Oklu Sayfada Kolonların Boyutlarını Ekrana Sığdır */
+/* Oklu Sayfada Kolonların Orijinal Boyutunu Koru */
 .schema-board.has-active-flow .layer-column {
-  min-width: 280px;
-  max-width: 350px; /* Kutular çok taşıp scroll bar çıkarmasın diye sınırlandı */
+  min-width: 200px;
   flex: 1;
 }
 
-/* Kutu içindeki Node'ların yüksekliklerini optimize et */
-.schema-board.has-active-flow .schema-box {
-  min-height: 80px; 
-  padding: 16px 16px;
-}
-.schema-board.has-active-flow #layer-services .schema-box {
-  min-height: 140px; /* Mikroservis kutusu yine de biraz daha gösterişli olsun */
+.layer-column.two-columns-container {
+  max-width: 500px !important; 
+  min-width: 450px !important;
+  flex: 2; 
 }
 
 .layer-column.horizontal-layer {
@@ -596,17 +481,13 @@
   flex: 2;
 }
 
-.layer-column.horizontal-layer {
-  width: 100%;
-}
-
+/* YENİ: YATAY DİZİLİMLİ KATMAN (Örn: Veritabanı) */
 .layer-column.horizontal-layer .layer-body {
-  flex-direction: row; 
+  flex-direction: row-reverse; 
   align-items: center; 
-  justify-content: space-between; /* İki uca yasla */
-  gap: 200px; /* Konumları space-between belirliyor, gap sadece emniyet için */
+  justify-content: space-around;
+  gap: 15px; 
   flex-wrap: nowrap; 
-  width: 100%;
 }
 
 .layer-header {
@@ -1382,210 +1263,3 @@
 }
 :host-context(.dark-theme) .label-badge,
 .dark-theme .label-badge { box-shadow: 0 0 0 2px #0f172a; }
-
-/* YENİ STİLLER (Öğrenme Merkezi) */
-.welcome-overlay {
-  position: fixed; /* absolute yerine fixed yaptık ki devasa sayfanın ortasına değil, ekranda gördüğümüz kısmın ortasına gelsin */
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.welcome-modal {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  max-width: 600px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-  text-align: center;
-}
-.dark-theme .welcome-modal {
-  background: #1e293b;
-  color: #f8fafc;
-}
-.welcome-modal h2 { margin-bottom: 20px; color: #3b82f6; }
-.welcome-modal ul { text-align: left; margin: 20px 0; line-height: 1.6; }
-.start-btn {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.start-btn:hover { background: #2563eb; }
-
-/* ==================================================
-   Terminal / Konsol Tasarımı (Light & Dark Theme)
-   ================================================== */
-.learning-console {
-<<<<<<< HEAD
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  max-width: none;
-  height: 56px;
-  display: flex;
-  align-items: stretch;
-  background: #0f172a;
-  border-radius: 0;
-  border: none;
-  border-top: 1px solid #334155;
-  box-shadow: 0 -6px 20px rgba(0,0,0,0.35);
-  z-index: 100;
-=======
-  width: 100%;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
-  overflow: hidden;
-  font-family: monospace;
-  margin-top: 20px; /* Mimari ile arasına mesafe daraltıldı */
-}
-:host-context(.dark-theme) .learning-console,
-.dark-theme .learning-console {
-  background: #0f172a;
-  border-top: 1px solid #334155;
-}
-
-.console-header {
-<<<<<<< HEAD
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  background: #1e293b;
-  color: #94a3b8;
-  padding: 0 16px;
-  font-size: 13px;
-  white-space: nowrap;
-  border-bottom: none;
-  border-right: 1px solid #334155;
-=======
-  background: #f1f5f9;
-  color: #475569;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  border-bottom: 1px solid #e2e8f0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  gap: 16px;
-}
-/* VS Code benzeri sekmeler */
-.console-header span { cursor: pointer; }
-.console-header span.active { color: #2563eb; border-bottom: 1px solid #2563eb; padding-bottom: 7px; }
-
-:host-context(.dark-theme) .console-header,
-.dark-theme .console-header {
-  background: #1e293b;
-  color: #94a3b8;
-  border-bottom: 1px solid #334155;
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
-}
-:host-context(.dark-theme) .console-header span.active,
-.dark-theme .console-header span.active { color: #f8fafc; border-bottom-color: #f8fafc; }
-
-.console-body {
-<<<<<<< HEAD
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 0 16px;
-=======
-  padding: 16px 24px;
-  color: #334155;
-  max-height: 400px;
-  overflow-y: auto;
-  font-size: 14px;
-  line-height: 1.5;
-}
-:host-context(.dark-theme) .console-body,
-.dark-theme .console-body {
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
-  color: #10b981;
-  overflow-x: auto;
-  overflow-y: hidden;
-  min-width: 0;
-}
-.console-history {
-  flex: 0 0 auto;
-  margin-bottom: 0;
-  white-space: nowrap;
-}
-<<<<<<< HEAD
-=======
-
-.console-history { margin-bottom: 8px; }
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
-.history-text { white-space: pre-wrap; display: inline-block; vertical-align: top; }
-
-.system-text { color: #64748b; }
-:host-context(.dark-theme) .system-text,
-.dark-theme .system-text { color: #94a3b8; }
-
-.prompt-prefix { color: #2563eb; margin-right: 8px; font-weight: bold; }
-:host-context(.dark-theme) .prompt-prefix,
-.dark-theme .prompt-prefix { color: #f59e0b; }
-
-.console-input-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-<<<<<<< HEAD
-  flex: 1 1 auto;
-  min-width: 220px;
-}
-.console-input-row span { color: #3b82f6; font-weight: bold; white-space: nowrap; }
-=======
-  padding: 16px 24px;
-  background: #f8fafc;
-}
-:host-context(.dark-theme) .console-input-row,
-.dark-theme .console-input-row {
-  background: #0f172a;
-}
-
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
-.console-input-row input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: #0f172a;
-  font-family: monospace;
-  font-size: 14px;
-  outline: none;
-}
-:host-context(.dark-theme) .console-input-row input,
-.dark-theme .console-input-row input {
-  color: #f8fafc;
-}
-
-.console-input-row button {
-<<<<<<< HEAD
-  flex: 0 0 auto;
-  background: #3b82f6;
-=======
-  background: #2563eb;
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
-  color: white;
-  border: none;
-  padding: 6px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-}
-.console-input-row button:hover { background: #1d4ed8; }
-.console-input-row button:hover { background: #2563eb; }
-

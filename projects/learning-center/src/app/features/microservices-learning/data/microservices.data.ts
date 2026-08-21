@@ -23,25 +23,19 @@ export const MICROSERVICES_LAYERS: Layer[] = [
     ]
   },
   {
-    id: 'layer-data',
-<<<<<<< HEAD
-    title: '4. VERİTABANLARI & ÖNBELLEK',
-    isTwoColumn: true,
-    leftNodes: [
-=======
-    title: '5. VERİTABANLARI & ÖNBELLEK',
+    id: 'layer-broker',
+    title: '4. MESAJ KUYRUĞU',
     nodes: [
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
-      { id: 'db-sql', name: 'İlişkisel Veritabanı', type: 'db', desc: 'Örn: PostgreSQL, SQL Server' },
-      { id: 'db-nosql', name: 'Döküman Veritabanı', type: 'db', desc: 'Örn: MongoDB' },
-      { id: 'cache-redis', name: 'Önbellek (Cache)', type: 'db', desc: 'Örn: Redis (Hızlı okuma/yazma)' }
+      { id: 'broker', name: 'Olay/Mesaj Yöneticisi', type: 'helper-be', desc: 'Servisler arası asenkron iletişim (RabbitMQ/Kafka)' }
     ]
   },
   {
-    id: 'layer-broker',
-    title: '5. MESAJ KUYRUĞU',
+    id: 'layer-data',
+    title: '5. VERİTABANLARI & ÖNBELLEK',
     nodes: [
-      { id: 'broker', name: 'Olay/Mesaj Yöneticisi', type: 'helper-be', desc: 'Servisler arası asenkron iletişim (RabbitMQ/Kafka)' }
+      { id: 'db-sql', name: 'İlişkisel Veritabanı', type: 'db', desc: 'Örn: PostgreSQL, SQL Server' },
+      { id: 'db-nosql', name: 'Döküman Veritabanı', type: 'db', desc: 'Örn: MongoDB' },
+      { id: 'cache-redis', name: 'Önbellek (Cache)', type: 'db', desc: 'Örn: Redis (Hızlı okuma/yazma)' }
     ]
   }
 ];

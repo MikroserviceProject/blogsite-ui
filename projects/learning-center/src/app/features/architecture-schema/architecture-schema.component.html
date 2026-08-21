@@ -1,20 +1,11 @@
 <div class="architecture-container">
 
-  <!-- YENİ: Hoşgeldin Ekranı (İlk Girişte Görünür) -->
-  <div class="welcome-overlay" *ngIf="showWelcome()">
-    <div class="welcome-modal">
-      <h2>Mikroservis Öğrenme Merkezi 🚀</h2>
-      <p>Bu interaktif şemada, genel bir mikroservis mimarisinde isteklerin (request) servisler, veritabanları ve mesaj kuyrukları arasında nasıl gezindiğini adım adım göreceksiniz. Belirli bir sektöre bağlı kalmadan, herhangi bir sistemde (giriş yapma, profil düzenleme, fotoğraf yükleme gibi) olayların nasıl aktığını inceleyebilirsiniz.</p>
-      <ul>
-        <li><b>Genel Mimari:</b> Sistemin en geniş halini, temel servislerin ve veritabanlarının nasıl birbirine bağlandığını kuşbakışı inceleyebilirsiniz.</li>
-        <li><b>Giriş Yap:</b> İsteğin alınması, SQL'den kullanıcının doğrulanması, Token'ın Redis'te önbelleğe alınması ve asenkron loglama için olayın RabbitMQ'ya iletilmesi.</li>
-        <li><b>Profil Düzenle:</b> İlgili servise yönlendirme, önbellek temizliği, MongoDB'ye yazma ve asenkron bilgi mesajı fırlatılması.</li>
-      </ul>
-      <button class="start-btn" (click)="startLearning()">Öğrenmeye Başla</button>
-    </div>
+  <!-- YENİ: Mikroservis Sekmeleri (Tab Switcher) -->
+  <div class="architecture-tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'auth'" (click)="setTab('auth')">Auth Servisi (Kimlik/Yetki)</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'follower'" (click)="setTab('follower')">Follower Servisi (Takip)</button>
   </div>
-
-  <!-- Üst Araç Çubuğu (Görünüm Değiştirici) -->
+  <!-- YENİ: Üst Araç Çubuğu (Görünüm Değiştirici) -->
   <div class="schema-toolbar" *ngIf="activeFlowId()">
     <button class="toggle-view-btn" (click)="toggleInactiveNodes()">
       <span class="icon">{{ showInactiveNodes() ? '👁' : '👁‍🗨' }}</span>
@@ -60,7 +51,7 @@
 
   <!-- MİMARİ BOARD -->
   <!-- DIŞ KAPLAYICI (Artık scroll burada olacak ki SVG de içeride kaysın) -->
-  <div class="board-wrapper" (click)="onBoardClick($event)" [class.has-active-flow]="activeFlowId() !== null">
+  <div class="board-wrapper" (click)="onBoardClick($event)">
     
     <!-- ESNEYEN İÇ İÇERİK (Hem Kutuları Hem Okları Tutar) -->
     <div class="schema-board" #boardWrapper [class.has-active-flow]="activeFlowId() !== null">
@@ -69,16 +60,31 @@
       <svg class="schema-svg-overlay">
         
         <defs>
-          <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-            <polygon points="0 0, 6 3, 0 6" fill="#94a3b8" />
+          <marker id="arrowhead" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+            <polygon points="0 0, 4 2, 0 4" fill="#cbd5e1" />
           </marker>
           
-          <!-- YENİ: Oklar için dinamik renk paletine uygun uçlar (TS'teki renklerle eşleşmeli) -->
-          @for (color of ['3b82f6', 'ef4444', '10b981', 'f97316', '8b5cf6', '06b6d4', 'ec4899', 'eab308', '6366f1', '14b8a6']; track color) {
-            <marker [id]="'arrowhead-' + color" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-              <polygon points="0 0, 6 3, 0 6" [attr.fill]="'#' + color" />
-            </marker>
-          }
+          <marker id="arrowhead-active" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#3b82f6" />
+          </marker>
+
+          <!-- YENİ: Renkli Ok Uçları -->
+          <marker id="arrowhead-pink" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#f43f5e" />
+          </marker>
+          <marker id="arrowhead-blue" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#3b82f6" />
+          </marker>
+          <marker id="arrowhead-purple" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#8b5cf6" />
+          </marker>
+          <marker id="arrowhead-green" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#10b981" />
+          </marker>
+
+          <marker id="arrowhead-return" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#10b981" />
+          </marker>
         </defs>
 
         <!-- YENİ: Grup Hiyerarşisi Çizgileri (Kutu sürüklendikçe uzar/kısalır) -->
@@ -99,30 +105,13 @@
             [attr.marker-end]="'url(#arrowhead)'"
           />
 
-          <!-- Hareketli (Renkli) Noktalar veya Sabit Renkli Çizgi -->
+          <!-- Hareketli (Renkli) Noktalar -->
           <path class="animated-path"
             [attr.d]="line.pathD"
-            [style.stroke]="!line.isDefaultBackground ? line.lineColor : ''"
+            [style.stroke]="line.active && !line.isReturn && !line.isDefaultBackground ? line.lineColor : ''"
+            [attr.marker-end]="line.isDefaultBackground ? '' : (line.active ? (line.isReturn ? 'url(#arrowhead-return)' : 'url(#' + line.markerEnd + ')') : '')"
           />
-        </g>
-      
-        <!-- YENİ: Tek Bir SVG Token (DOM'dan silinip eklenmez, flash yapmaz) -->
-        <g *ngIf="activeTokenPathD()" class="data-token-group">
-          <g>
-            <line x1="0" y1="0" x2="0" y2="30" stroke="#f59e0b" stroke-width="2" />
-            <rect x="-60" y="30" width="120" height="26" rx="6" fill="#ffffff" stroke="#f59e0b" stroke-width="1.5" style="filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.15));" />
-            <text x="0" y="47" font-size="12" font-weight="600" fill="#1e293b" text-anchor="middle" font-family="'Inter', sans-serif">
-              {{ currentDataToken || 'Veri' }}
-            </text>
-            <circle cx="0" cy="0" r="8" fill="#fcd34d" stroke="#f59e0b" stroke-width="2" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.2));" />
-            <circle cx="0" cy="0" r="3" fill="#ffffff" />
-          </g>
-          <animateMotion #masterTokenAnimator
-            [attr.path]="activeTokenPathD()"
-            dur="2.5s"
-            calcMode="paced"
-            fill="freeze"
-          />
+
         </g>
       </svg>
 
@@ -134,11 +123,9 @@
                [class.active-label]="line.active && !isAnimationFinished()" 
                [class.default-label]="line.isDefaultBackground"
                [class.return-label]="line.isReturn">
-             <div class="text-label" 
-                  [style.color]="line.lineColor"
-                  [style.border-color]="line.lineColor"
-                  [class.text-active]="!line.isDefaultBackground">
-               {{ line.label }}
+             <div class="label-badge" 
+                  [style.background-color]="line.active && !line.isReturn && !line.isDefaultBackground ? line.lineColor : ''">
+               {{ line.stepIndex }}
              </div>
           </div>
       }
@@ -149,7 +136,6 @@
 
       <ng-template #layerColTemplate let-layer>
         <div class="layer-column" 
-             [id]="layer.id"
              [style.order]="getLayerOrder(layer.id)"
              [class.two-columns-container]="layer.isTwoColumn" 
              [class.horizontal-layer]="layer.direction === 'horizontal' && activeFlowId() !== null">
@@ -186,31 +172,6 @@
 
     </div>
   </div>
-
-  <!-- YENİ: Console (Komut Satırı) - Dinamik Yapı -->
-  <div class="learning-console" *ngIf="!showWelcome()">
-    <div class="console-header">
-      <span>PROBLEMS</span>
-      <span>OUTPUT</span>
-      <span>DEBUG CONSOLE</span>
-      <span class="active">TERMINAL</span>
-      <span>PORTS</span>
-    </div>
-    <div class="console-body" #consoleBody>
-      <div class="console-history" *ngFor="let msg of consoleHistory()">
-        <span [class.prompt-user]="msg.type === 'user'" [class.prompt-system]="msg.type === 'system'" class="prompt-prefix">
-          {{ msg.type === 'user' ? '>' : 'C:\\Microservices>' }}
-        </span>
-        <span class="history-text" [class.system-text]="msg.type === 'system'">{{ msg.text }}</span>
-      </div>
-    </div>
-    <div class="console-input-row" *ngIf="activePrompt()">
-      <span class="prompt-prefix">{{ activePrompt()?.prefix }}</span>
-      <input type="text" [(ngModel)]="consoleInput" (keyup.enter)="executeCommand(consoleInput)" [placeholder]="activePrompt()?.placeholder" />
-      <button (click)="executeCommand(consoleInput)">Gönder</button>
-    </div>
-  </div>
-
 </div>
 
 <ng-template #nodeTemplate let-node>

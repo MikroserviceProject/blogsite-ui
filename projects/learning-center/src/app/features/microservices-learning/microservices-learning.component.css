@@ -422,16 +422,24 @@
   transition: stroke 0.3s ease;
 }
 
-/* Aktif adımın oku: sabit, düz çizgi (artık nokta nokta hareket etmiyor) */
+/* Hareketli Noktalar / Akan Işık (Kullanıcının Fav'ı) */
 .animated-path {
   fill: none;
   stroke-width: 3.5px;
+  stroke-dasharray: 8 8;
   stroke-linecap: round;
   transition: all 0.5s ease;
 }
 
+/* Aktif Olan Ok animasyonu */
 .active-line .animated-path {
   stroke-width: 4px;
+  animation: marchingAnts 0.7s linear infinite; 
+}
+
+@keyframes marchingAnts {
+  from { stroke-dashoffset: 16; }
+  to { stroke-dashoffset: 0; }
 }
 
 /* Geçmiş adımlarda hareketli noktalar kaybolur (sadece açık mavi zemin kalır) */
@@ -1425,27 +1433,9 @@
    Terminal / Konsol Tasarımı (Light & Dark Theme)
    ================================================== */
 .learning-console {
-<<<<<<< HEAD
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  max-width: none;
-  height: 56px;
-  display: flex;
-  align-items: stretch;
-  background: #0f172a;
-  border-radius: 0;
-  border: none;
-  border-top: 1px solid #334155;
-  box-shadow: 0 -6px 20px rgba(0,0,0,0.35);
-  z-index: 100;
-=======
   width: 100%;
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
   overflow: hidden;
   font-family: monospace;
   margin-top: 20px; /* Mimari ile arasına mesafe daraltıldı */
@@ -1457,18 +1447,6 @@
 }
 
 .console-header {
-<<<<<<< HEAD
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  background: #1e293b;
-  color: #94a3b8;
-  padding: 0 16px;
-  font-size: 13px;
-  white-space: nowrap;
-  border-bottom: none;
-  border-right: 1px solid #334155;
-=======
   background: #f1f5f9;
   color: #475569;
   padding: 8px 16px;
@@ -1489,19 +1467,11 @@
   background: #1e293b;
   color: #94a3b8;
   border-bottom: 1px solid #334155;
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
 }
 :host-context(.dark-theme) .console-header span.active,
 .dark-theme .console-header span.active { color: #f8fafc; border-bottom-color: #f8fafc; }
 
 .console-body {
-<<<<<<< HEAD
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 0 16px;
-=======
   padding: 16px 24px;
   color: #334155;
   max-height: 400px;
@@ -1511,22 +1481,10 @@
 }
 :host-context(.dark-theme) .console-body,
 .dark-theme .console-body {
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
   color: #10b981;
-  overflow-x: auto;
-  overflow-y: hidden;
-  min-width: 0;
 }
-.console-history {
-  flex: 0 0 auto;
-  margin-bottom: 0;
-  white-space: nowrap;
-}
-<<<<<<< HEAD
-=======
 
 .console-history { margin-bottom: 8px; }
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
 .history-text { white-space: pre-wrap; display: inline-block; vertical-align: top; }
 
 .system-text { color: #64748b; }
@@ -1541,12 +1499,6 @@
   display: flex;
   align-items: center;
   gap: 12px;
-<<<<<<< HEAD
-  flex: 1 1 auto;
-  min-width: 220px;
-}
-.console-input-row span { color: #3b82f6; font-weight: bold; white-space: nowrap; }
-=======
   padding: 16px 24px;
   background: #f8fafc;
 }
@@ -1555,7 +1507,6 @@
   background: #0f172a;
 }
 
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
 .console-input-row input {
   flex: 1;
   background: transparent;
@@ -1571,12 +1522,7 @@
 }
 
 .console-input-row button {
-<<<<<<< HEAD
-  flex: 0 0 auto;
-  background: #3b82f6;
-=======
   background: #2563eb;
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
   color: white;
   border: none;
   padding: 6px 16px;
