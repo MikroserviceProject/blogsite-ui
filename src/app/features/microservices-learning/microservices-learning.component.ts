@@ -1052,41 +1052,7 @@ export class MicroservicesLearningComponent implements OnDestroy, AfterViewCheck
           });
         }
       }
-<<<<<<< HEAD
     }
-=======
-
-      // 3. Adım: Hangi okun hangi renk olacağını ve dönüş mü gidiş mi olduğunu belirle
-      let lineColor = this.getLineColor(i);
-      let markerEnd = `arrowhead-${lineColor.replace('#', '')}`;
-
-      if (i <= this.currentStepIndex() || this.isAnimationFinished()) {
-        
-        // Zıplamayı (Jump) önlemek için: Önceki okun bittiği yer ile bu okun başladığı yeri birleştir.
-        let tokenPathD = pathD;
-        if (i > 0) {
-          const prevStep = newLines[i - 1];
-          // Mümkünse dinamik olarak M x1 y1 kısmını L x1 y1'e çevirerek birleştir.
-          tokenPathD = pathD.replace(`M ${x1} ${y1}`, `M ${prevStep.x2} ${prevStep.y2} L ${x1} ${y1}`);
-        }
-
-        newLines.push({
-          id: `${step.fromNodeId}-${step.toNodeId}-${i}`, 
-          x1, y1, x2, y2, midX: labelX, labelX, labelY,
-          pathD,
-          tokenPathD, // YENİ: Token'ın kayacağı kesintisiz yol
-          label: step.label,
-          subLabel: step.subLabel,
-          active: i === this.currentStepIndex() && !this.isAnimationFinished(),
-          isReturn: step.isReturn || false,
-          isDefaultBackground: false,
-          stepIndex: i + 1,
-          lineColor,
-          markerEnd
-        });
-      }
-    });
->>>>>>> 90f1edea6f93e796b65f7fb1a88620dc773533dd
 
     // YENİ: Etiket (Label) Çakışmalarını Önleme Algoritması
     // Etiketlerin üst üste binmemesi için Y ekseninde itme uygular
