@@ -1525,26 +1525,61 @@
 .console-input-row button:hover { background: #2563eb; }
 
 
-/* MOBİL (RESPONSIVE) DÜZELTMESİ */
+/* MOBİL (RESPONSIVE) DÜZELTMESİ — Masaüstüne kesinlikle dokunmaz */
 @media (max-width: 1024px) {
-  /* Board wrapper: yatayda kaydırılabilir, dikey sabit */
+
+  /* ─── Kaydırma Kapsayıcısı ─── */
   .board-wrapper {
     overflow-x: auto;
     overflow-y: visible;
     width: 100%;
     -webkit-overflow-scrolling: touch;
-    scroll-snap-type: none;
   }
-  /* İçeriği sabit genişlikte tut, scroll ile görülsün */
+
+  /* ─── Normal Görünüm (Akış yok, flex layout) ─── */
   .schema-board {
-    min-width: 1100px;
     justify-content: flex-start !important;
-    padding-left: 10px;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    width: max-content !important;
   }
-  /* Aktif akış varken de sol hizalama */
+  .layer-column {
+    width: 200px !important;
+    flex: 0 0 200px !important;
+    max-width: 200px !important;
+  }
+  .schema-box {
+    height: auto !important;
+    min-height: 80px !important;
+  }
+  .layer-column.horizontal-layer {
+    max-width: 420px !important;
+    min-width: 420px !important;
+  }
+
+  /* ─── Aktif Akış Görünümü (Grid layout, 2x2) ─── */
   .schema-board.has-active-flow {
     margin-left: 0 !important;
-    padding-left: 10px !important;
-    padding-right: 40px !important;
+    padding-left: 15px !important;
+    padding-right: 60px !important;
+    padding-bottom: 200px !important;
+    gap: 60px 100px !important;
+    grid-template-columns: minmax(200px, 260px) minmax(200px, 260px) !important;
+    width: max-content !important;
+    min-width: 0 !important;
+  }
+  .schema-board.has-active-flow .layer-column {
+    min-width: 200px !important;
+    max-width: 260px !important;
+    width: auto !important;
+    flex: unset !important;
+  }
+
+  .console-wrapper {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 }
