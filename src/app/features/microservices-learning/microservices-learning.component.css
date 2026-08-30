@@ -1524,3 +1524,16 @@
 }
 .console-input-row button:hover { background: #2563eb; }
 
+
+/* MOBİL (RESPONSIVE) DÜZELTMESİ */
+@media (max-width: 1024px) {
+  .board-wrapper {
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+  .schema-board {
+    min-width: 1100px; /* Force minimum width to keep desktop-like layout on mobile and enable panning */
+  }
+}
