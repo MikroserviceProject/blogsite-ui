@@ -922,7 +922,7 @@ export class MicroservicesLearningComponent implements OnDestroy, AfterViewCheck
     if (!this.boardWrapper) return;
     const wrapper = this.boardWrapper.nativeElement;
     const wrapperRect = wrapper.getBoundingClientRect();
-    
+
     const getOffset = (el: HTMLElement) => {
       const rect = el.getBoundingClientRect();
       return {
@@ -937,288 +937,122 @@ export class MicroservicesLearningComponent implements OnDestroy, AfterViewCheck
       };
     };
 
-    if (!activeFlow) { this.svgLines.set([]); return; }
-    
-    // 1. TÜM görünür kutuların (obstacle) konumlarını topla
-    const allBoxes: {id: string, top: number, bottom: number, left: number, right: number}[] = [];
     const allBoxEls = wrapper.querySelectorAll('.schema-box:not(.hidden-node)');
-    allBoxEls.forEach((el: Element) => {
-      const htmlEl = el as HTMLElement;
-      const off = getOffset(htmlEl);
-      allBoxes.push({
-        id: htmlEl.id || '',
-        top: off.top - 5,
-        bottom: off.bottom + 5,
-        left: off.left - 5,
-        right: off.right + 5
-      });
-    });
+    // Aynı anda tek bir adım gösterildiği için kutuların ekstra yüksekliğe ihtiyacı yok
+    allBoxEls.forEach((el: Element) => { (el as HTMLElement).style.minHeight = ''; });
 
-    // 2. Global sınırlar
+    if (!activeFlow) { this.svgLines.set([]); this.groupSvgLines.set([]); return; }
+
+    // Global sınırlar (koridor yönlendirmesi kutuların üzerinden/altından dolaşsın diye)
     let globalTop = 99999;
     let globalBottom = 0;
-    let globalLeft = 99999;
-    let globalRight = 0;
-    
-    allBoxes.forEach(box => {
-      if (box.top < globalTop) globalTop = box.top;
-      if (box.bottom > globalBottom) globalBottom = box.bottom;
-      if (box.left < globalLeft) globalLeft = box.left;
-      if (box.right > globalRight) globalRight = box.right;
-    });
 
-    // 3. Kenar Kullanım Sayımlarını Belirle (Okların üst üste binmesini engeller)
-    const edgeTotal = new Map<string, number>(); // key: 'nodeId-left' or 'nodeId-right'
-    const stepEdges = new Map<number, { fromEdge: 'left'|'right', toEdge: 'left'|'right' }>();
-
-    activeFlow.steps.forEach((step, i) => {
-      const elFrom = document.getElementById(step.fromNodeId);
-      const elTo = document.getElementById(step.toNodeId);
-      if (!elFrom || !elTo) return;
-
-      const from = getOffset(elFrom);
-      const to = getOffset(elTo);
-      const dx = to.centerX - from.centerX;
-      const dy = to.centerY - from.centerY;
-      
-      const isSameColumn = Math.abs(dx) < 200;
-      const isAdjacent = Math.abs(dx) >= 200 && Math.abs(dx) < 500;
-      const isReturn = step.isReturn || false;
-      const goingRight = dx > 0;
-
-      let fromEdge: 'left' | 'right' = 'right';
-      let toEdge: 'left' | 'right' = 'left';
-
-      if (isSameColumn) {
-        if (isReturn) {
-          fromEdge = 'left';
-          toEdge = 'left';
-        } else {
-          fromEdge = 'right';
-          toEdge = 'right';
-        }
-      } else if (isAdjacent && Math.abs(dy) < 150) {
-        fromEdge = goingRight ? 'right' : 'left';
-        toEdge = goingRight ? 'left' : 'right';
-      } else {
-        fromEdge = goingRight ? 'right' : 'left';
-        toEdge = goingRight ? 'left' : 'right';
-      }
-
-      stepEdges.set(i, { fromEdge, toEdge });
-
-      const fromKey = `${step.fromNodeId}-${fromEdge}`;
-      const toKey = `${step.toNodeId}-${toEdge}`;
-      
-      edgeTotal.set(fromKey, (edgeTotal.get(fromKey) || 0) + 1);
-      edgeTotal.set(toKey, (edgeTotal.get(toKey) || 0) + 1);
-    });
-
-    // 4. Kutu Boylarını (min-height) Kenardaki Gerçek Ok Sayısına Göre Büyüt
-    // Bu sayede oklar hiçbir zaman kutunun dışına (havaya) taşmaz!
     allBoxEls.forEach((el: Element) => {
-      const htmlEl = el as HTMLElement;
-      const id = htmlEl.id;
-      if (id) {
-        const leftTotal = edgeTotal.get(`${id}-left`) || 0;
-        const rightTotal = edgeTotal.get(`${id}-right`) || 0;
-        const maxConns = Math.max(leftTotal, rightTotal);
-        // Her bağlantı 36px mesafe gerektirir
-        const reqHeight = Math.max(60, maxConns * 36 + 20); 
-        htmlEl.style.minHeight = `${reqHeight}px`;
-      }
+      const off = getOffset(el as HTMLElement);
+      if (off.top - 5 < globalTop) globalTop = off.top - 5;
+      if (off.bottom + 5 > globalBottom) globalBottom = off.bottom + 5;
     });
-
-    // 5. Boylar olası bir şekilde büyüdüğü için koordinatları TAZELİYORUZ
-    allBoxes.length = 0;
-    allBoxEls.forEach((el: Element) => {
-      const htmlEl = el as HTMLElement;
-      const off = getOffset(htmlEl);
-      allBoxes.push({
-        id: htmlEl.id || '',
-        top: off.top - 5,
-        bottom: off.bottom + 5,
-        left: off.left - 5,
-        right: off.right + 5
-      });
-    });
-
-    // Global sınırları tekrar hesapla
-    globalTop = 99999;
-    globalBottom = 0;
-    globalLeft = 99999;
-    globalRight = 0;
-    
-    allBoxes.forEach(box => {
-      if (box.top < globalTop) globalTop = box.top;
-      if (box.bottom > globalBottom) globalBottom = box.bottom;
-      if (box.left < globalLeft) globalLeft = box.left;
-      if (box.right > globalRight) globalRight = box.right;
-    });
-
-    const edgeCurrent = new Map<string, number>();
-    const pairCount = new Map<string, number>();
 
     const newLines: SvgLine[] = [];
-    
-    // Global yatay koridor kullanım sayaçları (üst üste binmeyi engeller)
-    let topCorridorCount = 0;
-    let bottomCorridorCount = 0;
 
-    activeFlow.steps.forEach((step, i) => {
-      const edges = stepEdges.get(i);
-      if (!edges) return;
+    // Eğitsel akış: karmaşayı önlemek için HER ZAMAN sadece aktif adımın oku çizilir
+    const stepIdx = this.currentStepIndex();
+    const step = activeFlow.steps[stepIdx];
 
+    if (step) {
       const elFrom = document.getElementById(step.fromNodeId);
       const elTo = document.getElementById(step.toNodeId);
 
-      if (!elFrom || !elTo) return;
+      if (elFrom && elTo) {
+        const from = getOffset(elFrom);
+        const to = getOffset(elTo);
+        const dx = to.centerX - from.centerX;
+        const dy = to.centerY - from.centerY;
+        const sameBox = Math.abs(dx) < 10 && Math.abs(dy) < 10;
 
-      const from = getOffset(elFrom);
-      const to = getOffset(elTo);
+        if (!sameBox) {
+          const isReturn = step.isReturn || false;
+          const goingRight = dx > 0;
+          const isSameColumn = Math.abs(dx) < 200;
+          const isAdjacent = Math.abs(dx) >= 200 && Math.abs(dx) < 500;
 
-      const fromKey = `${step.fromNodeId}-${edges.fromEdge}`;
-      const toKey = `${step.toNodeId}-${edges.toEdge}`;
-      
-      const fromTotal = edgeTotal.get(fromKey) || 1;
-      const toTotal = edgeTotal.get(toKey) || 1;
+          let x1: number, y1: number, x2: number, y2: number;
+          let pathD: string;
+          let labelX: number, labelY: number;
 
-      const fromIdx = (edgeCurrent.get(fromKey) || 0) + 1;
-      const toIdx = (edgeCurrent.get(toKey) || 0) + 1;
-      
-      edgeCurrent.set(fromKey, fromIdx);
-      edgeCurrent.set(toKey, toIdx);
+          // ── ORTOGONAL (GUTTER) ROUTING ALGORİTMASI ──
+          // Kutu içinden geçmeleri %100 engellemek için sadece YAN kenarları kullanıyoruz.
+          if (isSameColumn) {
+            if (isReturn) {
+              // Sol taraftan bracket ([) çiz
+              x1 = from.left;
+              y1 = from.centerY;
+              x2 = to.left;
+              y2 = to.centerY;
+              const gutterX = Math.min(from.left, to.left) - 40;
+              pathD = `M ${x1} ${y1} L ${gutterX} ${y1} L ${gutterX} ${y2} L ${x2} ${y2}`;
+              labelX = gutterX;
+              labelY = (y1 + y2) / 2;
+            } else {
+              // Sağ taraftan bracket (]) çiz
+              x1 = from.right;
+              y1 = from.centerY;
+              x2 = to.right;
+              y2 = to.centerY;
+              const gutterX = Math.max(from.right, to.right) + 40;
+              pathD = `M ${x1} ${y1} L ${gutterX} ${y1} L ${gutterX} ${y2} L ${x2} ${y2}`;
+              labelX = gutterX;
+              labelY = (y1 + y2) / 2;
+            }
+          } else if (isAdjacent && Math.abs(dy) < 150) {
+            // Basit yatay çizgi
+            x1 = goingRight ? from.right : from.left;
+            y1 = from.centerY;
+            x2 = goingRight ? to.left : to.right;
+            y2 = to.centerY;
+            const midX = x1 + (x2 - x1) / 2;
+            pathD = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+            labelX = midX;
+            labelY = (y1 + y2) / 2;
+          } else {
+            // Uzak Kolonlar veya Çapraz/Wrap bağlantılar (Global Koridor — diğer kutuların üzerinden/altından dolaşır, aralarından geçmez)
+            x1 = goingRight ? from.right : from.left;
+            y1 = from.centerY;
+            const gutter1X = goingRight ? x1 + 30 : x1 - 30;
 
-      const pairKey = `${step.fromNodeId}>${step.toNodeId}`;
-      const pairIdx = (pairCount.get(pairKey) || 0);
-      pairCount.set(pairKey, pairIdx + 1);
+            x2 = goingRight ? to.left : to.right;
+            y2 = to.centerY;
+            const gutter2X = goingRight ? x2 - 30 : x2 + 30;
 
-      // Jitter: aynı çiftten giden çoklu okları birbirinden ayır
-      const jitter = pairIdx * 20;
+            // Üstten mi alttan mı dolaşalım?
+            const midY = (y1 + y2) / 2;
+            const diagramMidY = (globalTop + globalBottom) / 2;
+            const corridorY = midY < diagramMidY ? globalTop - 40 : globalBottom + 40;
 
-      // Kutunun KENARINDAKİ bağlantı noktalarını SABİT aralıklarla dağıt (Yatay çizgilerin ve ok uçlarının üst üste binmesini tamamen engeller!)
-      const spacing = 36;
-      
-      const outTotalHeight = (fromTotal - 1) * spacing;
-      const outStartY = from.centerY - (outTotalHeight / 2);
-      const fixedY1 = outStartY + (fromIdx - 1) * spacing;
+            pathD = `M ${x1} ${y1} L ${gutter1X} ${y1} L ${gutter1X} ${corridorY} L ${gutter2X} ${corridorY} L ${gutter2X} ${y2} L ${x2} ${y2}`;
+            labelX = (gutter1X + gutter2X) / 2;
+            labelY = corridorY;
+          }
 
-      const inTotalHeight = (toTotal - 1) * spacing;
-      const inStartY = to.centerY - (inTotalHeight / 2);
-      const fixedY2 = inStartY + (toIdx - 1) * spacing;
+          const lineColor = this.getLineColor(stepIdx);
+          const markerEnd = `arrowhead-${lineColor.replace('#', '')}`;
 
-      const dx = to.centerX - from.centerX;
-      const dy = to.centerY - from.centerY;
-      const goingRight = dx > 0;
-
-      let x1: number, y1: number, x2: number, y2: number;
-      let pathD: string;
-      let labelX: number, labelY: number;
-
-      // Aynı kutu kontrolü
-      const sameBox = Math.abs(dx) < 10 && Math.abs(dy) < 10;
-      if (sameBox) return;
-
-      // ── ORTOGONAL (GUTTER) ROUTING ALGORİTMASI ──
-      // Kutu içinden geçmeleri %100 engellemek için sadece YAN kenarları kullanıyoruz.
-
-      const isSameColumn = Math.abs(dx) < 200;
-      const isAdjacent = Math.abs(dx) >= 200 && Math.abs(dx) < 500;
-      const isReturn = step.isReturn || false;
-
-      // 1. Aynı Kolon veya Alt Alta (dx küçük)
-      if (isSameColumn) {
-        if (isReturn) {
-          // Sol taraftan bracket ([) çiz
-          x1 = from.left;
-          y1 = fixedY1;
-          x2 = to.left;
-          y2 = fixedY2;
-          
-          const gutterX = Math.min(from.left, to.left) - 40 - (fromIdx * 20);
-          
-          pathD = `M ${x1} ${y1} L ${gutterX} ${y1} L ${gutterX} ${y2} L ${x2} ${y2}`;
-          labelX = gutterX;
-          labelY = (y1 + y2) / 2;
-        } else {
-          // Sağ taraftan bracket (]) çiz
-          x1 = from.right;
-          y1 = fixedY1;
-          x2 = to.right;
-          y2 = fixedY2;
-          
-          const gutterX = Math.max(from.right, to.right) + 40 + (fromIdx * 20);
-          
-          pathD = `M ${x1} ${y1} L ${gutterX} ${y1} L ${gutterX} ${y2} L ${x2} ${y2}`;
-          labelX = gutterX;
-          labelY = (y1 + y2) / 2;
+          newLines.push({
+            id: `${step.fromNodeId}-${step.toNodeId}-${stepIdx}`,
+            x1, y1, x2, y2, midX: labelX, labelX, labelY,
+            pathD,
+            label: step.label,
+            subLabel: step.subLabel,
+            active: !this.isAnimationFinished(),
+            isReturn,
+            isDefaultBackground: false,
+            stepIndex: stepIdx + 1,
+            lineColor,
+            markerEnd
+          });
         }
-
-      // 2. Yan Yana Kolonlar (Yatay Bağlantı)
-      } else if (isAdjacent && Math.abs(dy) < 150) {
-        // Basit yatay çizgi
-        x1 = goingRight ? from.right : from.left;
-        y1 = fixedY1;
-        x2 = goingRight ? to.left : to.right;
-        y2 = fixedY2;
-        
-        // midX'i fromIdx'e göre az miktarda kaydır ki çok bitişik kolonlarda ters yöne ok çıkmasın (overshoot engeli)
-        const midX = x1 + (x2 - x1) / 2 + (fromIdx * 6 * (goingRight ? 1 : -1));
-        pathD = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
-        labelX = midX;
-        labelY = (y1 + y2) / 2;
-
-      // 3. Uzak Kolonlar veya Çapraz/Wrap bağlantılar (Satır atlayanlar)
-      } else {
-        // Çapraz veya alt satıra geçişlerde doğrudan orta noktadan (basit Z-şekli) bağla
-        x1 = goingRight ? from.right : from.left;
-        y1 = fixedY1;
-        x2 = goingRight ? to.left : to.right;
-        y2 = fixedY2;
-        
-        // Kutuların arasındaki dikey boşluktan inebilmek için:
-        let midX = (x1 + x2) / 2;
-        
-        // Üst üste binmesini önlemek için jitter ekle
-        midX += (fromIdx * 10 * (goingRight ? 1 : -1));
-
-        pathD = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
-        
-        // Etiketi dikey çizginin üzerine koy, üst üste binmesin diye adım indeksine (i) göre dikeyde hafif kaydır (jitter)
-        labelX = midX;
-        labelY = ((y1 + y2) / 2) + ((i % 4) * 25) - 30;
       }
-
-      // 3. Adım: Hangi okun hangi renk olacağını ve dönüş mü gidiş mi olduğunu belirle
-      let lineColor = this.getLineColor(i);
-      let markerEnd = `arrowhead-${lineColor.replace('#', '')}`;
-
-      if (i <= this.currentStepIndex() || this.isAnimationFinished()) {
-        
-        // Zıplamayı (Jump) önlemek için: Önceki okun bittiği yer ile bu okun başladığı yeri birleştir.
-        let tokenPathD = pathD;
-        if (i > 0) {
-          const prevStep = newLines[i - 1];
-          // Mümkünse dinamik olarak M x1 y1 kısmını L x1 y1'e çevirerek birleştir.
-          tokenPathD = pathD.replace(`M ${x1} ${y1}`, `M ${prevStep.x2} ${prevStep.y2} L ${x1} ${y1}`);
-        }
-
-        newLines.push({
-          id: `${step.fromNodeId}-${step.toNodeId}-${i}`, 
-          x1, y1, x2, y2, midX: labelX, labelX, labelY,
-          pathD,
-          tokenPathD, // YENİ: Token'ın kayacağı kesintisiz yol
-          label: step.label,
-          subLabel: step.subLabel,
-          active: i === this.currentStepIndex() && !this.isAnimationFinished(),
-          isReturn: step.isReturn || false,
-          isDefaultBackground: false,
-          stepIndex: i + 1,
-          lineColor,
-          markerEnd
-        });
-      }
-    });
+    }
 
     // YENİ: Etiket (Label) Çakışmalarını Önleme Algoritması
     // Etiketlerin üst üste binmemesi için Y ekseninde itme uygular

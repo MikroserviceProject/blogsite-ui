@@ -1,0 +1,55 @@
+<section class="solid-section">
+  <div class="solid-heading-wrap">
+    <h2 class="solid-heading">SOLID Prensipleri</h2>
+    <p class="solid-intro">Nesne yönelimli tasarımda kodu daha esnek, bakımı kolay ve genişletilebilir hale getiren 5 temel prensip.</p>
+  </div>
+
+  <div class="solid-letters" #lettersRow>
+    @for (p of principles; track p.letter; let i = $index) {
+      <div class="solid-letter-col" [style.--i]="i" [style.--c]="p.color" #letterCol>
+        <div class="solid-letter">{{ p.letter }}</div>
+        <div class="solid-connector"></div>
+        <div class="solid-short">
+          <span class="solid-short-en">{{ p.titleEn }}</span>
+          <span class="solid-short-tr">{{ p.titleTr }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="solid-list" #cardsGrid>
+    @for (p of principles; track p.letter; let i = $index) {
+      <article class="solid-row" [style.--i]="i" [style.--c]="p.color">
+        <div class="solid-row-text">
+          <div class="solid-row-heading">
+            <div class="solid-card-badge">{{ p.letter }}</div>
+            <h3 class="solid-card-title">
+              {{ p.titleEn }}
+              <span class="solid-card-tr">({{ p.titleTr }})</span>
+            </h3>
+          </div>
+          <ul class="solid-card-list">
+            @for (b of p.bullets; track b) {
+              <li>{{ b }}</li>
+            }
+          </ul>
+        </div>
+        <div class="solid-row-code">
+          <div class="code-block-wrap is-bad">
+            <div class="code-block-header">
+              <span class="code-block-icon">✕</span> Sorun
+            </div>
+            <pre class="code-block"><code [innerHTML]="highlightCode(p.codeBad)"></code></pre>
+          </div>
+          <div class="solid-arrow">→</div>
+          <div class="code-block-wrap is-good">
+            <div class="code-block-header">
+              <span class="code-block-icon">✓</span> Nasıl çözülür
+            </div>
+            <pre class="code-block"><code [innerHTML]="highlightCode(p.codeGood)"></code></pre>
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+</section>
