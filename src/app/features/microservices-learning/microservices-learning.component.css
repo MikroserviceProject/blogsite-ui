@@ -1548,18 +1548,19 @@
 
   /* Kutuları Ciddi Oranda Küçült */
   .layer-column {
-    width: 140px !important;
-    flex: 0 0 140px !important;
-    max-width: 140px !important;
+    width: 155px !important;
+    flex: 0 0 155px !important;
+    max-width: 155px !important;
   }
   .schema-box {
-    height: 80px !important;
-    min-height: 80px !important;
+    height: auto !important;
+    min-height: auto !important;
     padding: 8px !important;
   }
   /* Kutu içi fontları küçült */
   .box-title-area h3 {
-    font-size: 0.75rem !important;
+    font-size: 0.8rem !important;
+    margin-bottom: 5px !important;
   }
   .box-desc {
     font-size: 0.6rem !important;
@@ -1578,11 +1579,11 @@
     padding-right: 200px !important;   /* Aciklamalarin tasmamasi icin sagda biraz pay */
     padding-bottom: 200px !important; /* Alt token alanlari icin pay */
     gap: 40px 100px !important;       /* grid bossluklarini daralt */
-    grid-template-columns: minmax(150px, 160px) minmax(150px, 160px) !important;
+    grid-template-columns: minmax(155px, 175px) minmax(155px, 175px) !important;
   }
   .schema-board.has-active-flow .layer-column {
-    min-width: 140px !important;
-    max-width: 160px !important;
+    min-width: 155px !important;
+    max-width: 175px !important;
     width: auto !important;
     flex: unset !important;
   }
