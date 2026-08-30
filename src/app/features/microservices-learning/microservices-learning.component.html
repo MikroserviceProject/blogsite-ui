@@ -189,13 +189,7 @@
 
   <!-- YENİ: Console (Komut Satırı) - Dinamik Yapı -->
   <div class="learning-console" *ngIf="!showWelcome()">
-    <div class="console-header">
-      <span>PROBLEMS</span>
-      <span>OUTPUT</span>
-      <span>DEBUG CONSOLE</span>
-      <span class="active">TERMINAL</span>
-      <span>PORTS</span>
-    </div>
+    <!-- Removed console-header -->
     <div class="console-body" #consoleBody>
       <div class="console-history" *ngFor="let msg of consoleHistory()">
         <span [class.prompt-user]="msg.type === 'user'" [class.prompt-system]="msg.type === 'system'" class="prompt-prefix">

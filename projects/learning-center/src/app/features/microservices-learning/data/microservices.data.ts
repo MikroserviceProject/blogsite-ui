@@ -19,74 +19,55 @@ export const MICROSERVICES_LAYERS: Layer[] = [
     id: 'layer-services',
     title: '3. MİKROSERVİSLER (İş Mantığı)',
     nodes: [
-      { id: 'microservices', name: 'Mikroservis Ağı', type: 'service-be', desc: 'Auth, Profil, Medya, Ödeme gibi tüm iç servisler' }
-    ]
-  },
-  {
-    id: 'layer-broker',
-    title: '4. MESAJ KUYRUĞU',
-    nodes: [
-      { id: 'broker', name: 'Olay/Mesaj Yöneticisi', type: 'helper-be', desc: 'Servisler arası asenkron iletişim (RabbitMQ/Kafka)' }
+      { id: 'microservices', name: 'Mikroservis Ağı', type: 'service-be', desc: 'Auth, Blog, Profil gibi tüm iç servisler' }
     ]
   },
   {
     id: 'layer-data',
-    title: '5. VERİTABANLARI & ÖNBELLEK',
+    title: '4. VERİTABANI',
     nodes: [
-      { id: 'db-sql', name: 'İlişkisel Veritabanı', type: 'db', desc: 'Örn: PostgreSQL, SQL Server' },
-      { id: 'db-nosql', name: 'Döküman Veritabanı', type: 'db', desc: 'Örn: MongoDB' },
-      { id: 'cache-redis', name: 'Önbellek (Cache)', type: 'db', desc: 'Örn: Redis (Hızlı okuma/yazma)' }
+      { id: 'db-main', name: 'Ana Veritabanı', type: 'db', desc: 'Örn: PostgreSQL (Genel Mimari)' },
+      { id: 'db-auth', name: 'Kimlik Veritabanı', type: 'db', desc: 'Örn: PostgreSQL (AuthenticationDb)' },
+      { id: 'db-profile', name: 'Profil Veritabanı', type: 'db', desc: 'Örn: PostgreSQL (Profil Bilgileri)' }
     ]
   }
 ];
 
 export const MICROSERVICES_FLOWS: FlowPath[] = [
   {
+    id: 'genel-mimari',
+    name: 'Genel Mimari',
+    steps: [
+      { fromNodeId: 'client', toNodeId: 'gateway', label: '1. İstemciden İstek Gelir' },
+      { fromNodeId: 'gateway', toNodeId: 'microservices', label: '2. Gateway İsteği İlgili Servise Yönlendirir' },
+      { fromNodeId: 'microservices', toNodeId: 'db-main', label: '3. Servis Veritabanına (PostgreSQL) Gider' },
+      { fromNodeId: 'db-main', toNodeId: 'microservices', label: '4. Veri Döndürülür', isReturn: true },
+      { fromNodeId: 'microservices', toNodeId: 'gateway', label: '5. Servis Yanıtı Gateway\'e İletilir', isReturn: true },
+      { fromNodeId: 'gateway', toNodeId: 'client', label: '6. İstemciye Sonuç Dönülür', isReturn: true }
+    ]
+  },
+  {
     id: 'giris-yap',
-    name: 'Giriş Yap',
+    name: 'Giriş Yapma Akışı',
     steps: [
       { fromNodeId: 'client', toNodeId: 'gateway', label: '1. Giriş İsteği (POST /login)' },
       { fromNodeId: 'gateway', toNodeId: 'microservices', label: '2. Auth Servisine Yönlendir' },
-      { fromNodeId: 'microservices', toNodeId: 'db-sql', label: '3. SQL\'den Kullanıcıyı Doğrula' },
-      { fromNodeId: 'db-sql', toNodeId: 'microservices', label: '4. Kullanıcı Bulundu', isReturn: true },
-      { fromNodeId: 'microservices', toNodeId: 'cache-redis', label: '5. Oturumu/Token\'ı Önbelleğe Al' },
-      { fromNodeId: 'cache-redis', toNodeId: 'microservices', label: '6. Önbelleğe Alındı', isReturn: true },
-      { fromNodeId: 'microservices', toNodeId: 'broker', label: '7. (Asenkron) "KullaniciGirisYapti" Olayı Fırlat' },
-      { fromNodeId: 'broker', toNodeId: 'microservices', label: '8. Güvenlik/Log Servisi Kaydetti', isReturn: true },
-      { fromNodeId: 'microservices', toNodeId: 'gateway', label: '9. 200 OK (Token ile dön)', isReturn: true },
-      { fromNodeId: 'gateway', toNodeId: 'client', label: '10. Giriş Başarılı', isReturn: true }
+      { fromNodeId: 'microservices', toNodeId: 'db-auth', label: '3. PostgreSQL\'den Kullanıcıyı Doğrula' },
+      { fromNodeId: 'db-auth', toNodeId: 'microservices', label: '4. Kullanıcı Bulundu', isReturn: true },
+      { fromNodeId: 'microservices', toNodeId: 'gateway', label: '5. 200 OK (Token ile dön)', isReturn: true },
+      { fromNodeId: 'gateway', toNodeId: 'client', label: '6. Giriş Başarılı', isReturn: true }
     ]
   },
   {
     id: 'profil-duzenle',
-    name: 'Profil Düzenle',
+    name: 'Profil Düzenleme Akışı',
     steps: [
       { fromNodeId: 'client', toNodeId: 'gateway', label: '1. Profil Güncelleme İsteği' },
-      { fromNodeId: 'gateway', toNodeId: 'microservices', label: '2. Profil Servisine Yönlendir' },
-      { fromNodeId: 'microservices', toNodeId: 'cache-redis', label: '3. Redis\'teki Eski Profil Verisini Sil' },
-      { fromNodeId: 'cache-redis', toNodeId: 'microservices', label: '4. Veri Silindi', isReturn: true },
-      { fromNodeId: 'microservices', toNodeId: 'db-nosql', label: '5. Yeni Profili MongoDB\'ye Kaydet' },
-      { fromNodeId: 'db-nosql', toNodeId: 'microservices', label: '6. Veri Kaydedildi', isReturn: true },
-      { fromNodeId: 'microservices', toNodeId: 'broker', label: '7. "ProfilGuncellendi" Olayı Fırlat' },
-      { fromNodeId: 'broker', toNodeId: 'microservices', label: '8. Diğer Servisler Haberdar Edildi', isReturn: true },
-      { fromNodeId: 'microservices', toNodeId: 'gateway', label: '9. 200 OK', isReturn: true },
-      { fromNodeId: 'gateway', toNodeId: 'client', label: '10. Profil Başarıyla Güncellendi', isReturn: true }
-    ]
-  },
-  {
-    id: 'genel-mimari',
-    name: 'Genel Mikroservis Mimarisi',
-    steps: [
-      { fromNodeId: 'client', toNodeId: 'gateway', label: '1. İstemciden İstek Gelir' },
-      { fromNodeId: 'gateway', toNodeId: 'microservices', label: '2. Gateway İsteği Yönlendirir' },
-      { fromNodeId: 'microservices', toNodeId: 'db-sql', label: '3. Mikroservis SQL\'den Veri Çeker' },
-      { fromNodeId: 'db-sql', toNodeId: 'microservices', label: '4. Veri Döndürülür', isReturn: true },
-      { fromNodeId: 'microservices', toNodeId: 'cache-redis', label: '5. Veri Önbelleğe (Redis) Yazılır' },
-      { fromNodeId: 'cache-redis', toNodeId: 'microservices', label: '6. Önbellek Kaydı Tamam', isReturn: true },
-      { fromNodeId: 'microservices', toNodeId: 'broker', label: '7. Diğer Servisler İçin Olay Fırlatılır' },
-      { fromNodeId: 'broker', toNodeId: 'microservices', label: '8. Olay Kuyruğa Alındı', isReturn: true },
-      { fromNodeId: 'microservices', toNodeId: 'gateway', label: '9. Servis Yanıtı Gateway\'e İletilir', isReturn: true },
-      { fromNodeId: 'gateway', toNodeId: 'client', label: '10. İstemciye Sonuç Dönülür', isReturn: true }
+      { fromNodeId: 'gateway', toNodeId: 'microservices', label: '2. Profil İşlemine Yönlendir' },
+      { fromNodeId: 'microservices', toNodeId: 'db-profile', label: '3. Yeni Profili PostgreSQL\'e Kaydet' },
+      { fromNodeId: 'db-profile', toNodeId: 'microservices', label: '4. Veri Kaydedildi', isReturn: true },
+      { fromNodeId: 'microservices', toNodeId: 'gateway', label: '5. 200 OK', isReturn: true },
+      { fromNodeId: 'gateway', toNodeId: 'client', label: '6. Profil Başarıyla Güncellendi', isReturn: true }
     ]
   }
 ];
