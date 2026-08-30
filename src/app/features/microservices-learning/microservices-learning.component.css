@@ -1527,7 +1527,7 @@
 
 /* MOBİL (RESPONSIVE) DÜZELTMESİ — Masaüstüne kesinlikle dokunmaz */
 @media (max-width: 1024px) {
-
+  /* Scroll kapsayıcısı */
   .board-wrapper {
     overflow-x: auto;
     overflow-y: visible;
@@ -1535,18 +1535,67 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  /* ZOOM VEYA SCALE YOK! SVG OKLARININ BOZULMAMASI ICIN GERCEK PX DEGERLERINI KUCULTUYORUZ */
+  
+  /* Temel Alan - Sola Yasla ve Gereksiz Bosluklari Al */
   .schema-board {
-    zoom: 0.35;
     justify-content: flex-start !important;
+    padding: 10px !important;
+    gap: 15px !important;
     min-width: 0 !important;
-    width: auto !important;
-    padding: 15px 10px 30px 10px !important;
+    width: max-content !important;
   }
 
+  /* Kutuları Ciddi Oranda Küçült */
+  .layer-column {
+    width: 140px !important;
+    flex: 0 0 140px !important;
+    max-width: 140px !important;
+  }
+  .schema-box {
+    height: 80px !important;
+    min-height: 80px !important;
+    padding: 8px !important;
+  }
+  /* Kutu içi fontları küçült */
+  .box-title-area h3 {
+    font-size: 0.75rem !important;
+  }
+  .box-desc {
+    font-size: 0.6rem !important;
+    line-height: 1.2 !important;
+  }
+  
+  /* Üst basliklari kucult */
+  .layer-header h3 {
+    font-size: 0.65rem !important;
+  }
+
+  /* Aktif Moddaki Devasa Bosluklari ve Paddingleri Kucult (Grid 2x2) */
   .schema-board.has-active-flow {
-    zoom: 0.42;
-    padding-right: 200px !important;
-    padding-bottom: 200px !important;
+    margin-left: 0 !important;
+    padding-left: 10px !important;
+    padding-right: 200px !important;   /* Aciklamalarin tasmamasi icin sagda biraz pay */
+    padding-bottom: 200px !important; /* Alt token alanlari icin pay */
+    gap: 40px 100px !important;       /* grid bossluklarini daralt */
+    grid-template-columns: minmax(150px, 160px) minmax(150px, 160px) !important;
+  }
+  .schema-board.has-active-flow .layer-column {
+    min-width: 140px !important;
+    max-width: 160px !important;
+    width: auto !important;
+    flex: unset !important;
+  }
+  
+  /* Okların üzerindeki açıklama etiketleri (Text Label) fontlarini küçült */
+  .text-label span {
+    font-size: 0.55rem !important;
+    padding: 2px 4px !important;
+  }
+  
+  /* Token kutucuklarini küçült */
+  .data-token-group text {
+    font-size: 7px !important;
   }
 
   .console-wrapper {
